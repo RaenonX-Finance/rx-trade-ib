@@ -30,6 +30,7 @@ from typing import TypedDict, TYPE_CHECKING
 import numpy as np
 
 from trade_ibkr.enums import PxDataCol
+
 if TYPE_CHECKING:
     from trade_ibkr.model import PxData
 
@@ -54,8 +55,14 @@ class PxDataSupportResistance(TypedDict):
     type: PxDataSupportResistanceType
 
 
+class PxDataContract(TypedDict):
+    minTick: float
+    symbol: float
+
+
 class PxDataDict(TypedDict):
-    symbol: str
+    uniqueIdentifier: str
+    contract: PxDataContract
     data: list[PxDataBar]
     supportResistance: list[PxDataSupportResistance]
 
@@ -80,7 +87,7 @@ def _from_px_data_support_resistance(px_data: "PxData") -> list[PxDataSupportRes
     ret: list[PxDataSupportResistance] = []
 
     levels: list[float] = sorted(set(px_data.sr_levels_window) | set(px_data.sr_levels_fractal))
-    current_diff = np.subtract(np.full((len(levels), ), px_data.get_current()[PxDataCol.CLOSE]), levels)
+    current_diff = np.subtract(np.full((len(levels),), px_data.get_current()[PxDataCol.CLOSE]), levels)
 
     for level, diff in zip(levels, current_diff):
         ret.append({
@@ -95,9 +102,17 @@ def _from_px_data_support_resistance(px_data: "PxData") -> list[PxDataSupportRes
     return ret
 
 
+def _from_px_data_contract(px_data: "PxData") -> PxDataContract:
+    return {
+        "symbol": px_data.contract.underSymbol,
+        "minTick": px_data.contract.minTick,
+    }
+
+
 def to_socket_message_px_data(px_data: "PxData") -> str:
     data: PxDataDict = {
-        "symbol": px_data.contract.localSymbol,
+        "uniqueIdentifier": px_data.contract.underConId,
+        "contract": _from_px_data_contract(px_data),
         "data": _from_px_data_bars(px_data),
         "supportResistance": _from_px_data_support_resistance(px_data),
     }

@@ -9,8 +9,7 @@ from ibapi.wrapper import EWrapper
 
 from trade_ibkr.enums import PxDataCol
 from trade_ibkr.model import (
-    BarDataDict, OnPxDataUpdatedNoAccount, OnPxDataUpdatedEventNoAccount, PxData,
-    to_bar_data_dict,
+    BarDataDict, OnPxDataUpdatedEventNoAccount, OnPxDataUpdatedNoAccount, PxData, to_bar_data_dict,
 )
 
 P = ParamSpec("P")
@@ -20,8 +19,12 @@ R = TypeVar("R")
 @dataclass(kw_only=True)
 class PxDataCacheEntry:
     data: dict[int, BarDataDict]
-    contract: Contract
+    contract: ContractDetails | None
     on_update: OnPxDataUpdatedNoAccount
+
+    @property
+    def is_ready(self) -> bool:
+        return self.contract is not None and self.data
 
     def to_px_data(self) -> PxData:
         return PxData(contract=self.contract, bars=[self.data[key] for key in sorted(self.data.keys())])
@@ -35,7 +38,7 @@ class IBapiInfo(EWrapper, EClient):
         self._px_data_complete: set[int] = set()
         self._px_req_id_to_contract_req_id: dict[int, int] = {}
 
-        self._contract_data: dict[int, Contract | None] = {}
+        self._contract_data: dict[int, ContractDetails | None] = {}
 
         self._order_id = 0
         self._request_id = -1
@@ -56,7 +59,7 @@ class IBapiInfo(EWrapper, EClient):
         return request_id
 
     def contractDetails(self, reqId: int, contractDetails: ContractDetails):
-        self._contract_data[reqId] = contractDetails.contract
+        self._contract_data[reqId] = contractDetails
 
     # endregion
 
@@ -76,7 +79,12 @@ class IBapiInfo(EWrapper, EClient):
         is_new_bar = epoch not in cache_entry.data
 
         if is_new_bar and remove_old:
+            # Keep price data in a fixed size
             cache_entry.data.pop(min(cache_entry.data.keys()))
+
+        if contract_req_id := self._px_req_id_to_contract_req_id.get(reqId):
+            # Add contract detail to PxData object
+            cache_entry.contract = self._contract_data[contract_req_id]
 
         return is_new_bar
 
@@ -86,13 +94,16 @@ class IBapiInfo(EWrapper, EClient):
     def historicalDataUpdate(self, reqId: int, bar: BarData):
         self._on_historical_data_return(reqId, bar, remove_old=True)
 
-        async def execute_on_update():
-            await self._px_data_cache[reqId].on_update(OnPxDataUpdatedEventNoAccount(
-                contract=self._contract_data[self._px_req_id_to_contract_req_id[reqId]],
-                px_data=self._px_data_cache[reqId].to_px_data(),
-            ))
+        px_data_cache_entry = self._px_data_cache[reqId]
 
-        asyncio.run(execute_on_update())
+        if px_data_cache_entry.is_ready:
+            async def execute_on_update():
+                await px_data_cache_entry.on_update(OnPxDataUpdatedEventNoAccount(
+                    contract=px_data_cache_entry.contract,
+                    px_data=px_data_cache_entry.to_px_data(),
+                ))
+
+            asyncio.run(execute_on_update())
 
     def request_px_data(self, *, contract: Contract, duration: str, bar_size: str, keep_update: bool) -> int:
         request_id = self.next_valid_request_id
@@ -111,7 +122,7 @@ class IBapiInfo(EWrapper, EClient):
 
         def decorator(on_all_px_data_received: OnPxDataUpdatedNoAccount):
             self._px_data_cache[req_px] = PxDataCacheEntry(
-                contract=contract,
+                contract=None,
                 data={},
                 on_update=on_all_px_data_received,
             )

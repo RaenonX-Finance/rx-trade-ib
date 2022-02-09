@@ -4,7 +4,7 @@ from typing import Generator, TYPE_CHECKING
 
 import numpy as np
 import talib
-from ibapi.contract import Contract
+from ibapi.contract import ContractDetails
 from pandas import DataFrame, Series, to_datetime
 from scipy.signal import argrelextrema
 
@@ -39,11 +39,11 @@ class PxData:
 
     def __init__(
             self, *,
-            contract: Contract,
+            contract: ContractDetails,
             bars: list["BarDataDict"] | None = None,
             dataframe: DataFrame | None = None
     ):
-        self.contract: Contract = contract
+        self.contract: ContractDetails = contract
         self.dataframe: DataFrame = DataFrame(bars) if bars else dataframe
 
         if self.dataframe is None:

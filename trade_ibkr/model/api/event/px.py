@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Coroutine, TypeAlias
 
-from ibapi.contract import Contract
+from ibapi.contract import Contract, ContractDetails
 
 from ...account import Account
 from ...px_data import PxData
@@ -21,7 +21,7 @@ OnPxDataUpdated: TypeAlias = Callable[[OnPxDataUpdatedEvent], None]
 
 @dataclass(kw_only=True)
 class OnPxDataUpdatedEventNoAccount:
-    contract: Contract
+    contract: ContractDetails
     px_data: PxData
 
 

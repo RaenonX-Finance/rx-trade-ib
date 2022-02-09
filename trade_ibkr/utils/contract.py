@@ -2,7 +2,7 @@
 from ibapi.contract import Contract
 
 
-def make_futures_contract(local_symbol: str, exchange: str):
+def make_futures_contract(local_symbol: str, exchange: str) -> Contract:
     contract = Contract()
     contract.secType = "FUT"
     contract.exchange = exchange
@@ -11,7 +11,7 @@ def make_futures_contract(local_symbol: str, exchange: str):
     return contract
 
 
-def make_crypto_contract(symbol: str):
+def make_crypto_contract(symbol: str) -> Contract:
     contract = Contract()
     contract.symbol = symbol
     contract.secType = "CRYPTO"

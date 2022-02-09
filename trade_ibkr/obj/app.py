@@ -19,7 +19,7 @@ def init_app(app_callable: Callable[[], T], is_demo: bool = False) -> tuple[T, t
             app.disconnect()
             raise ex
 
-    api_thread = threading.Thread(target=run_loop, daemon=True)
+    api_thread = threading.Thread(target=run_loop)
     api_thread.start()
 
     while not app.isConnected():
