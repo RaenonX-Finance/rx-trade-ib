@@ -62,18 +62,23 @@ class IBapiInfo(EWrapper, EClient):
 
     # region Historical Data
 
-    def _on_historical_data_return(self, reqId: int, bar: BarData, /, remove_old: bool):
+    def _on_historical_data_return(self, reqId: int, bar: BarData, /, remove_old: bool) -> bool:
         # If `bar.barCount` is -1, the data is incorrect
         if bar.barCount == -1:
-            return
+            return False
 
         bar_data_dict = to_bar_data_dict(bar)
+        epoch = bar_data_dict[PxDataCol.EPOCH_SEC]
 
         cache_entry = self._px_data_cache[reqId]
         cache_entry.data[bar_data_dict[PxDataCol.EPOCH_SEC]] = bar_data_dict
 
-        if remove_old:
+        is_new_bar = epoch not in cache_entry.data
+
+        if is_new_bar and remove_old:
             cache_entry.data.pop(min(cache_entry.data.keys()))
+
+        return is_new_bar
 
     def historicalData(self, reqId: int, bar: BarData):
         self._on_historical_data_return(reqId, bar, remove_old=False)

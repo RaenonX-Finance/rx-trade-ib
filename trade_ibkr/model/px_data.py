@@ -18,18 +18,7 @@ if TYPE_CHECKING:
 
 
 class PxData:
-    def __init__(
-            self, *,
-            contract: Contract,
-            bars: list["BarDataDict"] | None = None,
-            dataframe: DataFrame | None = None
-    ):
-        self.contract: Contract = contract
-        self.dataframe: DataFrame = DataFrame(bars) if bars else dataframe
-
-        if self.dataframe is None:
-            raise ValueError("Must specify either `bars` or `dataframe` for PxData")
-
+    def _proc_df(self):
         self.dataframe[PxDataCol.DATE] = to_datetime(
             self.dataframe[PxDataCol.EPOCH_SEC], utc=True, unit="s"
         ).dt.tz_convert("America/Chicago")
@@ -45,6 +34,22 @@ class PxData:
         self.dataframe[PxDataCol.LOCAL_MAX] = self.dataframe.iloc[
             argrelextrema(self.dataframe[PxDataCol.HIGH].values, np.greater_equal, order=3)[0]
         ][PxDataCol.HIGH]
+
+        self.dataframe = self.dataframe.fillna(np.nan).replace([np.nan], [None])
+
+    def __init__(
+            self, *,
+            contract: Contract,
+            bars: list["BarDataDict"] | None = None,
+            dataframe: DataFrame | None = None
+    ):
+        self.contract: Contract = contract
+        self.dataframe: DataFrame = DataFrame(bars) if bars else dataframe
+
+        if self.dataframe is None:
+            raise ValueError("Must specify either `bars` or `dataframe` for PxData")
+
+        self._proc_df()
 
         self.sr_levels_fractal = support_resistance_fractal(self.dataframe)
         self.sr_levels_window = support_resistance_window(self.dataframe)
