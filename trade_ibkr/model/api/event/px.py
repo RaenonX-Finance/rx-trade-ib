@@ -24,5 +24,7 @@ class OnPxDataUpdatedEventNoAccount:
     contract: ContractDetails
     px_data: PxData
 
+    proc_sec: float
+
 
 OnPxDataUpdatedNoAccount: TypeAlias = Callable[[OnPxDataUpdatedEventNoAccount], Coroutine[Any, Any, None]]

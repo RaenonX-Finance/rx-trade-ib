@@ -21,7 +21,7 @@ contract_eth = make_crypto_contract("ETH")
 
 
 async def on_px_updated(e: OnPxDataUpdatedEventNoAccount):
-    print(f"{datetime.now().strftime('%H:%M:%S')}: Px Updated for {e.contract.underSymbol}")
+    print(f"{datetime.now().strftime('%H:%M:%S')}: Px Updated for {e.contract.underSymbol} ({e.proc_sec:.3f} s)")
     await fast_api_socket.emit("pxUpdated", to_socket_message_px_data(e.px_data))
 
 

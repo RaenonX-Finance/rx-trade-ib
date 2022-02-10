@@ -1,4 +1,5 @@
 import asyncio
+import time
 from dataclasses import dataclass
 from typing import Callable, ParamSpec, TypeVar
 
@@ -92,6 +93,7 @@ class IBapiInfo(EWrapper, EClient):
         self._on_historical_data_return(reqId, bar, remove_old=False)
 
     def historicalDataUpdate(self, reqId: int, bar: BarData):
+        _time = time.time()
         self._on_historical_data_return(reqId, bar, remove_old=True)
 
         px_data_cache_entry = self._px_data_cache[reqId]
@@ -101,6 +103,7 @@ class IBapiInfo(EWrapper, EClient):
                 await px_data_cache_entry.on_update(OnPxDataUpdatedEventNoAccount(
                     contract=px_data_cache_entry.contract,
                     px_data=px_data_cache_entry.to_px_data(),
+                    proc_sec=time.time() - _time,
                 ))
 
             asyncio.run(execute_on_update())
