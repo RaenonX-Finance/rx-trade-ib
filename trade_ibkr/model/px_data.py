@@ -9,7 +9,7 @@ from ibapi.contract import ContractDetails
 from pandas import DataFrame, DatetimeIndex, Series, to_datetime
 from scipy.signal import argrelextrema
 
-from trade_ibkr.calc import support_resistance_fractal, support_resistance_window
+from trade_ibkr.calc import calc_support_resistance_levels
 from trade_ibkr.const import console
 from trade_ibkr.enums import CandlePos, PxDataCol
 from trade_ibkr.utils import closest_diff
@@ -69,15 +69,14 @@ class PxData:
 
         self._proc_df()
 
-        self.sr_levels_fractal = support_resistance_fractal(self.dataframe)
-        self.sr_levels_window = support_resistance_window(self.dataframe)
+        self.sr_levels_data = calc_support_resistance_levels(self.dataframe)
 
     def get_px_sr_score(self, px: float) -> float:
-        if not self.sr_levels_window or not self.sr_levels_fractal:
+        if not self.sr_levels_data.levels["window"] or not self.sr_levels_data.levels["fractal"]:
             return float("NaN")
 
-        fractal = closest_diff(self.sr_levels_fractal, px) / self.get_current()[PxDataCol.CLOSE]
-        window = closest_diff(self.sr_levels_window, px) / self.get_current()[PxDataCol.CLOSE]
+        fractal = closest_diff(self.sr_levels_data.levels["fractal"], px) / self.get_current()[PxDataCol.CLOSE]
+        window = closest_diff(self.sr_levels_data.levels["window"], px) / self.get_current()[PxDataCol.CLOSE]
 
         return fractal * window * 1E8
 
@@ -120,7 +119,7 @@ class PxData:
         current_datetime = datetime.now().strftime("%H:%M:%S")
         current_close = self.get_current()[PxDataCol.CLOSE]
 
-        sr_levels = Counter(self.sr_levels_window + self.sr_levels_fractal)
+        sr_levels = Counter(self.sr_levels_data.levels["window"] + self.sr_levels_data.levels["fractal"])
         sr_level_txt = " / ".join(f"{key}{' !' if sr_levels[key] > 1 else ''}" for key in sorted(sr_levels.keys()))
 
         console.print(current_datetime)

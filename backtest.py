@@ -2,7 +2,6 @@ from decimal import Decimal
 
 import pandas as pd
 
-from trade_ibkr.enums import PxDataCol
 from trade_ibkr.model import BacktestAccount, OnPxDataUpdatedEvent
 from trade_ibkr.obj import start_app
 from trade_ibkr.strategy import simple_strategy
@@ -19,8 +18,6 @@ contract = make_futures_contract("MNQH2", "GLOBEX")
     account=account, contract=contract, duration="7200", bar_size="5 mins", min_data_rows=5
 )
 def main(e: OnPxDataUpdatedEvent):
-    print(f"{e.px_data.get_px_sr_score(e.px_data.get_current()[PxDataCol.CLOSE]):10.2f}")
-
     simple_strategy(
         e.contract,
         e.account,

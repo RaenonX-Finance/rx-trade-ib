@@ -1,33 +1,5 @@
-"""
-export type PxDataBar = {
-  epochSec: number,
-  amplitude: number,
-  open: number,
-  high: number,
-  low: number,
-  close: number,
-};
-
-export type SupportResistance = {
-  level: number,
-  diffCurrent: number,
-  type: {
-    window: boolean,
-    fractal: boolean,
-  },
-};
-
-
-export type PxData = {
-  symbol: string,
-  data: PxDataBar,
-  supportResistance: SupportResistance[],
-};
-"""
 import json
 from typing import TypedDict, TYPE_CHECKING
-
-import numpy as np
 
 from trade_ibkr.enums import PxDataCol
 
@@ -88,16 +60,15 @@ def _from_px_data_bars(px_data: "PxData") -> list[PxDataBar]:
 def _from_px_data_support_resistance(px_data: "PxData") -> list[PxDataSupportResistance]:
     ret: list[PxDataSupportResistance] = []
 
-    levels: list[float] = sorted(set(px_data.sr_levels_window) | set(px_data.sr_levels_fractal))
-    current_diff = np.subtract(levels, np.full((len(levels),), px_data.get_current()[PxDataCol.CLOSE]))
+    current = px_data.get_current()[PxDataCol.CLOSE]
 
-    for level, diff in zip(levels, current_diff):
+    for level_data in px_data.sr_levels_data.levels_data.values():
         ret.append({
-            "level": level,
-            "diffCurrent": diff,
+            "level": level_data.level,
+            "diffCurrent": level_data.level - current,
             "type": {
-                "window": level in px_data.sr_levels_window,
-                "fractal": level in px_data.sr_levels_fractal,
+                "window": level_data.window,
+                "fractal": level_data.fractal,
             },
         })
 

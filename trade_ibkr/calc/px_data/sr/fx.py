@@ -2,8 +2,6 @@
 Most of the source code originated from:
 https://medium.datadriveninvestor.com/how-to-detect-support-resistance-levels-and-breakout-using-python-f8b5dac42f21.
 """
-from typing import cast
-
 import numpy as np
 from pandas import DataFrame
 
@@ -11,14 +9,12 @@ from trade_ibkr.enums import PxDataCol
 
 
 def is_far_from_level(value: float, levels: list[float], avg: float) -> bool:
-    return np.any([abs(value - level) > avg for level in levels])
+    return not np.any([abs(value - level) < avg for level in levels])
 
 
-def support_resistance_fractal(df: DataFrame) -> list[float]:
+def support_resistance_fractal(df: DataFrame, bar_hl_avg: float) -> list[float]:
     series_high = df[PxDataCol.HIGH].tolist()
     series_low = df[PxDataCol.LOW].tolist()
-
-    avg = cast(float, np.mean(df[PxDataCol.HIGH] - df[PxDataCol.LOW]))
 
     def is_bullish_fractal(i: int):
         return (
@@ -37,25 +33,23 @@ def support_resistance_fractal(df: DataFrame) -> list[float]:
     for i in range(2, len(df.index) - 2):
         if is_bullish_fractal(i):
             low = series_low[i]
-            if is_far_from_level(low, levels, avg):
+            if is_far_from_level(low, levels, bar_hl_avg):
                 levels.append(low)
         elif is_bearish_fractal(i):
             high = series_high[i]
-            if is_far_from_level(high, levels, avg):
+            if is_far_from_level(high, levels, bar_hl_avg):
                 levels.append(high)
 
     return sorted(levels)
 
 
-def support_resistance_window(df: DataFrame) -> list[float]:
+def support_resistance_window(df: DataFrame, bar_hl_avg: float) -> list[float]:
     levels = []
     max_list = []
     min_list = []
 
     series_high = df[PxDataCol.HIGH].tolist()
     series_low = df[PxDataCol.LOW].tolist()
-
-    avg = cast(float, np.mean(df[PxDataCol.HIGH] - df[PxDataCol.LOW]))
 
     for i in range(5, len(df.index) - 5):
         # taking a window of 9 candles
@@ -68,7 +62,7 @@ def support_resistance_window(df: DataFrame) -> list[float]:
         max_list.append(current_max)
 
         # if the maximum value remains the same after shifting 5 times
-        if len(max_list) == 5 and is_far_from_level(current_max, levels, avg):
+        if len(max_list) == 5 and is_far_from_level(current_max, levels, bar_hl_avg):
             levels.append(current_max)
 
         current_min = min(series_low[i - 5:i + 5])
@@ -78,7 +72,7 @@ def support_resistance_window(df: DataFrame) -> list[float]:
 
         min_list.append(current_min)
 
-        if len(min_list) == 5 and is_far_from_level(current_min, levels, avg):
+        if len(min_list) == 5 and is_far_from_level(current_min, levels, bar_hl_avg):
             levels.append(current_min)
 
     return sorted(levels)
