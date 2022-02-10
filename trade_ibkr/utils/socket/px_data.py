@@ -42,6 +42,7 @@ class PxDataBar(TypedDict):
     high: float
     low: float
     close: float
+    vwap: float
 
 
 class PxDataSupportResistanceType(TypedDict):
@@ -78,6 +79,7 @@ def _from_px_data_bars(px_data: "PxData") -> list[PxDataBar]:
             "high": px_data_row[PxDataCol.HIGH],
             "low": px_data_row[PxDataCol.LOW],
             "close": px_data_row[PxDataCol.CLOSE],
+            "vwap": px_data_row[PxDataCol.VWAP],
         })
 
     return ret

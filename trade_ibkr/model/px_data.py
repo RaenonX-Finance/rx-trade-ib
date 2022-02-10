@@ -1,11 +1,12 @@
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Generator, TYPE_CHECKING
 
 import numpy as np
+import pandas as pd
 import talib
 from ibapi.contract import ContractDetails
-from pandas import DataFrame, Series, to_datetime
+from pandas import DataFrame, DatetimeIndex, Series, to_datetime
 from scipy.signal import argrelextrema
 
 from trade_ibkr.calc import support_resistance_fractal, support_resistance_window
@@ -21,7 +22,14 @@ class PxData:
     def _proc_df(self):
         self.dataframe[PxDataCol.DATE] = to_datetime(
             self.dataframe[PxDataCol.EPOCH_SEC], utc=True, unit="s"
-        ).dt.tz_convert("America/Chicago")
+        ).dt.tz_convert("America/Chicago").dt.tz_localize(None)
+        self.dataframe.set_index(DatetimeIndex(self.dataframe[PxDataCol.DATE]), inplace=True)
+
+        self.dataframe[PxDataCol.DATE_MARKET] = to_datetime(np.where(
+            self.dataframe[PxDataCol.DATE].dt.hour < 17,
+            self.dataframe[PxDataCol.DATE].dt.date,
+            self.dataframe[PxDataCol.DATE].dt.date + timedelta(days=1)
+        ))
 
         self.dataframe[PxDataCol.AMPLITUDE] = talib.EMA(
             abs(self.dataframe[PxDataCol.HIGH] - self.dataframe[PxDataCol.LOW]),
@@ -34,6 +42,16 @@ class PxData:
         self.dataframe[PxDataCol.LOCAL_MAX] = self.dataframe.iloc[
             argrelextrema(self.dataframe[PxDataCol.HIGH].values, np.greater_equal, order=3)[0]
         ][PxDataCol.HIGH]
+
+        self.dataframe[PxDataCol.PRICE_TIMES_VOLUME] = np.multiply(
+            self.dataframe[PxDataCol.CLOSE],
+            self.dataframe[PxDataCol.VOLUME]
+        )
+        mkt_data_group = self.dataframe.groupby(PxDataCol.DATE_MARKET)
+        self.dataframe[PxDataCol.VWAP] = np.divide(
+            mkt_data_group[PxDataCol.PRICE_TIMES_VOLUME].transform(pd.Series.cumsum),
+            mkt_data_group[PxDataCol.VOLUME].transform(pd.Series.cumsum),
+        )
 
         self.dataframe = self.dataframe.fillna(np.nan).replace([np.nan], [None])
 
