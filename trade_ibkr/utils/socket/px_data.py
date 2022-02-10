@@ -87,7 +87,7 @@ def _from_px_data_support_resistance(px_data: "PxData") -> list[PxDataSupportRes
     ret: list[PxDataSupportResistance] = []
 
     levels: list[float] = sorted(set(px_data.sr_levels_window) | set(px_data.sr_levels_fractal))
-    current_diff = np.subtract(np.full((len(levels),), px_data.get_current()[PxDataCol.CLOSE]), levels)
+    current_diff = np.subtract(levels, np.full((len(levels),), px_data.get_current()[PxDataCol.CLOSE]))
 
     for level, diff in zip(levels, current_diff):
         ret.append({

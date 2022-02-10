@@ -12,7 +12,7 @@ contract_mym = make_futures_contract("MYM  MAR 22", "ECBOT")
 contract_eth = make_crypto_contract("ETH")
 
 
-# TODO: Show extrema of multiple contracts and S/R levels
+# TODO: Show extrema of multiple contracts / VWAP
 
 
 async def on_px_updated(e: OnPxDataUpdatedEventNoAccount):
@@ -21,11 +21,6 @@ async def on_px_updated(e: OnPxDataUpdatedEventNoAccount):
 
 @app.get_px_data_keep_update(contract=contract_mnq, duration="43200 S", bar_size="1 min")
 async def on_mnq_px_data_received(e: OnPxDataUpdatedEventNoAccount):
-    await on_px_updated(e)
-
-
-@app.get_px_data_keep_update(contract=contract_eth, duration="1800 S", bar_size="1 min")
-async def on_eth_px_data_received(e: OnPxDataUpdatedEventNoAccount):
     await on_px_updated(e)
 
 
