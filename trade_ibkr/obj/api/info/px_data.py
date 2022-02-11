@@ -3,17 +3,16 @@ import time
 from dataclasses import dataclass, field
 from typing import ParamSpec, TypeVar
 
-from ibapi.client import EClient
 from ibapi.common import BarData, TickAttrib, TickerId
 from ibapi.contract import Contract, ContractDetails
 from ibapi.ticktype import TickType, TickTypeEnum
-from ibapi.wrapper import EWrapper
 
 from trade_ibkr.enums import PxDataCol
 from trade_ibkr.model import (
-    BarDataDict, OnPxDataUpdatedEventNoAccount, OnPxDataUpdatedNoAccount, PxData, to_bar_data_dict,
-    OnMarketDataReceived, OnMarketDataReceivedEvent,
+    BarDataDict, OnMarketDataReceived, OnMarketDataReceivedEvent, OnPxDataUpdatedEventNoAccount,
+    OnPxDataUpdatedNoAccount, PxData, to_bar_data_dict,
 )
+from .base import IBapiInfoBase
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -40,17 +39,17 @@ class PxDataCacheEntry:
     @property
     def is_send_px_data_ok(self) -> bool:
         # Debounce the data because `priceTick` and historical data update frequently
-        return time.time() - self.last_historical_sent > 5
+        return time.time() - self.last_historical_sent > 3
 
     @property
     def is_send_market_px_data_ok(self) -> bool:
-        # Limit to at most 20 market data per sec (0.05 sec for each)
-        return time.time() - self.last_market_update > 0.05
+        # Limit to at most 10 market data per sec (0.1 sec for each)
+        return time.time() - self.last_market_update > 0.1
 
     @property
-    def no_market_data_update(self):
-        # > 5 secs no incoming market data
-        return time.time() - self.last_market_update > 5
+    def no_market_data_update(self) -> bool:
+        # > 3 secs no incoming market data
+        return time.time() - self.last_market_update > 3 and self.is_ready
 
     def to_px_data(self) -> PxData:
         self.last_historical_sent = time.time()
@@ -58,39 +57,14 @@ class PxDataCacheEntry:
         return PxData(contract=self.contract, bars=[self.data[key] for key in sorted(self.data.keys())])
 
 
-class IBapiInfo(EWrapper, EClient):
+class IBapiInfoPxData(IBapiInfoBase):
     def __init__(self):
-        EClient.__init__(self, self)
+        super().__init__()
 
         self._px_data_cache: dict[int, PxDataCacheEntry] = {}
         self._px_data_complete: set[int] = set()
         self._px_req_id_to_contract_req_id: dict[int, int] = {}
         self._px_market_to_px_data: dict[int, int] = {}
-
-        self._contract_data: dict[int, ContractDetails | None] = {}
-
-        self._order_id = 0
-        self._request_id = -1
-
-    @property
-    def next_valid_request_id(self) -> int:
-        self._request_id += 1
-
-        return self._request_id
-
-    # region Contract
-
-    def request_contract_data(self, contract: Contract) -> int:
-        request_id = self.next_valid_request_id
-
-        self.reqContractDetails(request_id, contract)
-
-        return request_id
-
-    def contractDetails(self, reqId: int, contractDetails: ContractDetails):
-        self._contract_data[reqId] = contractDetails
-
-    # endregion
 
     # region Historical Data
 

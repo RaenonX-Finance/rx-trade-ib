@@ -9,7 +9,7 @@ from .model import SRLevelsData
 
 
 def calc_support_resistance_levels(df: DataFrame) -> SRLevelsData:
-    avg = cast(float, np.mean(df[PxDataCol.HIGH] - df[PxDataCol.LOW]))
+    avg = cast(float, np.mean(df[PxDataCol.HIGH] - df[PxDataCol.LOW]) * 1.5)
 
     levels_fractal = support_resistance_fractal(df, avg)
     levels_window = support_resistance_window(df, avg)
