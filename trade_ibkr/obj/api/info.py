@@ -23,10 +23,12 @@ R = TypeVar("R")
 class PxDataCacheEntry:
     data: dict[int, BarDataDict]
     contract: ContractDetails | None
+    contract_og: Contract
     on_update: OnPxDataUpdatedNoAccount
     on_update_market: OnMarketDataReceived
 
     last_historical_sent: float = field(init=False)
+    last_market_update: float = 0
 
     def __post_init__(self):
         self.last_historical_sent = time.time()
@@ -39,6 +41,11 @@ class PxDataCacheEntry:
     def is_send_px_data_ok(self) -> bool:
         # Debounce the data because `priceTick` and historical data update frequently
         return time.time() - self.last_historical_sent > 5
+
+    @property
+    def no_market_data_update(self):
+        # > 5 secs no incoming market data
+        return time.time() - self.last_market_update > 5
 
     def to_px_data(self) -> PxData:
         self.last_historical_sent = time.time()
@@ -124,6 +131,11 @@ class IBapiInfo(EWrapper, EClient):
 
             asyncio.run(execute_on_update())
 
+        if px_data_cache_entry.no_market_data_update:
+            # Re-trigger market data feed if stopped
+            req_market = self.request_px_data_market(px_data_cache_entry.contract_og)
+            self._px_market_to_px_data[req_market] = reqId
+
     # endregion
 
     # region Market Data
@@ -135,6 +147,7 @@ class IBapiInfo(EWrapper, EClient):
             return
 
         px_data_cache_entry = self._px_data_cache[self._px_market_to_px_data[reqId]]
+        px_data_cache_entry.last_market_update = time.time()
 
         if not px_data_cache_entry.contract:
             return
@@ -177,6 +190,7 @@ class IBapiInfo(EWrapper, EClient):
 
         self._px_data_cache[req_px] = PxDataCacheEntry(
             contract=None,
+            contract_og=contract,
             data={},
             on_update=on_px_data_updated,
             on_update_market=on_market_data_received,
