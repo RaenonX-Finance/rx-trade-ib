@@ -43,6 +43,11 @@ class PxDataCacheEntry:
         return time.time() - self.last_historical_sent > 5
 
     @property
+    def is_send_market_px_data_ok(self) -> bool:
+        # Limit to at most 20 market data per sec (0.05 sec for each)
+        return time.time() - self.last_market_update > 0.05
+
+    @property
     def no_market_data_update(self):
         # > 5 secs no incoming market data
         return time.time() - self.last_market_update > 5
@@ -147,9 +152,8 @@ class IBapiInfo(EWrapper, EClient):
             return
 
         px_data_cache_entry = self._px_data_cache[self._px_market_to_px_data[reqId]]
-        px_data_cache_entry.last_market_update = time.time()
 
-        if not px_data_cache_entry.contract:
+        if not px_data_cache_entry.contract or not px_data_cache_entry.is_send_market_px_data_ok:
             return
 
         async def execute_on_update():
@@ -159,6 +163,8 @@ class IBapiInfo(EWrapper, EClient):
             ))
 
         asyncio.run(execute_on_update())
+
+        px_data_cache_entry.last_market_update = time.time()
 
     # endregion
 
