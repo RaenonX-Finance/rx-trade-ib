@@ -29,12 +29,18 @@ class SRLevelsData:
             for current_level in levels:
                 is_close_to_level = False
 
-                for level_of_data, data in self.levels_data.items():
+                for level_of_data in self.levels_data.keys():
                     if abs(level_of_data - current_level) > self.bar_hl_avg:
                         continue
 
-                    data.window = key == "window"
-                    data.fractal = key == "fractal"
+                    self.levels_data[level_of_data].window = (
+                            self.levels_data[level_of_data].window
+                            or key == "window"
+                    )
+                    self.levels_data[level_of_data].fractal = (
+                            self.levels_data[level_of_data].fractal
+                            or key == "fractal"
+                    )
                     is_close_to_level = True
                     break
 
