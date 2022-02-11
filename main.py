@@ -61,5 +61,8 @@ app.get_px_data_keep_update(
     on_market_data_received=on_market_data_received,
 )
 
+# Set current process to the highest priority
+os.system(f"wmic process where processid={os.getpid()} CALL setpriority realtime")
+
 if __name__ == "__main__":
     uvicorn.run("main:fast_api", host="127.0.0.1", port=5000)
