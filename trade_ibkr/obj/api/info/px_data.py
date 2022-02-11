@@ -27,10 +27,11 @@ class PxDataCacheEntry:
     on_update_market: OnMarketDataReceived
 
     last_historical_sent: float = field(init=False)
-    last_market_update: float = 0
+    last_market_update: float = field(init=False)
 
     def __post_init__(self):
-        self.last_historical_sent = time.time()
+        self.last_historical_sent = 0
+        self.last_market_update = 0
 
     @property
     def is_ready(self) -> bool:
@@ -142,6 +143,14 @@ class IBapiInfoPxData(IBapiInfoBase):
 
     # endregion
 
+    def get_px_data(self, req_id: int) -> PxData | None:
+        px_data_entry = self._px_data_cache.get(req_id)
+
+        if not px_data_entry:
+            return None
+
+        return px_data_entry.to_px_data()
+
     def request_px_data(self, *, contract: Contract, duration: str, bar_size: str, keep_update: bool) -> int:
         request_id = self.next_valid_request_id
 
@@ -161,7 +170,7 @@ class IBapiInfoPxData(IBapiInfoBase):
             contract: Contract, duration: str, bar_size: str,
             on_px_data_updated: OnPxDataUpdatedNoAccount,
             on_market_data_received: OnMarketDataReceived,
-    ) -> None:
+    ) -> int:
         req_px = self.request_px_data(contract=contract, duration=duration, bar_size=bar_size, keep_update=True)
         req_contract = self.request_contract_data(contract)
         req_market = self.request_px_data_market(contract)
@@ -175,3 +184,5 @@ class IBapiInfoPxData(IBapiInfoBase):
             on_update=on_px_data_updated,
             on_update_market=on_market_data_received,
         )
+
+        return req_px

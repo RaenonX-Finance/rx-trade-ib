@@ -35,7 +35,7 @@ class PxDataContract(TypedDict):
 
 
 class PxDataDict(TypedDict):
-    uniqueIdentifier: str
+    uniqueIdentifier: int
     contract: PxDataContract
     data: list[PxDataBar]
     supportResistance: list[PxDataSupportResistance]
@@ -83,12 +83,20 @@ def _from_px_data_contract(px_data: "PxData") -> PxDataContract:
     }
 
 
-def to_socket_message_px_data(px_data: "PxData") -> str:
-    data: PxDataDict = {
+def _to_px_data_dict(px_data: "PxData") -> PxDataDict:
+    return {
         "uniqueIdentifier": get_unique_identifier(px_data.contract),
         "contract": _from_px_data_contract(px_data),
         "data": _from_px_data_bars(px_data),
         "supportResistance": _from_px_data_support_resistance(px_data),
     }
+
+
+def to_socket_message_px_data(px_data: "PxData") -> str:
+    return json.dumps(_to_px_data_dict(px_data))
+
+
+def to_socket_message_px_data_list(px_data_list: list["PxData"]) -> str:
+    data: list[PxDataDict] = [_to_px_data_dict(px_data) for px_data in px_data_list if px_data]
 
     return json.dumps(data)
