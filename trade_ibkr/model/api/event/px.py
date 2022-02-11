@@ -28,3 +28,12 @@ class OnPxDataUpdatedEventNoAccount:
 
 
 OnPxDataUpdatedNoAccount: TypeAlias = Callable[[OnPxDataUpdatedEventNoAccount], Coroutine[Any, Any, None]]
+
+
+@dataclass(kw_only=True)
+class OnMarketDataReceivedEvent:
+    contract: ContractDetails
+    px: float
+
+
+OnMarketDataReceived: TypeAlias = Callable[[OnMarketDataReceivedEvent], Coroutine[Any, Any, None]]

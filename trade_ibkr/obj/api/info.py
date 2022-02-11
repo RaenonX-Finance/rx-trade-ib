@@ -1,16 +1,18 @@
 import asyncio
 import time
-from dataclasses import dataclass
-from typing import Callable, ParamSpec, TypeVar
+from dataclasses import dataclass, field
+from typing import ParamSpec, TypeVar
 
 from ibapi.client import EClient
-from ibapi.common import BarData
+from ibapi.common import BarData, TickAttrib, TickerId
 from ibapi.contract import Contract, ContractDetails
+from ibapi.ticktype import TickType, TickTypeEnum
 from ibapi.wrapper import EWrapper
 
 from trade_ibkr.enums import PxDataCol
 from trade_ibkr.model import (
     BarDataDict, OnPxDataUpdatedEventNoAccount, OnPxDataUpdatedNoAccount, PxData, to_bar_data_dict,
+    OnMarketDataReceived, OnMarketDataReceivedEvent,
 )
 
 P = ParamSpec("P")
@@ -22,12 +24,25 @@ class PxDataCacheEntry:
     data: dict[int, BarDataDict]
     contract: ContractDetails | None
     on_update: OnPxDataUpdatedNoAccount
+    on_update_market: OnMarketDataReceived
+
+    last_historical_sent: float = field(init=False)
+
+    def __post_init__(self):
+        self.last_historical_sent = time.time()
 
     @property
     def is_ready(self) -> bool:
         return self.contract is not None and self.data
 
+    @property
+    def is_send_px_data_ok(self) -> bool:
+        # Debounce the data because `priceTick` and historical data update frequently
+        return time.time() - self.last_historical_sent > 5
+
     def to_px_data(self) -> PxData:
+        self.last_historical_sent = time.time()
+
         return PxData(contract=self.contract, bars=[self.data[key] for key in sorted(self.data.keys())])
 
 
@@ -38,6 +53,7 @@ class IBapiInfo(EWrapper, EClient):
         self._px_data_cache: dict[int, PxDataCacheEntry] = {}
         self._px_data_complete: set[int] = set()
         self._px_req_id_to_contract_req_id: dict[int, int] = {}
+        self._px_market_to_px_data: dict[int, int] = {}
 
         self._contract_data: dict[int, ContractDetails | None] = {}
 
@@ -98,7 +114,7 @@ class IBapiInfo(EWrapper, EClient):
 
         px_data_cache_entry = self._px_data_cache[reqId]
 
-        if px_data_cache_entry.is_ready:
+        if px_data_cache_entry.is_ready and px_data_cache_entry.is_send_px_data_ok:
             async def execute_on_update():
                 await px_data_cache_entry.on_update(OnPxDataUpdatedEventNoAccount(
                     contract=px_data_cache_entry.contract,
@@ -108,6 +124,31 @@ class IBapiInfo(EWrapper, EClient):
 
             asyncio.run(execute_on_update())
 
+    # endregion
+
+    # region Market Data
+
+    def tickPrice(self, reqId: TickerId, tickType: TickType, price: float, attrib: TickAttrib):
+        name = TickTypeEnum.idx2name[tickType]
+
+        if name != "LAST":
+            return
+
+        px_data_cache_entry = self._px_data_cache[self._px_market_to_px_data[reqId]]
+
+        if not px_data_cache_entry.contract:
+            return
+
+        async def execute_on_update():
+            await px_data_cache_entry.on_update_market(OnMarketDataReceivedEvent(
+                contract=px_data_cache_entry.contract,
+                px=price,
+            ))
+
+        asyncio.run(execute_on_update())
+
+    # endregion
+
     def request_px_data(self, *, contract: Contract, duration: str, bar_size: str, keep_update: bool) -> int:
         request_id = self.next_valid_request_id
 
@@ -115,21 +156,28 @@ class IBapiInfo(EWrapper, EClient):
 
         return request_id
 
+    def request_px_data_market(self, contract: Contract) -> int:
+        request_id = self.next_valid_request_id
+
+        self.reqMktData(request_id, contract, "", False, False, [])
+
+        return request_id
+
     def get_px_data_keep_update(
             self, *,
             contract: Contract, duration: str, bar_size: str,
-    ) -> Callable[[OnPxDataUpdatedNoAccount], None]:
+            on_px_data_updated: OnPxDataUpdatedNoAccount,
+            on_market_data_received: OnMarketDataReceived,
+    ) -> None:
         req_px = self.request_px_data(contract=contract, duration=duration, bar_size=bar_size, keep_update=True)
         req_contract = self.request_contract_data(contract)
+        req_market = self.request_px_data_market(contract)
         self._px_req_id_to_contract_req_id[req_px] = req_contract
+        self._px_market_to_px_data[req_market] = req_px
 
-        def decorator(on_all_px_data_received: OnPxDataUpdatedNoAccount):
-            self._px_data_cache[req_px] = PxDataCacheEntry(
-                contract=None,
-                data={},
-                on_update=on_all_px_data_received,
-            )
-
-        return decorator
-
-    # endregion
+        self._px_data_cache[req_px] = PxDataCacheEntry(
+            contract=None,
+            data={},
+            on_update=on_px_data_updated,
+            on_update_market=on_market_data_received,
+        )

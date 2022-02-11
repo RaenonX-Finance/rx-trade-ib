@@ -1,5 +1,5 @@
 """Check https://interactivebrokers.github.io/tws-api/basic_contracts.html for more details."""
-from ibapi.contract import Contract
+from ibapi.contract import Contract, ContractDetails
 
 
 def make_futures_contract(local_symbol: str, exchange: str) -> Contract:
@@ -19,3 +19,7 @@ def make_crypto_contract(symbol: str) -> Contract:
     contract.currency = "USD"
 
     return contract
+
+
+def get_unique_identifier(contract: ContractDetails) -> int:
+    return contract.underConId
