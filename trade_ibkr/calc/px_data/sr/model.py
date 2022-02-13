@@ -25,7 +25,7 @@ class SRLevelsData:
     def __post_init__(self):
         self.levels_data = {}
 
-        for key, levels in self.levels.items():
+        for key, levels in sorted(self.levels.items(), key=lambda item: len(item[1])):
             for current_level in levels:
                 is_close_to_level = False
 
