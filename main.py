@@ -27,9 +27,7 @@ contract_eth = make_crypto_contract("ETH")
 # TODO: Send orders - double click (front)
 # - Check avg px after order
 # - Check PnL after order if filled at strike
-# TODO: Error on connection refused
 
-# FIXME: (front) wrong time (seeing UTC) on load
 # FIXME: (front) legend not updated when the market data ticks for latest (OHLC)
 # FIXME: (front) legend time not updating
 # FIXME: (front) crashes when the S/R line type change
@@ -54,27 +52,27 @@ async def on_market_data_received(e: OnMarketDataReceivedEvent):
 
 
 px_data_req_ids: list[int] = [
-    # app.get_px_data_keep_update(
-    #     contract=contract_mnq,
-    #     duration="2 D",
-    #     bar_size="1 min",
-    #     on_px_data_updated=on_px_updated,
-    #     on_market_data_received=on_market_data_received,
-    # ),
-    # app.get_px_data_keep_update(
-    #     contract=contract_mym,
-    #     duration="2 D",
-    #     bar_size="1 min",
-    #     on_px_data_updated=on_px_updated,
-    #     on_market_data_received=on_market_data_received,
-    # ),
     app.get_px_data_keep_update(
-        contract=contract_eth,
+        contract=contract_mnq,
         duration="2 D",
         bar_size="1 min",
         on_px_data_updated=on_px_updated,
         on_market_data_received=on_market_data_received,
     ),
+    app.get_px_data_keep_update(
+        contract=contract_mym,
+        duration="2 D",
+        bar_size="1 min",
+        on_px_data_updated=on_px_updated,
+        on_market_data_received=on_market_data_received,
+    ),
+    # app.get_px_data_keep_update(
+    #     contract=contract_eth,
+    #     duration="2 D",
+    #     bar_size="1 min",
+    #     on_px_data_updated=on_px_updated,
+    #     on_market_data_received=on_market_data_received,
+    # ),
 ]
 
 
@@ -90,4 +88,4 @@ async def on_request_px_data(*_):
 os.system(f"wmic process where processid={os.getpid()} CALL setpriority realtime")
 
 if __name__ == "__main__":
-    uvicorn.run("main:fast_api", host="127.0.0.1", port=5000)
+    uvicorn.run("main:fast_api", host="127.0.0.1", port=8000)

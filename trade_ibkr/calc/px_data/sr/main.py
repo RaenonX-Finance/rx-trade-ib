@@ -14,4 +14,4 @@ def calc_support_resistance_levels(df: DataFrame) -> SRLevelsData:
     levels_fractal = support_resistance_fractal(df, avg)
     levels_window = support_resistance_window(df, avg)
 
-    return SRLevelsData(levels={"fractal": levels_fractal, "window": levels_window}, bar_hl_avg=avg)
+    return SRLevelsData(levels={"fractal": levels_fractal, "window": levels_window}, bar_hl_avg=avg, df=df)
