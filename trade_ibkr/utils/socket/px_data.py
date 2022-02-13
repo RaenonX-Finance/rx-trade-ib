@@ -2,7 +2,7 @@ import json
 from typing import TypedDict, TYPE_CHECKING
 
 from trade_ibkr.enums import PxDataCol
-from ..contract import get_unique_identifier
+from ..contract import get_detailed_contract_identifier
 
 if TYPE_CHECKING:
     from trade_ibkr.model import PxData
@@ -85,7 +85,7 @@ def _from_px_data_contract(px_data: "PxData") -> PxDataContract:
 
 def _to_px_data_dict(px_data: "PxData") -> PxDataDict:
     return {
-        "uniqueIdentifier": get_unique_identifier(px_data.contract),
+        "uniqueIdentifier": get_detailed_contract_identifier(px_data.contract),
         "contract": _from_px_data_contract(px_data),
         "data": _from_px_data_bars(px_data),
         "supportResistance": _from_px_data_support_resistance(px_data),

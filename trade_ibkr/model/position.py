@@ -4,6 +4,7 @@ from decimal import Decimal
 from ibapi.contract import Contract
 
 from trade_ibkr.enums import Side
+from trade_ibkr.utils import get_contract_identifier
 
 
 @dataclass(kw_only=True)
@@ -43,18 +44,13 @@ class PositionData:
 
 class Position:
     def __init__(self, data: list[PositionData]):
-        self._data: dict[str, PositionData] = {
-            self._get_contract_unique_identifier(position.contract): position
+        self._data: dict[int, PositionData] = {
+            get_contract_identifier(position.contract): position
             for position in data
         }
 
-    @staticmethod
-    def _get_contract_unique_identifier(contract: Contract) -> str:
-        """The return will be used for indexing the positions."""
-        return contract.localSymbol
-
     def get_position_data(self, contract: Contract) -> PositionData | None:
-        return self._data.get(self._get_contract_unique_identifier(contract))
+        return self._data.get(get_contract_identifier(contract))
 
     def get_position_side(self, contract: Contract) -> Side:
         position_data = self.get_position_data(contract)
@@ -67,4 +63,8 @@ class Position:
 
         For broker account, re-fetch all positions instead.
         """
-        self._data[self._get_contract_unique_identifier(position_data.contract)] = position_data
+        self._data[get_contract_identifier(position_data.contract)] = position_data
+
+    @property
+    def data(self) -> dict[int, PositionData]:
+        return self._data

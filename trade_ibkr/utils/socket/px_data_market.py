@@ -3,7 +3,7 @@ from typing import TypedDict
 
 from ibapi.contract import ContractDetails
 
-from ..contract import get_unique_identifier
+from ..contract import get_detailed_contract_identifier
 
 
 class PxDataMarket(TypedDict):
@@ -13,7 +13,7 @@ class PxDataMarket(TypedDict):
 
 def to_socket_message_px_data_market(contract: ContractDetails, px: float) -> str:
     data: PxDataMarket = {
-        "contractId": get_unique_identifier(contract),
+        "contractId": get_detailed_contract_identifier(contract),
         "px": px,
     }
 

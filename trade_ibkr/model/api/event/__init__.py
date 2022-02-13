@@ -3,4 +3,4 @@ from .px import (
     OnPxDataUpdatedEventNoAccount, OnPxDataUpdatedNoAccount,
     OnMarketDataReceivedEvent, OnMarketDataReceived,
 )
-from .portfolio import OnPositionFetchCompleted, OnPositionFetchCompletedEvent
+from .portfolio import OnPositionFetched, OnPositionFetchedEvent

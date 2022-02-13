@@ -6,7 +6,7 @@ from ibapi.common import OrderId
 from ibapi.contract import Contract
 from ibapi.order import Order
 
-from trade_ibkr.model import OnPositionFetchCompleted, OnPositionFetchCompletedEvent, Position, PositionData
+from trade_ibkr.model import OnPositionFetched, OnPositionFetchedEvent, Position, PositionData
 from .base import IBapiInfoBase
 
 
@@ -15,7 +15,7 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         super().__init__()
 
         self._position_data_list: list[PositionData] = []
-        self._position_send_coro: OnPositionFetchCompleted | None = None
+        self._position_on_fetched: OnPositionFetched | None = None
 
     # region Position
 
@@ -27,14 +27,22 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         ))
 
     def positionEnd(self):
-        if self._position_send_coro:
-            async def execute_after_position_end():
-                await self._position_send_coro(OnPositionFetchCompletedEvent(Position(self._position_data_list)))
+        if not self._position_on_fetched:
+            print(
+                "Position fetched, but no correspoding handler is set. "
+                "Use `set_on_position_fetched()` for setting the handler."
+            )
+            return
 
-            asyncio.run(execute_after_position_end())
+        async def execute_after_position_end():
+            await self._position_on_fetched(OnPositionFetchedEvent(position=Position(self._position_data_list)))
 
-            self._position_send_coro = None
-            self._position_data_list = []
+        asyncio.run(execute_after_position_end())
+
+        self._position_data_list = []
+
+    def set_on_position_fetched(self, on_position_fetched: OnPositionFetched):
+        self._position_on_fetched = on_position_fetched
 
     # endregion
 

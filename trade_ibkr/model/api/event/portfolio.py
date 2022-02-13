@@ -5,8 +5,8 @@ from ...position import Position
 
 
 @dataclass(kw_only=True)
-class OnPositionFetchCompletedEvent:
+class OnPositionFetchedEvent:
     position: Position
 
 
-OnPositionFetchCompleted = Callable[[Position], Coroutine[Any, Any, None]]
+OnPositionFetched = Callable[[OnPositionFetchedEvent], Coroutine[Any, Any, None]]
