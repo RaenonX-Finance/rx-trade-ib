@@ -22,7 +22,6 @@ fast_api = fast_api  # Binding for `uvicorn`
 # TODO: Send orders - double click (front)
 # - Check avg px after order
 # - Check PnL after order if filled at strike
-# FIXME: (front) S/R new line diff not updating diff / also remove diff calc-ing
 # FIXME: (front) open order polling not working (to be removed after order execution sys completed)
 # FIXME: (front) Show current PnL on px line label
 # TODO: Show unrealized / realized PNL for each security

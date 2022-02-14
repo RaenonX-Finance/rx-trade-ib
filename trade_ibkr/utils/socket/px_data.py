@@ -25,7 +25,6 @@ class PxDataSupportResistanceType(TypedDict):
 
 class PxDataSupportResistance(TypedDict):
     level: float
-    diffCurrent: float
     type: PxDataSupportResistanceType
 
 
@@ -61,12 +60,9 @@ def _from_px_data_bars(px_data: "PxData") -> list[PxDataBar]:
 def _from_px_data_support_resistance(px_data: "PxData") -> list[PxDataSupportResistance]:
     ret: list[PxDataSupportResistance] = []
 
-    current = px_data.get_current()[PxDataCol.CLOSE]
-
     for level_data in px_data.sr_levels_data.levels_data.values():
         ret.append({
             "level": level_data.level,
-            "diffCurrent": level_data.level - current,
             "type": {
                 "window": level_data.window,
                 "fractal": level_data.fractal,
