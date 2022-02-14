@@ -59,7 +59,7 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         self._open_order_list.append(OpenOrder(
             contract=contract,
             type_=order.orderType,
-            price=order.lmtPrice,
+            price=order.lmtPrice or order.auxPrice,
             quantity=order.totalQuantity,
             side=order.action,
         ))
