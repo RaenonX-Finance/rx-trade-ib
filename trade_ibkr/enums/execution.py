@@ -7,6 +7,8 @@ class ExecutionDataCol:
 
     # Names above must match the field name of `GroupedOrderExecution`
 
+    TOTAL_PNL = "total_pnl"
+
     PROFIT = "profit"
     LOSS = "loss"
     WIN_RATE = "wr"

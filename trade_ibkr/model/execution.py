@@ -123,6 +123,8 @@ class OrderExecutionCollection:
             df[ExecutionDataCol.AVG_TOTAL_PROFIT].divide(df[ExecutionDataCol.AVG_TOTAL_LOSS])
         )
 
+        df[ExecutionDataCol.TOTAL_PNL] = df[ExecutionDataCol.REALIZED_PNL].cumsum()
+
         # Remove NaNs
         df.fillna(np.nan, inplace=True)
         df.replace([np.nan, np.inf, -np.inf], None, inplace=True)
