@@ -44,8 +44,8 @@ class PxDataCacheEntry:
 
     @property
     def is_send_market_px_data_ok(self) -> bool:
-        # Limit to at most 10 market data per sec (0.1 sec for each)
-        return time.time() - self.last_market_update > 0.1
+        # Limit market data output rate
+        return time.time() - self.last_market_update > 0.25
 
     @property
     def no_market_data_update(self) -> bool:

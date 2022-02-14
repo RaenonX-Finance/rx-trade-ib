@@ -53,6 +53,7 @@ class PxData:
             mkt_data_group[PxDataCol.VOLUME].transform(pd.Series.cumsum),
         )
 
+        # Remove NaNs
         self.dataframe = self.dataframe.fillna(np.nan).replace([np.nan], [None])
 
     def __init__(
@@ -125,8 +126,8 @@ class PxData:
         console.print(current_datetime)
         console.print(
             f"{current_close:9.2f} | "
-            # f"{executions.side:12} | "
-            # f"{executions.avg_px:9.2f} | "
+            # f"{executions_df.side:12} | "
+            # f"{executions_df.avg_px:9.2f} | "
             # f"{px_diff:9.2f} | "
             f"\n{sr_level_txt}",
         )
