@@ -31,6 +31,7 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         self._execution_cache: dict[str, OrderExecution] = {}
         self._execution_on_fetched: OnExecutionFetched | None = None
         self._execution_group_period_sec: int | None = None
+        self._execution_earliest_time: datetime | None = None
 
     # region Position
 
@@ -160,9 +161,10 @@ class IBapiInfoPortfolio(IBapiInfoBase):
             whyHeld: str, mktCapPrice: float
     ):
         if status == "Filled":
-            self.action_status.order_pending = False
-            self.action_status.order_executed_on_current_k = True
             self.request_positions()
+            self.request_open_orders()
+            if self._execution_earliest_time:
+                self.request_all_executions(self._execution_earliest_time)
 
     # endregion
 
@@ -173,6 +175,8 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         self.reqAllOpenOrders()
 
     def request_all_executions(self, earliest_time: datetime):
+        self._execution_earliest_time = earliest_time
+
         exec_filter = ExecutionFilter()
         exec_filter.time = earliest_time.strftime("%Y%m%d %H:%M:%S")
 
