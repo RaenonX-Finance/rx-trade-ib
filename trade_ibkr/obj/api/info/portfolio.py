@@ -27,11 +27,13 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
         self._open_order_list: list[OpenOrder] = []
         self._open_order_on_fetched: OnOpenOrderFetched | None = None
+        self._open_order_processing: bool = False
 
         self._execution_cache: dict[str, OrderExecution] = {}
         self._execution_on_fetched: OnExecutionFetched | None = None
         self._execution_group_period_sec: int | None = None
         self._execution_earliest_time: datetime | None = None
+        self._execution_request_ids: set[int] = set()
 
     # region Position
 
@@ -75,6 +77,8 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         ))
 
     def openOrderEnd(self):
+        self._open_order_processing = False
+
         if not self._open_order_on_fetched:
             print(
                 "Open order fetched, but no corresponding handler is set. "
@@ -109,6 +113,12 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         )
 
     def commissionReport(self, commissionReport: CommissionReport):
+        if commissionReport.execId not in self._execution_cache:
+            # This method is triggered when an order is filled
+            # If `execId` is not in the execution cache, it should be a signal of "order filled"
+            self._on_order_completed()
+            return
+
         pnl = commissionReport.realizedPNL
         if pnl == sys.float_info.max:  # Max value PNL means unavailable
             return
@@ -160,11 +170,18 @@ class IBapiInfoPortfolio(IBapiInfoBase):
             parentId: int, lastFillPrice: float, clientId: int,
             whyHeld: str, mktCapPrice: float
     ):
-        if status == "Filled":
-            self.request_positions()
-            self.request_open_orders()
-            if self._execution_earliest_time:
-                self.request_all_executions(self._execution_earliest_time)
+        if status in ("Submitted", "Cancelled") and not self._open_order_processing:
+            # `self._open_order_processing` to avoid re-triggering this method, causing pace violation
+            self._on_order_updated()
+
+    def _on_order_completed(self):
+        self.request_positions()
+        self.request_open_orders()
+        if self._execution_earliest_time:
+            self.request_all_executions(self._execution_earliest_time)
+
+    def _on_order_updated(self):
+        self.request_open_orders()
 
     # endregion
 
@@ -172,6 +189,7 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         self.reqPositions()
 
     def request_open_orders(self):
+        self._open_order_processing = True
         self.reqAllOpenOrders()
 
     def request_all_executions(self, earliest_time: datetime):
@@ -180,4 +198,6 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         exec_filter = ExecutionFilter()
         exec_filter.time = earliest_time.strftime("%Y%m%d %H:%M:%S")
 
-        self.reqExecutions(self.next_valid_request_id, exec_filter)
+        request_id = self.next_valid_request_id
+        self._execution_request_ids.add(request_id)
+        self.reqExecutions(request_id, exec_filter)

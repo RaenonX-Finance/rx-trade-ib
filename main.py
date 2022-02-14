@@ -22,8 +22,7 @@ fast_api = fast_api  # Binding for `uvicorn`
 # TODO: Send orders - double click (front)
 # - Check avg px after order
 # - Check PnL after order if filled at strike
-# TODO: Show unrealized / realized PNL for each security
-# TODO: Update positions and open orders actively upon order filled
+# - Check if the executions and others are updated right after the orders are filled
 # TODO: Calculate Px Data Correlation Coeff
 
 
