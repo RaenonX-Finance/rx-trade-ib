@@ -125,8 +125,12 @@ class PxData:
         console.print(current_datetime)
         console.print(
             f"{current_close:9.2f} | "
-            # f"{position_data.side:12} | "
-            # f"{position_data.avg_px:9.2f} | "
+            # f"{executions.side:12} | "
+            # f"{executions.avg_px:9.2f} | "
             # f"{px_diff:9.2f} | "
             f"\n{sr_level_txt}",
         )
+
+    @property
+    def earliest_time(self) -> datetime:
+        return self.dataframe[PxDataCol.DATE].min()

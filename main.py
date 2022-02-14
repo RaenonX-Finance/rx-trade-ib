@@ -1,18 +1,17 @@
 import os
-from datetime import datetime
 
 import uvicorn
 
 from trade_ibkr.const import fast_api, fast_api_socket
 from trade_ibkr.model import (
-    OnOpenOrderFetchedEvent, OnPxDataUpdatedEventNoAccount, OnMarketDataReceivedEvent,
-    OnPositionFetchedEvent,
+    OnExecutionFetchedEvent, OnMarketDataReceivedEvent, OnOpenOrderFetchedEvent, OnPositionFetchedEvent,
+    OnPxDataUpdatedEventNoAccount,
 )
 from trade_ibkr.obj import start_app_info
 from trade_ibkr.utils import (
-    make_futures_contract, make_crypto_contract,
-    to_socket_message_open_order, to_socket_message_px_data, to_socket_message_px_data_market,
-    to_socket_message_px_data_list, to_socket_message_position,
+    make_crypto_contract, make_futures_contract, print_log,
+    to_socket_message_execution, to_socket_message_open_order, to_socket_message_position,
+    to_socket_message_px_data, to_socket_message_px_data_list, to_socket_message_px_data_market,
 )
 
 fast_api = fast_api  # Binding for `uvicorn`
@@ -20,33 +19,30 @@ fast_api = fast_api  # Binding for `uvicorn`
 
 # TODO: TA-lib pattern recognition?
 
-# TODO: Fetch historical orders - Marker @ https://jsfiddle.net/TradingView/nd80cx1a/
 # TODO: Send orders - double click (front)
 # - Check avg px after order
 # - Check PnL after order if filled at strike
+# FIXME: (front) S/R new line diff not updating diff / also remove diff calc-ing
+# FIXME: (front) open order polling not working (to be removed after order execution sys completed)
+# FIXME: (front) Show current PnL on px line label
+# TODO: Show unrealized / realized PNL for each security
+# TODO: Update positions and open orders actively upon order filled
+# TODO: Calculate Px Data Correlation Coeff
+# TODO: List executions and W/L rate
 
 
 async def on_px_updated(e: OnPxDataUpdatedEventNoAccount):
-    print(
-        f"{datetime.now().strftime('%H:%M:%S.%f')[:-3]}: "
-        f"Px Updated for {e.contract.underSymbol} ({e.proc_sec:.3f} s)"
-    )
+    print_log(f"Px Updated for {e.contract.underSymbol} ({e.proc_sec:.3f} s)")
     await fast_api_socket.emit("pxUpdated", to_socket_message_px_data(e.px_data))
 
 
 async def on_market_data_received(e: OnMarketDataReceivedEvent):
-    print(
-        f"{datetime.now().strftime('%H:%M:%S.%f')[:-3]}: "
-        f"Market Px Updated for {e.contract.underSymbol} ({e.px:.2f})"
-    )
+    print_log(f"Market Px Updated for {e.contract.underSymbol} ({e.px:.2f})")
     await fast_api_socket.emit("pxUpdatedMarket", to_socket_message_px_data_market(e.contract, e.px))
 
 
 async def on_position_fetched(e: OnPositionFetchedEvent):
-    print(
-        f"{datetime.now().strftime('%H:%M:%S.%f')[:-3]}: "
-        "Position data fetched"
-    )
+    print_log("Position data fetched")
     await fast_api_socket.emit(
         "position",
         to_socket_message_position(e.position)
@@ -54,19 +50,25 @@ async def on_position_fetched(e: OnPositionFetchedEvent):
 
 
 async def on_open_order_fetched(e: OnOpenOrderFetchedEvent):
-    print(
-        f"{datetime.now().strftime('%H:%M:%S.%f')[:-3]}: "
-        f"Open order fetched ({sum(len(orders) for orders in e.open_order.orders.values())})"
-    )
+    print_log(f"Open order fetched ({sum(len(orders) for orders in e.open_order.orders.values())})")
     await fast_api_socket.emit(
         "openOrder",
         to_socket_message_open_order(e.open_order)
     )
 
 
+async def on_executions_fetched(e: OnExecutionFetchedEvent):
+    print_log(f"Executions fetched ({sum(len(executions) for executions in e.executions.executions.values())})")
+    await fast_api_socket.emit(
+        "execution",
+        to_socket_message_execution(e.executions)
+    )
+
+
 app, _ = start_app_info(is_demo=True)
 app.set_on_position_fetched(on_position_fetched)
 app.set_on_open_order_fetched(on_open_order_fetched)
+app.set_on_executions_fetched(on_executions_fetched, 60)
 
 contract_mnq = make_futures_contract("MNQH2", "GLOBEX")
 contract_mym = make_futures_contract("MYM  MAR 22", "ECBOT")
@@ -99,6 +101,7 @@ px_data_req_ids: list[int] = [
 
 @fast_api_socket.on("pxInit")
 async def on_request_px_data(*_):
+    print_log("Socket: Received Px Init")
     await fast_api_socket.emit(
         "pxInit",
         to_socket_message_px_data_list([app.get_px_data(req_id) for req_id in px_data_req_ids])
@@ -107,12 +110,21 @@ async def on_request_px_data(*_):
 
 @fast_api_socket.on("position")
 async def on_request_position(*_):
-    app.refresh_positions()
+    print_log("Socket: Received Position")
+    app.request_positions()
 
 
 @fast_api_socket.on("openOrder")
 async def on_request_open_orders(*_):
-    app.refresh_open_orders()
+    print_log("Socket: Received Open Order")
+    app.request_open_orders()
+
+
+@fast_api_socket.on("execution")
+async def on_request_execution(*_):
+    print_log("Socket: Received Execution")
+    earliest_time = min([app.get_px_data(req_id).earliest_time for req_id in px_data_req_ids])
+    app.request_all_executions(earliest_time)
 
 
 # Set current process to the highest priority

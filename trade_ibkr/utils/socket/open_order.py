@@ -1,7 +1,7 @@
 import json
 from typing import TYPE_CHECKING, TypeAlias, TypedDict
 
-from trade_ibkr.enums import OrderSide, OrderType
+from trade_ibkr.enums import OrderSideConst, OrderTypeConst
 from ..contract import get_contract_identifier
 
 if TYPE_CHECKING:
@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 
 class OpenOrderData(TypedDict):
     identifier: int
-    type: OrderType
-    side: OrderSide
+    type: OrderTypeConst
+    side: OrderSideConst
     quantity: float
     price: float
 

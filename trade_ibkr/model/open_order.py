@@ -3,17 +3,17 @@ from decimal import Decimal
 
 from ibapi.contract import Contract
 
-from trade_ibkr.enums import OrderSide, OrderType
+from trade_ibkr.enums import OrderSideConst, OrderTypeConst
 from trade_ibkr.utils import get_contract_identifier
 
 
 @dataclass(kw_only=True)
 class OpenOrder:
     contract: Contract
-    type_: OrderType
+    type_: OrderTypeConst
     price: float
     quantity: Decimal
-    side: OrderSide
+    side: OrderSideConst
 
 
 class OpenOrderBook:

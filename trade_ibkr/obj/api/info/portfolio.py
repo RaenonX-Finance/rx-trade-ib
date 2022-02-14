@@ -1,15 +1,19 @@
 import asyncio
-import time
+import sys
+from datetime import datetime
 from decimal import Decimal
 
+from ibapi.commission_report import CommissionReport
 from ibapi.common import OrderId
 from ibapi.contract import Contract
+from ibapi.execution import Execution, ExecutionFilter
 from ibapi.order import Order
 from ibapi.order_state import OrderState
 
 from trade_ibkr.model import (
-    OnOpenOrderFetched, OnOpenOrderFetchedEvent, OnPositionFetched, OnPositionFetchedEvent,
-    OpenOrder, OpenOrderBook, Position, PositionData,
+    OnExecutionFetched, OnExecutionFetchedEvent, OnOpenOrderFetched, OnOpenOrderFetchedEvent, OnPositionFetched,
+    OnPositionFetchedEvent,
+    OpenOrder, OpenOrderBook, OrderExecution, OrderExecutionCollection, Position, PositionData,
 )
 from .base import IBapiInfoBase
 
@@ -24,6 +28,10 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         self._open_order_list: list[OpenOrder] = []
         self._open_order_on_fetched: OnOpenOrderFetched | None = None
 
+        self._execution_cache: dict[str, OrderExecution] = {}
+        self._execution_on_fetched: OnExecutionFetched | None = None
+        self._execution_group_period_sec: int | None = None
+
     # region Position
 
     def position(self, account: str, contract: Contract, position: Decimal, avgCost: float):
@@ -36,8 +44,9 @@ class IBapiInfoPortfolio(IBapiInfoBase):
     def positionEnd(self):
         if not self._position_on_fetched:
             print(
-                "Position fetched, but no correspoding handler is set. "
-                "Use `set_on_position_fetched()` for setting the handler."
+                "Position fetched, but no corresponding handler is set. "
+                "Use `set_on_position_fetched()` for setting the handler.",
+                file=sys.stderr,
             )
             return
 
@@ -67,8 +76,9 @@ class IBapiInfoPortfolio(IBapiInfoBase):
     def openOrderEnd(self):
         if not self._open_order_on_fetched:
             print(
-                "Open order fetched, but no correspoding handler is set. "
-                "Use `set_on_open_order_fetched()` for setting the handler."
+                "Open order fetched, but no corresponding handler is set. "
+                "Use `set_on_open_order_fetched()` for setting the handler.",
+                file=sys.stderr,
             )
             return
 
@@ -84,11 +94,59 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
     # endregion
 
-    # region Order
+    # region Order Executions
 
-    @property
-    def next_valid_order_id(self) -> int:
-        return int(time.time())
+    def execDetails(self, reqId: int, contract: Contract, execution: Execution):
+        self._execution_cache[execution.execId] = OrderExecution(
+            exec_id=execution.execId,
+            order_id=execution.permId,
+            contract=contract,
+            local_time_original=execution.time,
+            side=execution.side,
+            cumulative_quantity=execution.cumQty,
+            avg_price=execution.avgPrice,
+        )
+
+    def commissionReport(self, commissionReport: CommissionReport):
+        pnl = commissionReport.realizedPNL
+        if pnl == sys.float_info.max:  # Max value PNL means unavailable
+            return
+
+        self._execution_cache[commissionReport.execId].realized_pnl = commissionReport.realizedPNL
+
+    def execDetailsEnd(self, reqId: int):
+        if not self._execution_on_fetched:
+            print(
+                "Executions fetched, but no corresponding handler is set. "
+                "Use `set_on_executions_fetched()` for setting the handler.",
+                file=sys.stderr,
+            )
+            return
+
+        if not self._execution_group_period_sec:
+            print(
+                "Executions fetched, but no corresponding period sec is set. "
+                "Use `set_on_executions_fetched()` for setting the handler.",
+                file=sys.stderr,
+            )
+            return
+
+        async def execute_after_exection_fetched():
+            await self._execution_on_fetched(OnExecutionFetchedEvent(
+                executions=OrderExecutionCollection(self._execution_cache.values(), self._execution_group_period_sec)
+            ))
+
+        asyncio.run(execute_after_exection_fetched())
+
+        self._execution_cache = {}
+
+    def set_on_executions_fetched(self, on_executions_fetched: OnExecutionFetched, period_sec: int):
+        self._execution_on_fetched = on_executions_fetched
+        self._execution_group_period_sec = period_sec
+
+    # endregion
+
+    # region Order
 
     def placeOrder(self, orderId: OrderId, contract: Contract, order: Order):
         super().placeOrder(orderId, contract, order)
@@ -104,12 +162,18 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         if status == "Filled":
             self.action_status.order_pending = False
             self.action_status.order_executed_on_current_k = True
-            self.refresh_positions()
+            self.request_positions()
 
     # endregion
 
-    def refresh_positions(self):
+    def request_positions(self):
         self.reqPositions()
 
-    def refresh_open_orders(self):
+    def request_open_orders(self):
         self.reqAllOpenOrders()
+
+    def request_all_executions(self, earliest_time: datetime):
+        exec_filter = ExecutionFilter()
+        exec_filter.time = earliest_time.strftime("%Y%m%d %H:%M:%S")
+
+        self.reqExecutions(self.next_valid_request_id, exec_filter)

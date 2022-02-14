@@ -13,7 +13,7 @@ class PositionEntry(TypedDict):
     avgPx: float
 
 
-PositionDict: TypeAlias = dict[int, "PositionData"]
+PositionDict: TypeAlias = dict[int, PositionEntry]
 
 
 def _from_position_data(position_data: "PositionData") -> PositionEntry:
