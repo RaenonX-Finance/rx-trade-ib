@@ -5,8 +5,12 @@ from decimal import Decimal
 from ibapi.common import OrderId
 from ibapi.contract import Contract
 from ibapi.order import Order
+from ibapi.order_state import OrderState
 
-from trade_ibkr.model import OnPositionFetched, OnPositionFetchedEvent, Position, PositionData
+from trade_ibkr.model import (
+    OnOpenOrderFetched, OnOpenOrderFetchedEvent, OnPositionFetched, OnPositionFetchedEvent,
+    OpenOrder, OpenOrderBook, Position, PositionData,
+)
 from .base import IBapiInfoBase
 
 
@@ -16,6 +20,9 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
         self._position_data_list: list[PositionData] = []
         self._position_on_fetched: OnPositionFetched | None = None
+
+        self._open_order_list: list[OpenOrder] = []
+        self._open_order_on_fetched: OnOpenOrderFetched | None = None
 
     # region Position
 
@@ -46,6 +53,37 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
     # endregion
 
+    # region Open Order
+
+    def openOrder(self, orderId: OrderId, contract: Contract, order: Order, orderState: OrderState):
+        self._open_order_list.append(OpenOrder(
+            contract=contract,
+            type_=order.orderType,
+            price=order.lmtPrice,
+            quantity=order.totalQuantity,
+            side=order.action,
+        ))
+
+    def openOrderEnd(self):
+        if not self._open_order_on_fetched:
+            print(
+                "Open order fetched, but no correspoding handler is set. "
+                "Use `set_on_open_order_fetched()` for setting the handler."
+            )
+            return
+
+        async def execute_after_open_order_fetched():
+            await self._open_order_on_fetched(OnOpenOrderFetchedEvent(open_order=OpenOrderBook(self._open_order_list)))
+
+        asyncio.run(execute_after_open_order_fetched())
+
+        self._open_order_list = []
+
+    def set_on_open_order_fetched(self, on_open_order_fetched: OnOpenOrderFetched):
+        self._open_order_on_fetched = on_open_order_fetched
+
+    # endregion
+
     # region Order
 
     @property
@@ -72,3 +110,6 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
     def refresh_positions(self):
         self.reqPositions()
+
+    def refresh_open_orders(self):
+        self.reqAllOpenOrders()

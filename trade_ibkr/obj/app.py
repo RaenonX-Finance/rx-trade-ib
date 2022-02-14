@@ -10,7 +10,7 @@ T = TypeVar("T", bound=Union[IBapiInfo | IBapiBot])
 
 def init_app(app_callable: Callable[[], T], is_demo: bool = False) -> tuple[T, threading.Thread]:
     app = app_callable()
-    app.connect("localhost", 8384 if is_demo else 8383, 123)
+    app.connect("localhost", 8384 if is_demo else 8383, 87)
 
     def run_loop():
         try:

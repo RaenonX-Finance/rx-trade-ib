@@ -4,12 +4,15 @@ from datetime import datetime
 import uvicorn
 
 from trade_ibkr.const import fast_api, fast_api_socket
-from trade_ibkr.model import OnPxDataUpdatedEventNoAccount, OnMarketDataReceivedEvent, OnPositionFetchedEvent
+from trade_ibkr.model import (
+    OnOpenOrderFetchedEvent, OnPxDataUpdatedEventNoAccount, OnMarketDataReceivedEvent,
+    OnPositionFetchedEvent,
+)
 from trade_ibkr.obj import start_app_info
 from trade_ibkr.utils import (
     make_futures_contract, make_crypto_contract,
-    to_socket_message_px_data, to_socket_message_px_data_market, to_socket_message_px_data_list,
-    to_socket_message_position,
+    to_socket_message_open_order, to_socket_message_px_data, to_socket_message_px_data_market,
+    to_socket_message_px_data_list, to_socket_message_position,
 )
 
 fast_api = fast_api  # Binding for `uvicorn`
@@ -17,7 +20,7 @@ fast_api = fast_api  # Binding for `uvicorn`
 
 # TODO: TA-lib pattern recognition?
 
-# TODO: Fetch current orders - Marker @ https://jsfiddle.net/TradingView/nd80cx1a/
+# TODO: Fetch historical orders - Marker @ https://jsfiddle.net/TradingView/nd80cx1a/
 # TODO: Send orders - double click (front)
 # - Check avg px after order
 # - Check PnL after order if filled at strike
@@ -42,7 +45,7 @@ async def on_market_data_received(e: OnMarketDataReceivedEvent):
 async def on_position_fetched(e: OnPositionFetchedEvent):
     print(
         f"{datetime.now().strftime('%H:%M:%S.%f')[:-3]}: "
-        f"Position data fetched"
+        "Position data fetched"
     )
     await fast_api_socket.emit(
         "position",
@@ -50,8 +53,20 @@ async def on_position_fetched(e: OnPositionFetchedEvent):
     )
 
 
+async def on_open_order_fetched(e: OnOpenOrderFetchedEvent):
+    print(
+        f"{datetime.now().strftime('%H:%M:%S.%f')[:-3]}: "
+        f"Open order fetched ({sum(len(orders) for orders in e.open_order.orders.values())})"
+    )
+    await fast_api_socket.emit(
+        "openOrder",
+        to_socket_message_open_order(e.open_order)
+    )
+
+
 app, _ = start_app_info(is_demo=True)
 app.set_on_position_fetched(on_position_fetched)
+app.set_on_open_order_fetched(on_open_order_fetched)
 
 contract_mnq = make_futures_contract("MNQH2", "GLOBEX")
 contract_mym = make_futures_contract("MYM  MAR 22", "ECBOT")
@@ -93,6 +108,11 @@ async def on_request_px_data(*_):
 @fast_api_socket.on("position")
 async def on_request_position(*_):
     app.refresh_positions()
+
+
+@fast_api_socket.on("openOrder")
+async def on_request_open_orders(*_):
+    app.refresh_open_orders()
 
 
 # Set current process to the highest priority

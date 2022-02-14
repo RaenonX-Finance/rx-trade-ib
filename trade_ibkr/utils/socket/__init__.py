@@ -1,3 +1,4 @@
+from .open_order import to_socket_message_open_order
 from .position import to_socket_message_position
 from .px_data import to_socket_message_px_data, to_socket_message_px_data_list
 from .px_data_market import to_socket_message_px_data_market
