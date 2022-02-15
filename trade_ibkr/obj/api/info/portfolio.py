@@ -70,7 +70,6 @@ class IBapiInfoPortfolio(IBapiInfoBase):
     def openOrder(self, orderId: OrderId, contract: Contract, order: Order, orderState: OrderState):
         self._open_order_list.append(OpenOrder(
             contract=contract,
-            type_=order.orderType,
             price=order.lmtPrice or order.auxPrice,
             quantity=order.totalQuantity,
             side=order.action,
@@ -88,7 +87,9 @@ class IBapiInfoPortfolio(IBapiInfoBase):
             return
 
         async def execute_after_open_order_fetched():
-            await self._open_order_on_fetched(OnOpenOrderFetchedEvent(open_order=OpenOrderBook(self._open_order_list)))
+            await self._open_order_on_fetched(OnOpenOrderFetchedEvent(
+                open_order=OpenOrderBook(self._open_order_list)
+            ))
 
         asyncio.run(execute_after_open_order_fetched())
 

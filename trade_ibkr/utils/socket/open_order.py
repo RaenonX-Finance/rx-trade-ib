@@ -1,7 +1,7 @@
 import json
 from typing import TYPE_CHECKING, TypeAlias, TypedDict
 
-from trade_ibkr.enums import OrderSideConst, OrderTypeConst
+from trade_ibkr.enums import OrderSideConst
 from ..contract import get_contract_identifier
 
 if TYPE_CHECKING:
@@ -10,7 +10,6 @@ if TYPE_CHECKING:
 
 class OpenOrderData(TypedDict):
     identifier: int
-    type: OrderTypeConst
     side: OrderSideConst
     quantity: float
     price: float
@@ -23,7 +22,6 @@ def _from_open_orders(open_orders: list["OpenOrder"]) -> list[OpenOrderData]:
     return [
         {
             "identifier": get_contract_identifier(open_order.contract),
-            "type": open_order.type_,
             "side": open_order.side,
             "quantity": float(open_order.quantity),
             "price": open_order.price,

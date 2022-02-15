@@ -25,7 +25,6 @@ fast_api = fast_api  # Binding for `uvicorn`
 # - Check if the executions and others are updated right after the orders are filled
 # TODO: Calculate Px Data Correlation Coeff
 
-
 async def on_px_updated(e: OnPxDataUpdatedEventNoAccount):
     print_log(f"Px Updated for {e.contract.underSymbol} ({e.proc_sec:.3f} s)")
     await fast_api_socket.emit("pxUpdated", to_socket_message_px_data(e.px_data))
