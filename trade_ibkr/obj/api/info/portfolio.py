@@ -204,6 +204,18 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         if status in ("Submitted", "Cancelled"):
             self._on_order_updated()
 
+    def nextValidId(self, orderId: int):
+        # Requesting a new order ID should indicate that an order is to be placed
+        if not self._order_pending_contract:
+            print("Order ID requested, which means there's an order to be placed - but contract is not set")
+            return
+
+        if not self._order_pending_order:
+            print("Order ID requested, which means there's an order to be placed - but order is not set")
+            return
+
+        super().placeOrder(orderId, self._order_pending_contract, self._order_pending_order)
+
     @staticmethod
     def _make_order(*, side: OrderSideConst, quantity: float, order_px: float | None, current_px: float) -> Order:
         quantity = Decimal(quantity)
@@ -229,12 +241,13 @@ class IBapiInfoPortfolio(IBapiInfoBase):
             self, *,
             contract: Contract, side: OrderSideConst, quantity: float, order_px: float | None,
             current_px: float
-    ) -> int:
+    ):
         order = self._make_order(side=side, order_px=order_px, quantity=quantity, current_px=current_px)
 
-        order_id = self.next_valid_request_id
-        super().placeOrder(order_id, contract, order)
+        self._order_pending_contract = contract
+        self._order_pending_order = order
 
-        return order_id
+        # Related handling should occur in `nextValidId`
+        self.reqIds(-1)
 
     # endregion

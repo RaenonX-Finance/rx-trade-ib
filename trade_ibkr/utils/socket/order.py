@@ -23,8 +23,6 @@ class OrderSocketMessagePack:
 def from_socket_message_order(message: str) -> OrderSocketMessagePack:
     order_message: OrderSocketMessage = json.loads(message)
 
-    print(order_message["identifier"])
-
     return OrderSocketMessagePack(
         contract_identifier=order_message["identifier"],
         side=order_message["side"],

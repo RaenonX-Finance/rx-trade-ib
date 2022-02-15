@@ -4,5 +4,5 @@ from .contract import (
     get_contract_identifier, get_detailed_contract_identifier,
 )
 from .log import print_log
-from .order import make_market_order, make_limit_order, make_stop_order
+from .order import make_market_order, make_limit_order, make_stop_order, get_order_trigger_price
 from .socket import *  # noqa
