@@ -10,11 +10,13 @@ from ibapi.execution import Execution, ExecutionFilter
 from ibapi.order import Order
 from ibapi.order_state import OrderState
 
+from trade_ibkr.enums import OrderSideConst
 from trade_ibkr.model import (
     OnExecutionFetched, OnExecutionFetchedEvent, OnOpenOrderFetched, OnOpenOrderFetchedEvent, OnPositionFetched,
     OnPositionFetchedEvent,
     OpenOrder, OpenOrderBook, OrderExecution, OrderExecutionCollection, Position, PositionData,
 )
+from trade_ibkr.utils import make_limit_order, make_market_order, make_stop_order
 from .base import IBapiInfoBase
 
 
@@ -34,6 +36,22 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         self._execution_group_period_sec: int | None = None
         self._execution_earliest_time: datetime | None = None
         self._execution_request_ids: set[int] = set()
+
+    # region Action on Order Updated
+
+    def _on_order_completed(self):
+        self.request_positions()
+        self.request_open_orders()
+        if self._execution_earliest_time:
+            self.request_all_executions(self._execution_earliest_time)
+
+    def _on_order_updated(self):
+        if self._open_order_processing:
+            return
+
+        self.request_open_orders()
+
+    # endregion
 
     # region Position
 
@@ -62,6 +80,9 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
     def set_on_position_fetched(self, on_position_fetched: OnPositionFetched):
         self._position_on_fetched = on_position_fetched
+
+    def request_positions(self):
+        self.reqPositions()
 
     # endregion
 
@@ -97,6 +118,10 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
     def set_on_open_order_fetched(self, on_open_order_fetched: OnOpenOrderFetched):
         self._open_order_on_fetched = on_open_order_fetched
+
+    def request_open_orders(self):
+        self._open_order_processing = True
+        self.reqAllOpenOrders()
 
     # endregion
 
@@ -156,43 +181,6 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         self._execution_on_fetched = on_executions_fetched
         self._execution_group_period_sec = period_sec
 
-    # endregion
-
-    # region Order
-
-    def placeOrder(self, orderId: OrderId, contract: Contract, order: Order):
-        super().placeOrder(orderId, contract, order)
-
-        self.action_status.order_pending = True
-
-    def orderStatus(
-            self, orderId: OrderId, status: str, filled: Decimal,
-            remaining: Decimal, avgFillPrice: float, permId: int,
-            parentId: int, lastFillPrice: float, clientId: int,
-            whyHeld: str, mktCapPrice: float
-    ):
-        if status in ("Submitted", "Cancelled") and not self._open_order_processing:
-            # `self._open_order_processing` to avoid re-triggering this method, causing pace violation
-            self._on_order_updated()
-
-    def _on_order_completed(self):
-        self.request_positions()
-        self.request_open_orders()
-        if self._execution_earliest_time:
-            self.request_all_executions(self._execution_earliest_time)
-
-    def _on_order_updated(self):
-        self.request_open_orders()
-
-    # endregion
-
-    def request_positions(self):
-        self.reqPositions()
-
-    def request_open_orders(self):
-        self._open_order_processing = True
-        self.reqAllOpenOrders()
-
     def request_all_executions(self, earliest_time: datetime):
         self._execution_earliest_time = earliest_time
 
@@ -202,3 +190,51 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         request_id = self.next_valid_request_id
         self._execution_request_ids.add(request_id)
         self.reqExecutions(request_id, exec_filter)
+
+    # endregion
+
+    # region Place Order
+
+    def orderStatus(
+            self, orderId: OrderId, status: str, filled: Decimal,
+            remaining: Decimal, avgFillPrice: float, permId: int,
+            parentId: int, lastFillPrice: float, clientId: int,
+            whyHeld: str, mktCapPrice: float
+    ):
+        if status in ("Submitted", "Cancelled"):
+            self._on_order_updated()
+
+    @staticmethod
+    def _make_order(*, side: OrderSideConst, quantity: float, order_px: float | None, current_px: float) -> Order:
+        quantity = Decimal(quantity)
+
+        if not order_px:
+            return make_market_order(side, quantity)
+
+        match side:
+            case "BUY":
+                if order_px > current_px:
+                    return make_stop_order(side, quantity, order_px)
+
+                return make_limit_order(side, quantity, order_px)
+            case "SELL":
+                if order_px > current_px:
+                    return make_limit_order(side, quantity, order_px)
+
+                return make_stop_order(side, quantity, order_px)
+
+        raise ValueError(f"Unhandled order side: {side}")
+
+    def place_order(
+            self, *,
+            contract: Contract, side: OrderSideConst, quantity: float, order_px: float | None,
+            current_px: float
+    ) -> int:
+        order = self._make_order(side=side, order_px=order_px, quantity=quantity, current_px=current_px)
+
+        order_id = self.next_valid_request_id
+        super().placeOrder(order_id, contract, order)
+
+        return order_id
+
+    # endregion

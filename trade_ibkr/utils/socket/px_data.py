@@ -77,7 +77,7 @@ def _from_px_data_contract(px_data: "PxData") -> PxDataContract:
     return {
         "symbol": px_data.contract.underSymbol,
         "minTick": px_data.contract.minTick,
-        "multiplier": px_data.contract.contract.multiplier,
+        "multiplier": float(px_data.contract.contract.multiplier),
     }
 
 

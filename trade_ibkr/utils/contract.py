@@ -21,6 +21,13 @@ def make_crypto_contract(symbol: str) -> Contract:
     return contract
 
 
+def make_contract_from_unique_identifier(identifier: int) -> Contract:
+    contract = Contract()
+    contract.conId = identifier
+
+    return contract
+
+
 def get_detailed_contract_identifier(contract: ContractDetails) -> int:
     return contract.contract.conId
 

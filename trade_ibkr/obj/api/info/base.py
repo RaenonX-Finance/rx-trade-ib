@@ -1,3 +1,5 @@
+import time
+
 from ibapi.client import EClient
 from ibapi.contract import Contract, ContractDetails
 from ibapi.wrapper import EWrapper
@@ -14,8 +16,7 @@ class IBapiInfoBase(EWrapper, EClient):
     @property
     def next_valid_request_id(self) -> int:
         self._request_id += 1
-
-        return self._request_id
+        return int((time.time() * 1000) % 1E8) + self._request_id
 
     def contractDetails(self, reqId: int, contractDetails: ContractDetails):
         self._contract_data[reqId] = contractDetails

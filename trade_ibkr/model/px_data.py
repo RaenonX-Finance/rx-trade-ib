@@ -135,3 +135,7 @@ class PxData:
     @property
     def earliest_time(self) -> datetime:
         return self.dataframe[PxDataCol.DATE].min()
+
+    @property
+    def current_close(self) -> float:
+        return self.dataframe.iloc[-1][PxDataCol.CLOSE]
