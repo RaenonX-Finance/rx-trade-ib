@@ -1,6 +1,5 @@
 import asyncio
 import sys
-import time
 from decimal import Decimal
 
 from ibapi.commission_report import CommissionReport
@@ -12,9 +11,9 @@ from ibapi.order_state import OrderState
 
 from trade_ibkr.enums import OrderSideConst
 from trade_ibkr.model import (
-    OnExecutionFetched, OnExecutionFetchedEvent, OnOpenOrderFetched, OnOpenOrderFetchedEvent, OnPositionFetched,
-    OnPositionFetchedEvent, OnExecutionFetchEarliestTime,
-    OpenOrder, OpenOrderBook, OrderExecution, OrderExecutionCollection, Position, PositionData,
+    OnExecutionFetchEarliestTime, OnExecutionFetched, OnExecutionFetchedEvent, OnOpenOrderFetched,
+    OnOpenOrderFetchedEvent, OnPositionFetched, OnPositionFetchedEvent, OpenOrder, OpenOrderBook, OrderExecution,
+    OrderExecutionCollection, Position, PositionData,
 )
 from trade_ibkr.utils import get_order_trigger_price, make_limit_order, make_market_order, make_stop_order
 from .base import IBapiInfoBase
@@ -30,7 +29,6 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         self._open_order_list: list[OpenOrder] | None = None
         self._open_order_on_fetched: OnOpenOrderFetched | None = None
         self._open_order_fetching: bool = False
-        self._open_order_by_trigger: bool = False
 
         self._execution_cache: dict[str, OrderExecution] = {}
         self._execution_on_fetched: OnExecutionFetched | None = None
@@ -47,9 +45,6 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         self.request_positions()
         self.request_open_orders()
         self.request_all_executions()
-
-    def _on_order_updated(self):
-        self.request_open_orders()
 
     # endregion
 
@@ -91,8 +86,7 @@ class IBapiInfoPortfolio(IBapiInfoBase):
     def openOrder(self, orderId: OrderId, contract: Contract, order: Order, orderState: OrderState):
         if self._open_order_list is None:
             # Manually dispatch a request event because it's not triggered on-demand
-            # > `_open_order_list` is `None` means it's not manually triggered
-            time.sleep(0.075)   # Debounce
+            # > `_open_order_list` is `None` means it's not manually requested
             self.request_open_orders()
             return
 
@@ -126,6 +120,10 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         self._open_order_on_fetched = on_open_order_fetched
 
     def request_open_orders(self):
+        if self._open_order_list is not None:
+            # Another request is processing, ignore the current one
+            return
+
         self._open_order_list = []
         self.reqOpenOrders()
 
