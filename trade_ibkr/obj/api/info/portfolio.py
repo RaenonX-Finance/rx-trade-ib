@@ -1,5 +1,6 @@
 import asyncio
 import sys
+import time
 from decimal import Decimal
 
 from ibapi.commission_report import CommissionReport
@@ -91,10 +92,12 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         if self._open_order_list is None:
             # Manually dispatch a request event because it's not triggered on-demand
             # > `_open_order_list` is `None` means it's not manually triggered
+            time.sleep(0.075)   # Debounce
             self.request_open_orders()
             return
 
         self._open_order_list.append(OpenOrder(
+            order_id=orderId,
             contract=contract,
             price=get_order_trigger_price(order),
             quantity=order.totalQuantity,

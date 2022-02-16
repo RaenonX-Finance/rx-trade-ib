@@ -9,6 +9,7 @@ from trade_ibkr.utils import get_contract_identifier
 
 @dataclass(kw_only=True)
 class OpenOrder:
+    order_id: int
     contract: Contract
     price: float
     quantity: Decimal

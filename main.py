@@ -21,11 +21,9 @@ fast_api = fast_api  # Binding for `uvicorn`
 # TODO: TA-lib pattern recognition?
 
 # TODO: Edit orders (list at the left of the order inputs)
-# - Show avg px after placement / Show PnL after order filled
+# - Show avg px after placement and px line
 # TODO: Cancel order (list at the left of the order inputs)
 # TODO: Calculate Px Data Correlation Coeff
-# FIXME: (front) Order entry page show: avg px after placement / PnL after order placement - if available (what if)
-# TODO: (front) allow navigating to the corresponding trade on clicking trade log item
 # TODO: (front) add order filled sound
 
 

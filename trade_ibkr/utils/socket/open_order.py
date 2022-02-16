@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 
 
 class OpenOrderData(TypedDict):
+    orderId: int
     identifier: int
     side: OrderSideConst
     quantity: float
@@ -21,6 +22,7 @@ OpenOrderDict: TypeAlias = dict[int, list[OpenOrderData]]
 def _from_open_orders(open_orders: list["OpenOrder"]) -> list[OpenOrderData]:
     return [
         {
+            "orderId": open_order.order_id,
             "identifier": get_contract_identifier(open_order.contract),
             "side": open_order.side,
             "quantity": float(open_order.quantity),
