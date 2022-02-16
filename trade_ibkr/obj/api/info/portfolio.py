@@ -1,6 +1,5 @@
 import asyncio
 import sys
-from datetime import datetime
 from decimal import Decimal
 
 from ibapi.commission_report import CommissionReport
@@ -13,10 +12,10 @@ from ibapi.order_state import OrderState
 from trade_ibkr.enums import OrderSideConst
 from trade_ibkr.model import (
     OnExecutionFetched, OnExecutionFetchedEvent, OnOpenOrderFetched, OnOpenOrderFetchedEvent, OnPositionFetched,
-    OnPositionFetchedEvent,
+    OnPositionFetchedEvent, OnExecutionFetchEarliestTime,
     OpenOrder, OpenOrderBook, OrderExecution, OrderExecutionCollection, Position, PositionData,
 )
-from trade_ibkr.utils import make_limit_order, make_market_order, make_stop_order
+from trade_ibkr.utils import get_order_trigger_price, make_limit_order, make_market_order, make_stop_order
 from .base import IBapiInfoBase
 
 
@@ -27,28 +26,28 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         self._position_data_list: list[PositionData] = []
         self._position_on_fetched: OnPositionFetched | None = None
 
-        self._open_order_list: list[OpenOrder] = []
+        self._open_order_list: list[OpenOrder] | None = None
         self._open_order_on_fetched: OnOpenOrderFetched | None = None
-        self._open_order_processing: bool = False
+        self._open_order_fetching: bool = False
+        self._open_order_by_trigger: bool = False
 
         self._execution_cache: dict[str, OrderExecution] = {}
         self._execution_on_fetched: OnExecutionFetched | None = None
+        self._execution_fetch_earliest_time: OnExecutionFetchEarliestTime | None = None
         self._execution_group_period_sec: int | None = None
-        self._execution_earliest_time: datetime | None = None
         self._execution_request_ids: set[int] = set()
+
+        self._order_pending_contract: Contract | None = None
+        self._order_pending_order: Order | None = None
 
     # region Action on Order Updated
 
     def _on_order_completed(self):
         self.request_positions()
         self.request_open_orders()
-        if self._execution_earliest_time:
-            self.request_all_executions(self._execution_earliest_time)
+        self.request_all_executions()
 
     def _on_order_updated(self):
-        if self._open_order_processing:
-            return
-
         self.request_open_orders()
 
     # endregion
@@ -66,7 +65,7 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         if not self._position_on_fetched:
             print(
                 "Position fetched, but no corresponding handler is set. "
-                "Use `set_on_position_fetched()` for setting the handler.",
+                "Use `set_on_position_fetched()` for setting it.",
                 file=sys.stderr,
             )
             return
@@ -89,39 +88,43 @@ class IBapiInfoPortfolio(IBapiInfoBase):
     # region Open Order
 
     def openOrder(self, orderId: OrderId, contract: Contract, order: Order, orderState: OrderState):
+        if self._open_order_list is None:
+            # Manually dispatch a request event because it's not triggered on-demand
+            # > `_open_order_list` is `None` means it's not manually triggered
+            self.request_open_orders()
+            return
+
         self._open_order_list.append(OpenOrder(
             contract=contract,
-            price=order.lmtPrice or order.auxPrice,
+            price=get_order_trigger_price(order),
             quantity=order.totalQuantity,
             side=order.action,
         ))
 
     def openOrderEnd(self):
-        self._open_order_processing = False
-
         if not self._open_order_on_fetched:
             print(
                 "Open order fetched, but no corresponding handler is set. "
-                "Use `set_on_open_order_fetched()` for setting the handler.",
+                "Use `set_on_open_order_fetched()` for setting it.",
                 file=sys.stderr,
             )
             return
 
         async def execute_after_open_order_fetched():
             await self._open_order_on_fetched(OnOpenOrderFetchedEvent(
-                open_order=OpenOrderBook(self._open_order_list)
+                open_order=OpenOrderBook(self._open_order_list or [])
             ))
 
         asyncio.run(execute_after_open_order_fetched())
 
-        self._open_order_list = []
+        self._open_order_list = None
 
     def set_on_open_order_fetched(self, on_open_order_fetched: OnOpenOrderFetched):
         self._open_order_on_fetched = on_open_order_fetched
 
     def request_open_orders(self):
-        self._open_order_processing = True
-        self.reqAllOpenOrders()
+        self._open_order_list = []
+        self.reqOpenOrders()
 
     # endregion
 
@@ -155,7 +158,7 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         if not self._execution_on_fetched:
             print(
                 "Executions fetched, but no corresponding handler is set. "
-                "Use `set_on_executions_fetched()` for setting the handler.",
+                "Use `set_on_executions_fetched()` for setting it.",
                 file=sys.stderr,
             )
             return
@@ -163,7 +166,7 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         if not self._execution_group_period_sec:
             print(
                 "Executions fetched, but no corresponding period sec is set. "
-                "Use `set_on_executions_fetched()` for setting the handler.",
+                "Use `set_on_executions_fetched()` for setting it.",
                 file=sys.stderr,
             )
             return
@@ -177,15 +180,23 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
         self._execution_cache = {}
 
-    def set_on_executions_fetched(self, on_executions_fetched: OnExecutionFetched, period_sec: int):
-        self._execution_on_fetched = on_executions_fetched
+    def set_on_executions_fetched(
+            self,
+            on_execution_fetched: OnExecutionFetched,
+            on_execution_fetch_earliest_time: OnExecutionFetchEarliestTime,
+            period_sec: int
+    ):
+        self._execution_on_fetched = on_execution_fetched
+        self._execution_fetch_earliest_time = on_execution_fetch_earliest_time
         self._execution_group_period_sec = period_sec
 
-    def request_all_executions(self, earliest_time: datetime):
-        self._execution_earliest_time = earliest_time
+    def request_all_executions(self):
+        if not self._execution_fetch_earliest_time:
+            print("`self._execution_fetch_earliest_time()` must be defined before requesting execution")
+            return
 
         exec_filter = ExecutionFilter()
-        exec_filter.time = earliest_time.strftime("%Y%m%d %H:%M:%S")
+        exec_filter.time = self._execution_fetch_earliest_time().strftime("%Y%m%d %H:%M:%S")
 
         request_id = self.next_valid_request_id
         self._execution_request_ids.add(request_id)
@@ -201,8 +212,13 @@ class IBapiInfoPortfolio(IBapiInfoBase):
             parentId: int, lastFillPrice: float, clientId: int,
             whyHeld: str, mktCapPrice: float
     ):
-        if status in ("Submitted", "Cancelled"):
-            self._on_order_updated()
+        if status in ("Cancelled", "Filled"):
+            # Triggered on order cancelled, or filled (along with `openOrder`, on order placed or filled)
+            self.request_open_orders()
+
+        if status == "Filled":
+            self.request_positions()
+            self.request_all_executions()
 
     def nextValidId(self, orderId: int):
         # Requesting a new order ID should indicate that an order is to be placed

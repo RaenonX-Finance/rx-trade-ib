@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 import uvicorn
 
@@ -9,10 +10,9 @@ from trade_ibkr.model import (
 )
 from trade_ibkr.obj import start_app_info
 from trade_ibkr.utils import (
-    make_crypto_contract, make_futures_contract, print_log,
-    to_socket_message_execution, to_socket_message_open_order, to_socket_message_position,
+    from_socket_message_order, get_detailed_contract_identifier, make_crypto_contract, make_futures_contract,
+    print_log, to_socket_message_execution, to_socket_message_open_order, to_socket_message_position,
     to_socket_message_px_data, to_socket_message_px_data_list, to_socket_message_px_data_market,
-    from_socket_message_order, get_detailed_contract_identifier,
 )
 
 fast_api = fast_api  # Binding for `uvicorn`
@@ -25,22 +25,22 @@ fast_api = fast_api  # Binding for `uvicorn`
 # TODO: Cancel order (list at the left of the order inputs)
 # TODO: Calculate Px Data Correlation Coeff
 # FIXME: (front) Order entry page show: avg px after placement / PnL after order placement - if available (what if)
-# FIXME: (back) refresh exec / open order / current avg px right after placing order
 # TODO: (front) allow navigating to the corresponding trade on clicking trade log item
+# TODO: (front) add order filled sound
 
 
 async def on_px_updated(e: OnPxDataUpdatedEventNoAccount):
-    print_log(f"Px Updated for {e.contract.underSymbol} ({e.proc_sec:.3f} s)")
+    print_log(f"[TWS] Px Updated / HST ({e})")
     await fast_api_socket.emit("pxUpdated", to_socket_message_px_data(e.px_data))
 
 
 async def on_market_data_received(e: OnMarketDataReceivedEvent):
-    print_log(f"Market Px Updated for {e.contract.underSymbol} ({e.px:.2f})")
+    print_log(f"[TWS] Px Updated / MKT ({e})")
     await fast_api_socket.emit("pxUpdatedMarket", to_socket_message_px_data_market(e.contract, e.px))
 
 
 async def on_position_fetched(e: OnPositionFetchedEvent):
-    print_log("Position data fetched")
+    print_log("[TWS] Fetched positions")
     await fast_api_socket.emit(
         "position",
         to_socket_message_position(e.position)
@@ -48,7 +48,7 @@ async def on_position_fetched(e: OnPositionFetchedEvent):
 
 
 async def on_open_order_fetched(e: OnOpenOrderFetchedEvent):
-    print_log(f"Open order fetched ({sum(len(orders) for orders in e.open_order.orders.values())})")
+    print_log(f"[TWS] Fetched open orders ({e})")
     await fast_api_socket.emit(
         "openOrder",
         to_socket_message_open_order(e.open_order)
@@ -56,7 +56,7 @@ async def on_open_order_fetched(e: OnOpenOrderFetchedEvent):
 
 
 async def on_executions_fetched(e: OnExecutionFetchedEvent):
-    print_log(f"Executions fetched ({sum(len(executions) for executions in e.executions.executions.values())})")
+    print_log(f"[TWS] Fetched executions ({e})")
     await fast_api_socket.emit(
         "execution",
         to_socket_message_execution(e.executions)
@@ -64,9 +64,6 @@ async def on_executions_fetched(e: OnExecutionFetchedEvent):
 
 
 app, _ = start_app_info(is_demo=True)
-app.set_on_position_fetched(on_position_fetched)
-app.set_on_open_order_fetched(on_open_order_fetched)
-app.set_on_executions_fetched(on_executions_fetched, 60)
 
 contract_mnq = make_futures_contract("MNQH2", "GLOBEX")
 contract_mym = make_futures_contract("MYM  MAR 22", "ECBOT")
@@ -75,14 +72,14 @@ contract_eth = make_crypto_contract("ETH")
 px_data_req_ids: list[int] = [
     app.get_px_data_keep_update(
         contract=contract_mnq,
-        duration="2 D",
+        duration="86400 S",
         bar_size="1 min",
         on_px_data_updated=on_px_updated,
         on_market_data_received=on_market_data_received,
     ),
     app.get_px_data_keep_update(
         contract=contract_mym,
-        duration="2 D",
+        duration="86400 S",
         bar_size="1 min",
         on_px_data_updated=on_px_updated,
         on_market_data_received=on_market_data_received,
@@ -97,9 +94,18 @@ px_data_req_ids: list[int] = [
 ]
 
 
+def request_earliest_execution_time() -> datetime:
+    return min([app.get_px_data(req_id).earliest_time for req_id in px_data_req_ids])
+
+
+app.set_on_position_fetched(on_position_fetched)
+app.set_on_open_order_fetched(on_open_order_fetched)
+app.set_on_executions_fetched(on_executions_fetched, request_earliest_execution_time, 60)
+
+
 @fast_api_socket.on("pxInit")
 async def on_request_px_data(*_):
-    print_log("Socket: Received Px Init")
+    print_log("[Socket] Received `pxInit`")
 
     try:
         await fast_api_socket.emit(
@@ -113,21 +119,20 @@ async def on_request_px_data(*_):
 
 @fast_api_socket.on("position")
 async def on_request_position(*_):
-    print_log("Socket: Received Position")
+    print_log("[Socket] Received `position`")
     app.request_positions()
 
 
 @fast_api_socket.on("openOrder")
 async def on_request_open_orders(*_):
-    print_log("Socket: Received Open Order")
+    print_log("[Socket] Received `openOrder`")
     app.request_open_orders()
 
 
 @fast_api_socket.on("execution")
 async def on_request_execution(*_):
-    print_log("Socket: Received Execution")
-    earliest_time = min([app.get_px_data(req_id).earliest_time for req_id in px_data_req_ids])
-    app.request_all_executions(earliest_time)
+    print_log("[Socket] Received `execution`")
+    app.request_all_executions()
 
 
 @fast_api_socket.on("orderPlace")
@@ -144,7 +149,7 @@ async def on_request_place_order(_, order_content: str):
 
     contract = px_data.contract.contract
 
-    print_log(f"Socket: Received Place Order ({contract.localSymbol} {message.side} @ {message.px or 'MKT'})")
+    print_log(f"[Socket] Received `orderPlace` ({contract.localSymbol} {message.side} @ {message.px or 'MKT'})")
     app.place_order(
         contract=contract,
         side=message.side,

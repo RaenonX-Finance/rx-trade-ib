@@ -26,6 +26,9 @@ class OnPxDataUpdatedEventNoAccount:
 
     proc_sec: float
 
+    def __str__(self):
+        return f"({self.contract.underSymbol} {self.px_data.current_close:.2f} @ {self.proc_sec:.3f} s)"
+
 
 OnPxDataUpdatedNoAccount: TypeAlias = Callable[[OnPxDataUpdatedEventNoAccount], Coroutine[Any, Any, None]]
 
@@ -34,6 +37,9 @@ OnPxDataUpdatedNoAccount: TypeAlias = Callable[[OnPxDataUpdatedEventNoAccount], 
 class OnMarketDataReceivedEvent:
     contract: ContractDetails
     px: float
+
+    def __str__(self):
+        return f"({self.contract.underSymbol} - {self.px:.2f})"
 
 
 OnMarketDataReceived: TypeAlias = Callable[[OnMarketDataReceivedEvent], Coroutine[Any, Any, None]]

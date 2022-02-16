@@ -6,5 +6,5 @@ from .px import (
 from .portfolio import (
     OnPositionFetched, OnPositionFetchedEvent,
     OnOpenOrderFetched, OnOpenOrderFetchedEvent,
-    OnExecutionFetched, OnExecutionFetchedEvent,
+    OnExecutionFetched, OnExecutionFetchedEvent, OnExecutionFetchEarliestTime,
 )
