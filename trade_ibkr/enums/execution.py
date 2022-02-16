@@ -19,3 +19,5 @@ class ExecutionDataCol:
     AVG_TOTAL_PROFIT = "avg_total_profit"
     AVG_TOTAL_LOSS = "avg_total_loss"
     AVG_TOTAL_RR_RATIO = "avg_total_rr_ratio"
+
+    THRESHOLD_WIN_RATE = "threshold_winrate"

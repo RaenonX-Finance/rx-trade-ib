@@ -122,6 +122,10 @@ class OrderExecutionCollection:
         df[ExecutionDataCol.AVG_TOTAL_RR_RATIO] = abs(
             df[ExecutionDataCol.AVG_TOTAL_PROFIT].divide(df[ExecutionDataCol.AVG_TOTAL_LOSS])
         )
+        df[ExecutionDataCol.THRESHOLD_WIN_RATE] = np.divide(
+            1,
+            1 + df[ExecutionDataCol.AVG_TOTAL_RR_RATIO],
+        )
 
         df[ExecutionDataCol.TOTAL_PNL] = df[ExecutionDataCol.REALIZED_PNL].cumsum()
 
