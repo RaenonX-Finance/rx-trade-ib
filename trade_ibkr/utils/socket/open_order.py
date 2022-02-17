@@ -13,7 +13,7 @@ class OpenOrderData(TypedDict):
     identifier: int
     side: OrderSideConst
     quantity: float
-    price: float
+    px: float
 
 
 OpenOrderDict: TypeAlias = dict[int, list[OpenOrderData]]
@@ -26,7 +26,7 @@ def _from_open_orders(open_orders: list["OpenOrder"]) -> list[OpenOrderData]:
             "identifier": get_contract_identifier(open_order.contract),
             "side": open_order.side,
             "quantity": float(open_order.quantity),
-            "price": open_order.price,
+            "px": open_order.price,
         } for open_order in open_orders
     ]
 

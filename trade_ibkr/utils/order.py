@@ -5,8 +5,10 @@ from ibapi.order import Order
 from trade_ibkr.enums import OrderSideConst
 
 
-def make_limit_order(side: OrderSideConst, quantity: Decimal, px: float) -> Order:
+def make_limit_order(side: OrderSideConst, quantity: Decimal, px: float, order_id: int | None = None) -> Order:
     order = Order()
+    if order_id:
+        order.orderId = order_id
     order.action = side
     order.totalQuantity = quantity
     order.orderType = "LMT"
@@ -16,8 +18,10 @@ def make_limit_order(side: OrderSideConst, quantity: Decimal, px: float) -> Orde
     return order
 
 
-def make_stop_order(side: OrderSideConst, quantity: Decimal, px: float) -> Order:
+def make_stop_order(side: OrderSideConst, quantity: Decimal, px: float, order_id: int | None = None) -> Order:
     order = Order()
+    if order_id:
+        order.orderId = order_id
     order.action = side
     order.totalQuantity = quantity
     order.orderType = "STP"
@@ -27,8 +31,10 @@ def make_stop_order(side: OrderSideConst, quantity: Decimal, px: float) -> Order
     return order
 
 
-def make_market_order(side: OrderSideConst, quantity: Decimal) -> Order:
+def make_market_order(side: OrderSideConst, quantity: Decimal, order_id: int | None = None) -> Order:
     order = Order()
+    if order_id:
+        order.orderId = order_id
     order.action = side
     order.totalQuantity = quantity
     order.orderType = "MKT"

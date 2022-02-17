@@ -22,10 +22,9 @@ fast_api = fast_api  # Binding for `uvicorn`
 
 # TODO: Edit orders (list at the left of the order inputs)
 # - Show avg px after placement and px line
-# TODO: Cancel order (list at the left of the order inputs)
 # TODO: Calculate Px Data Correlation Coeff
 # TODO: (front) add order filled sound - Does gateway play sound? - no
-# TODO: (front) PnL if side reversed
+# TODO: (front) Show PnL if side reversed
 
 
 async def on_px_updated(e: OnPxDataUpdatedEventNoAccount):
@@ -155,6 +154,7 @@ async def on_request_place_order(_, order_content: str):
         quantity=message.quantity,
         order_px=message.px,
         current_px=px_data.current_close,
+        order_id=message.order_id,
     )
 
 

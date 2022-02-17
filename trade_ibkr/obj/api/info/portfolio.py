@@ -234,38 +234,53 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         super().placeOrder(orderId, self._order_pending_contract, self._order_pending_order)
 
     @staticmethod
-    def _make_order(*, side: OrderSideConst, quantity: float, order_px: float | None, current_px: float) -> Order:
+    def _make_order(
+            *,
+            side: OrderSideConst, quantity: float, order_px: float | None,
+            current_px: float, order_id: int | None
+    ) -> Order:
         quantity = Decimal(quantity)
 
         if not order_px:
-            return make_market_order(side, quantity)
+            return make_market_order(side, quantity, order_id)
 
         match side:
             case "BUY":
                 if order_px > current_px:
-                    return make_stop_order(side, quantity, order_px)
+                    return make_stop_order(side, quantity, order_px, order_id)
 
-                return make_limit_order(side, quantity, order_px)
+                return make_limit_order(side, quantity, order_px, order_id)
             case "SELL":
                 if order_px > current_px:
-                    return make_limit_order(side, quantity, order_px)
+                    return make_limit_order(side, quantity, order_px, order_id)
 
-                return make_stop_order(side, quantity, order_px)
+                return make_stop_order(side, quantity, order_px, order_id)
 
         raise ValueError(f"Unhandled order side: {side}")
 
     def place_order(
             self, *,
             contract: Contract, side: OrderSideConst, quantity: float, order_px: float | None,
-            current_px: float
+            current_px: float, order_id: int | None,
     ):
-        order = self._make_order(side=side, order_px=order_px, quantity=quantity, current_px=current_px)
+        order = self._make_order(
+            side=side,
+            order_px=order_px,
+            quantity=quantity,
+            current_px=current_px,
+            order_id=order_id,
+        )
 
-        self._order_pending_contract = contract
-        self._order_pending_order = order
+        if order_id:
+            # Have order ID means it's order modification
+            super().placeOrder(order_id, contract, order)
+        else:
+            # No order ID means it's new order
+            self._order_pending_contract = contract
+            self._order_pending_order = order
 
-        # Related handling should occur in `nextValidId`
-        self.reqIds(-1)
+            # Related handling should occur in `nextValidId`
+            self.reqIds(-1)
 
     def cancel_order(self, order_id: int):
         self.cancelOrder(order_id)
