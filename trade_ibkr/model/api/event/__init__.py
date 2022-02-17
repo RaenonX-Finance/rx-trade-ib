@@ -7,4 +7,5 @@ from .portfolio import (
     OnPositionFetched, OnPositionFetchedEvent,
     OnOpenOrderFetched, OnOpenOrderFetchedEvent,
     OnExecutionFetched, OnExecutionFetchedEvent, OnExecutionFetchEarliestTime,
+    OnOrderFilled, OnOrderFilledEvent,
 )

@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
 from typing import Any, Callable, Coroutine
 
+from trade_ibkr.enums import OrderSideConst
 from ...execution import OrderExecutionCollection
 from ...open_order import OpenOrderBook
 from ...position import Position
@@ -37,3 +39,18 @@ class OnExecutionFetchedEvent:
 OnExecutionFetched = Callable[[OnExecutionFetchedEvent], Coroutine[Any, Any, None]]
 
 OnExecutionFetchEarliestTime = Callable[[], datetime]
+
+
+@dataclass(kw_only=True)
+class OnOrderFilledEvent:
+    identifier: int
+    symbol: str
+    action: OrderSideConst
+    quantity: Decimal
+    fill_px: float
+
+    def __str__(self):
+        return f"{self.symbol} {self.action} {self.quantity} @ {self.fill_px:.2f}"
+
+
+OnOrderFilled = Callable[[OnOrderFilledEvent], Coroutine[Any, Any, None]]

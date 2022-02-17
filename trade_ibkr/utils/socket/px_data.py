@@ -30,7 +30,7 @@ class PxDataSupportResistance(TypedDict):
 
 class PxDataContract(TypedDict):
     minTick: float
-    symbol: float
+    symbol: str
     multiplier: float
 
 

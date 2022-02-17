@@ -5,13 +5,15 @@ import uvicorn
 
 from trade_ibkr.const import fast_api, fast_api_socket
 from trade_ibkr.model import (
-    OnExecutionFetchedEvent, OnMarketDataReceivedEvent, OnOpenOrderFetchedEvent, OnPositionFetchedEvent,
+    OnExecutionFetchedEvent, OnMarketDataReceivedEvent, OnOpenOrderFetchedEvent, OnOrderFilledEvent,
+    OnPositionFetchedEvent,
     OnPxDataUpdatedEventNoAccount,
 )
 from trade_ibkr.obj import start_app_info
 from trade_ibkr.utils import (
     from_socket_message_order, get_detailed_contract_identifier, make_crypto_contract, make_futures_contract,
-    print_log, to_socket_message_execution, to_socket_message_open_order, to_socket_message_position,
+    print_log, to_socket_message_execution, to_socket_message_open_order, to_socket_message_order_filled,
+    to_socket_message_position,
     to_socket_message_px_data, to_socket_message_px_data_list, to_socket_message_px_data_market,
 )
 
@@ -19,12 +21,7 @@ fast_api = fast_api  # Binding for `uvicorn`
 
 
 # TODO: TA-lib pattern recognition?
-
-# TODO: Edit orders (list at the left of the order inputs)
-# - Show avg px after placement and px line
 # TODO: Calculate Px Data Correlation Coeff
-# TODO: (front) add order filled sound - Does gateway play sound? - no
-# TODO: (front) Show PnL if side reversed
 
 
 async def on_px_updated(e: OnPxDataUpdatedEventNoAccount):
@@ -59,6 +56,11 @@ async def on_executions_fetched(e: OnExecutionFetchedEvent):
         "execution",
         to_socket_message_execution(e.executions)
     )
+
+
+async def on_order_filled(e: OnOrderFilledEvent):
+    print_log(f"[TWS] Order Filled ({e})")
+    await fast_api_socket.emit("orderFilled", to_socket_message_order_filled(e))
 
 
 app, _ = start_app_info(is_demo=True)
@@ -98,6 +100,7 @@ def request_earliest_execution_time() -> datetime:
 
 app.set_on_position_fetched(on_position_fetched)
 app.set_on_open_order_fetched(on_open_order_fetched)
+app.set_on_order_filled(on_order_filled)
 app.set_on_executions_fetched(on_executions_fetched, request_earliest_execution_time, 60)
 
 

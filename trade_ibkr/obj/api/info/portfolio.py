@@ -12,10 +12,14 @@ from ibapi.order_state import OrderState
 from trade_ibkr.enums import OrderSideConst
 from trade_ibkr.model import (
     OnExecutionFetchEarliestTime, OnExecutionFetched, OnExecutionFetchedEvent, OnOpenOrderFetched,
-    OnOpenOrderFetchedEvent, OnPositionFetched, OnPositionFetchedEvent, OpenOrder, OpenOrderBook, OrderExecution,
+    OnOpenOrderFetchedEvent, OnOrderFilled, OnOrderFilledEvent, OnPositionFetched, OnPositionFetchedEvent, OpenOrder,
+    OpenOrderBook,
+    OrderExecution,
     OrderExecutionCollection, Position, PositionData,
 )
-from trade_ibkr.utils import get_order_trigger_price, make_limit_order, make_market_order, make_stop_order
+from trade_ibkr.utils import (
+    get_contract_identifier, get_order_trigger_price, make_limit_order, make_market_order, make_stop_order,
+)
 from .base import IBapiInfoBase
 
 
@@ -38,6 +42,10 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
         self._order_pending_contract: Contract | None = None
         self._order_pending_order: Order | None = None
+
+        self._order_filled_perm_id: int | None = None
+        self._order_filled_avg_px: float | None = None
+        self._order_on_filled: OnOrderFilled | None = None
 
     # region Action on Order Updated
 
@@ -172,12 +180,12 @@ class IBapiInfoPortfolio(IBapiInfoBase):
             )
             return
 
-        async def execute_after_exection_fetched():
+        async def execute_after_execution_fetched():
             await self._execution_on_fetched(OnExecutionFetchedEvent(
                 executions=OrderExecutionCollection(self._execution_cache.values(), self._execution_group_period_sec)
             ))
 
-        asyncio.run(execute_after_exection_fetched())
+        asyncio.run(execute_after_execution_fetched())
 
         self._execution_cache = {}
 
@@ -207,6 +215,36 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
     # region Order Management
 
+    def _handle_on_order_filled(self, contract: Contract, order: Order):
+        if order.permId != self._order_filled_perm_id:
+            return
+
+        if not self._order_on_filled:
+            print(
+                "Order filled handler not set, use `set_on_order_filled()` for setting it",
+                file=sys.stderr
+            )
+
+        async def execute_after_order_filled():
+            await self._order_on_filled(OnOrderFilledEvent(
+                identifier=get_contract_identifier(contract),
+                symbol=contract.symbol,
+                action=order.action,
+                quantity=order.filledQuantity,
+                fill_px=self._order_filled_avg_px,
+            ))
+
+        asyncio.run(execute_after_order_filled())
+
+        self._order_filled_perm_id = None
+        self._order_filled_avg_px = None
+
+    def completedOrder(self, contract: Contract, order: Order, orderState: OrderState):
+        self._handle_on_order_filled(contract, order)
+
+    def set_on_order_filled(self, on_order_filled: OnOrderFilled):
+        self._order_on_filled = on_order_filled
+
     def orderStatus(
             self, orderId: OrderId, status: str, filled: Decimal,
             remaining: Decimal, avgFillPrice: float, permId: int,
@@ -221,14 +259,25 @@ class IBapiInfoPortfolio(IBapiInfoBase):
             self.request_positions()
             self.request_all_executions()
 
+            if remaining == 0:
+                self._order_filled_perm_id = permId
+                self._order_filled_avg_px = avgFillPrice
+                self.request_completed_orders()
+
     def nextValidId(self, orderId: int):
         # Requesting a new order ID should indicate that an order is to be placed
         if not self._order_pending_contract:
-            print("Order ID requested, which means there's an order to be placed - but contract is not set")
+            print(
+                "Order ID requested, which means there's an order to be placed - but contract is not set",
+                file=sys.stderr
+            )
             return
 
         if not self._order_pending_order:
-            print("Order ID requested, which means there's an order to be placed - but order is not set")
+            print(
+                "Order ID requested, which means there's an order to be placed - but order is not set",
+                file=sys.stderr
+            )
             return
 
         super().placeOrder(orderId, self._order_pending_contract, self._order_pending_order)
@@ -284,5 +333,8 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
     def cancel_order(self, order_id: int):
         self.cancelOrder(order_id)
+
+    def request_completed_orders(self):
+        self.reqCompletedOrders(False)
 
     # endregion
