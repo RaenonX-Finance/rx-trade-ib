@@ -24,7 +24,8 @@ fast_api = fast_api  # Binding for `uvicorn`
 # - Show avg px after placement and px line
 # TODO: Cancel order (list at the left of the order inputs)
 # TODO: Calculate Px Data Correlation Coeff
-# TODO: (front) add order filled sound
+# TODO: (front) add order filled sound - Does gateway play sound? - no
+# TODO: (front) PnL if side reversed
 
 
 async def on_px_updated(e: OnPxDataUpdatedEventNoAccount):
@@ -155,6 +156,12 @@ async def on_request_place_order(_, order_content: str):
         order_px=message.px,
         current_px=px_data.current_close,
     )
+
+
+@fast_api_socket.on("orderCancel")
+async def on_request_cancel_order(_, order_id: str):
+    print_log("[Socket] Received `orderCancel`")
+    app.cancel_order(int(order_id))
 
 
 # Set current process to the highest priority

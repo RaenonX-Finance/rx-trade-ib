@@ -205,7 +205,7 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
     # endregion
 
-    # region Place Order
+    # region Order Management
 
     def orderStatus(
             self, orderId: OrderId, status: str, filled: Decimal,
@@ -266,5 +266,8 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
         # Related handling should occur in `nextValidId`
         self.reqIds(-1)
+
+    def cancel_order(self, order_id: int):
+        self.cancelOrder(order_id)
 
     # endregion
