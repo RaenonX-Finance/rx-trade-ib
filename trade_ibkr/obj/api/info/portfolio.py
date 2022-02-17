@@ -42,6 +42,7 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
         self._order_pending_contract: Contract | None = None
         self._order_pending_order: Order | None = None
+        self._order_cache: dict[int, Order] = {}
 
         self._order_filled_perm_id: int | None = None
         self._order_filled_avg_px: float | None = None
@@ -98,6 +99,7 @@ class IBapiInfoPortfolio(IBapiInfoBase):
             self.request_open_orders()
             return
 
+        self._order_cache[orderId] = order
         self._open_order_list.append(OpenOrder(
             order_id=orderId,
             contract=contract,
@@ -282,9 +284,8 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
         super().placeOrder(orderId, self._order_pending_contract, self._order_pending_order)
 
-    @staticmethod
     def _make_order(
-            *,
+            self, *,
             side: OrderSideConst, quantity: float, order_px: float | None,
             current_px: float, order_id: int | None
     ) -> Order:
@@ -322,6 +323,18 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
         if order_id:
             # Have order ID means it's order modification
+            existing_order = self._order_cache.get(order_id)
+            if existing_order and order.orderType != existing_order.orderType:
+                # Order type changed, just fill the order as market
+                self.cancel_order(order_id)
+                order = self._make_order(
+                    side=side,
+                    quantity=quantity,
+                    current_px=current_px,
+                    order_id=None,
+                    order_px=None,
+                )
+
             super().placeOrder(order_id, contract, order)
         else:
             # No order ID means it's new order
