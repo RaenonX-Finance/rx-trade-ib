@@ -33,7 +33,7 @@ class PxData:
 
         self.dataframe[PxDataCol.AMPLITUDE] = talib.EMA(
             abs(self.dataframe[PxDataCol.HIGH] - self.dataframe[PxDataCol.LOW]),
-            timeperiod=5
+            timeperiod=10
         )
 
         self.dataframe[PxDataCol.LOCAL_MIN] = self.dataframe.iloc[

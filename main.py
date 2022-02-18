@@ -21,7 +21,7 @@ fast_api = fast_api  # Binding for `uvicorn`
 
 
 # TODO: TA-lib pattern recognition?
-# TODO: Calculate Px Data Correlation Coeff
+# TODO: Open order not refreshed on order filled
 
 
 async def on_px_updated(e: OnPxDataUpdatedEventNoAccount):
@@ -108,14 +108,10 @@ app.set_on_executions_fetched(on_executions_fetched, request_earliest_execution_
 async def on_request_px_data(*_):
     print_log("[Socket] Received `pxInit`")
 
-    try:
-        await fast_api_socket.emit(
-            "pxInit",
-            to_socket_message_px_data_list([app.get_px_data(req_id) for req_id in px_data_req_ids])
-        )
-    except ValueError:
-        # PxInit might be called before the PxData initializes
-        pass
+    await fast_api_socket.emit(
+        "pxInit",
+        to_socket_message_px_data_list([app.get_px_data(req_id) for req_id in px_data_req_ids])
+    )
 
 
 @fast_api_socket.on("position")
