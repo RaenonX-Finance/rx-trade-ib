@@ -2,10 +2,10 @@ import threading
 import time
 from typing import Callable, TypeVar, Union
 
-from .api import IBapiBot, IBapiInfo
+from .api import IBapiBot, IBapiInfo, IBapiBacktest
 
 
-T = TypeVar("T", bound=Union[IBapiInfo | IBapiBot])
+T = TypeVar("T", bound=Union[IBapiInfo | IBapiBot | IBapiBacktest])
 
 
 def init_app(app_callable: Callable[[], T], is_demo: bool = False) -> tuple[T, threading.Thread]:
@@ -34,3 +34,7 @@ def start_app(*, is_demo: bool = False) -> tuple[IBapiBot, threading.Thread]:
 
 def start_app_info(*, is_demo: bool = False) -> tuple[IBapiInfo, threading.Thread]:
     return init_app(IBapiInfo, is_demo)
+
+
+def start_app_backtest(*, is_demo: bool = False) -> tuple[IBapiBacktest, threading.Thread]:
+    return init_app(IBapiBacktest, is_demo)

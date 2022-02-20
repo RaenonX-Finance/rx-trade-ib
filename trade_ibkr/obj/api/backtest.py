@@ -1,18 +1,18 @@
+from __future__ import annotations
+
 import time
 from dataclasses import dataclass
-from decimal import Decimal
 from typing import Callable, ParamSpec, TypeVar
 
 from ibapi.client import EClient
-from ibapi.common import BarData, OrderId
+from ibapi.common import BarData
 from ibapi.contract import Contract, ContractDetails
-from ibapi.order import Order
 from ibapi.wrapper import EWrapper
 
 from trade_ibkr.enums import FetchStatus, PxDataCol
 from trade_ibkr.model import (
-    BacktestAccount, BrokerAccount, ActionStatus, BarDataDict, PxData, Position, PositionData,
-    to_bar_data_dict, OnPxDataUpdated, OnPxDataUpdatedEvent,
+    BacktestAccount, BarDataDict, OnPxDataUpdated, OnPxDataUpdatedEvent, Position, PositionData, PxData,
+    to_bar_data_dict,
 )
 
 P = ParamSpec("P")
@@ -23,17 +23,15 @@ R = TypeVar("R")
 class PxDataCacheEntry:
     data: dict[int, BarDataDict]
     on_update: OnPxDataUpdated | None
-    contract: Contract
+    contract: ContractDetails | None
 
     def to_px_data(self) -> PxData:
         return PxData(contract=self.contract, bars=[self.data[key] for key in sorted(self.data.keys())])
 
 
-class IBapiBot(EWrapper, EClient):
+class IBapiBacktest(EWrapper, EClient):
     def __init__(self):
         EClient.__init__(self, self)
-
-        self.action_status = ActionStatus()
 
         self._px_data_cache: dict[int, PxDataCacheEntry] = {}
         self._px_data_complete: set[int] = set()
@@ -43,9 +41,8 @@ class IBapiBot(EWrapper, EClient):
 
         self._position_data: Position | None = None
 
-        self._contract_data: dict[int, Contract | None] = {}
+        self._contract_data: dict[int, ContractDetails | None] = {}
 
-        self._order_id = 0
         self._request_id = -1
 
     @property
@@ -53,25 +50,6 @@ class IBapiBot(EWrapper, EClient):
         self._request_id += 1
 
         return self._request_id
-
-    # region Position
-
-    def position(self, account: str, contract: Contract, position: Decimal, avgCost: float):
-        self._position_data_fetch_status = FetchStatus.FETCHING
-        self._position_data_list.append(PositionData(
-            contract=contract,
-            position=position,
-            avg_cost=avgCost,
-        ))
-
-    def positionEnd(self):
-        self._position_data_fetch_status = FetchStatus.COMPLETED
-        self._position_data = Position(self._position_data_list)
-
-    def refresh_positions(self):
-        self.reqPositions()
-
-    # endregion
 
     # region Contract
 
@@ -83,7 +61,7 @@ class IBapiBot(EWrapper, EClient):
         return request_id
 
     def contractDetails(self, reqId: int, contractDetails: ContractDetails):
-        self._contract_data[reqId] = contractDetails.contract
+        self._contract_data[reqId] = contractDetails
 
     # endregion
 
@@ -102,9 +80,6 @@ class IBapiBot(EWrapper, EClient):
         is_new_bar = epoch not in cache_entry.data
 
         cache_entry.data[epoch] = bar_data_dict
-
-        if is_new_bar:
-            self.action_status.order_executed_on_current_k = False
 
         if is_new_bar and remove_old:
             cache_entry.data.pop(min(cache_entry.data.keys()))
@@ -127,8 +102,8 @@ class IBapiBot(EWrapper, EClient):
 
         cache_entry.on_update(OnPxDataUpdatedEvent(
             px_data=cache_entry.to_px_data(),
-            account=BrokerAccount(app=self, position=self._position_data),
-            contract=cache_entry.contract,
+            account=BacktestAccount(),
+            contract=cache_entry.contract.contract,
             is_new_bar=is_new_bar,
         ))
 
@@ -143,7 +118,7 @@ class IBapiBot(EWrapper, EClient):
 
         self._px_data_cache[request_id] = PxDataCacheEntry(
             on_update=on_px_data_updated,
-            contract=contract,
+            contract=None,
             data={},
         )
 
@@ -166,6 +141,7 @@ class IBapiBot(EWrapper, EClient):
             time.sleep(0.1)
 
         px_data = self._px_data_cache[req_id_px].to_px_data()
+        px_data.dataframe.to_csv("data.csv")
 
         def decorator(on_px_data_updated: OnPxDataUpdated) -> None:
             for df, is_new_bar in px_data.get_dataframes_backtest(min_data_rows=min_data_rows):
@@ -174,36 +150,12 @@ class IBapiBot(EWrapper, EClient):
                 event = OnPxDataUpdatedEvent(
                     px_data=PxData(contract=contract_fetched, dataframe=df),
                     account=account,
-                    contract=contract_fetched,
+                    contract=contract_fetched.contract,
                     is_new_bar=is_new_bar,
                 )
 
                 on_px_data_updated(event)
 
         return decorator
-
-    # endregion
-
-    # region Order
-
-    @property
-    def next_valid_order_id(self) -> int:
-        return int(time.time())
-
-    def placeOrder(self, orderId: OrderId, contract: Contract, order: Order):
-        super().placeOrder(orderId, contract, order)
-
-        self.action_status.order_pending = True
-
-    def orderStatus(
-            self, orderId: OrderId, status: str, filled: Decimal,
-            remaining: Decimal, avgFillPrice: float, permId: int,
-            parentId: int, lastFillPrice: float, clientId: int,
-            whyHeld: str, mktCapPrice: float
-    ):
-        if status == "Filled":
-            self.action_status.order_pending = False
-            self.action_status.order_executed_on_current_k = True
-            self.refresh_positions()
 
     # endregion
