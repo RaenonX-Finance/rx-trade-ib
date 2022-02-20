@@ -7,7 +7,10 @@ class ExecutionDataCol:
 
     # Names above must match the field name of `GroupedOrderExecution`
 
-    TOTAL_PNL = "total_pnl"
+    REALIZED_PNL_SUM = "realized_pnl_sum"
+
+    PX_SIDE = "px_side"
+    PX_SIDE_SUM = "px_side_sum"
 
     PROFIT = "profit"
     LOSS = "loss"
@@ -16,8 +19,15 @@ class ExecutionDataCol:
     TOTAL_PROFIT = "total_profit"
     TOTAL_LOSS = "total_loss"
 
-    AVG_TOTAL_PROFIT = "avg_total_profit"
-    AVG_TOTAL_LOSS = "avg_total_loss"
-    AVG_TOTAL_RR_RATIO = "avg_total_rr_ratio"
+    AVG_PNL_PROFIT = "avg_pnl_profit"
+    AVG_PNL_LOSS = "avg_pnl_loss"
+    AVG_PNL_RR_RATIO = "avg_pnl_rr"
+    AVG_PNL_EWR = "avg_pnl_ewr"
 
-    THRESHOLD_WIN_RATE = "threshold_winrate"
+    TOTAL_PX_PROFIT = "total_px_profit"
+    TOTAL_PX_LOSS = "total_px_loss"
+
+    AVG_PX_PROFIT = "avg_px_profit"
+    AVG_PX_LOSS = "avg_px_loss"
+    AVG_PX_RR_RATIO = "avg_px_rr"
+    AVG_PX_EWR = "avg_px_ewr"

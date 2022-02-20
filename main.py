@@ -20,10 +20,6 @@ from trade_ibkr.utils import (
 fast_api = fast_api  # Binding for `uvicorn`
 
 
-# TODO: TA-lib pattern recognition?
-# TODO: Open order not refreshed on order filled
-
-
 async def on_px_updated(e: OnPxDataUpdatedEventNoAccount):
     print_log(f"[TWS] Px Updated / HST ({e})")
     await fast_api_socket.emit("pxUpdated", to_socket_message_px_data(e.px_data))
@@ -72,14 +68,14 @@ contract_eth = make_crypto_contract("ETH")
 px_data_req_ids: list[int] = [
     app.get_px_data_keep_update(
         contract=contract_mnq,
-        duration="86400 S",
+        duration="3 D",
         bar_size="1 min",
         on_px_data_updated=on_px_updated,
         on_market_data_received=on_market_data_received,
     ),
     app.get_px_data_keep_update(
         contract=contract_mym,
-        duration="86400 S",
+        duration="3 D",
         bar_size="1 min",
         on_px_data_updated=on_px_updated,
         on_market_data_received=on_market_data_received,

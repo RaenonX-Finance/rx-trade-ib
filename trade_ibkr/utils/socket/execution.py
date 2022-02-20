@@ -16,17 +16,24 @@ class ExecutionGroup(TypedDict):
     avgPx: float
 
     realizedPnL: float | None
+    realizedPnLSum: float | None
 
     profit: float | None
     loss: float | None
     winRate: float | None
 
-    avgTotalProfit: float | None
-    avgTotalLoss: float | None
-    avgTotalRrRatio: float | None
-    thresholdWinRate: float | None
+    avgPnLProfit: float | None
+    avgPnLLoss: float | None
+    avgPnLRrRatio: float | None
+    avgPnLEwr: float | None
 
-    totalPnL: float | None
+    pxSide: float | None
+    pxSideSum: float | None
+
+    avgPxProfit: float | None
+    avgPxLoss: float | None
+    avgPxRrRatio: float | None
+    avgPxEwr: float | None
 
 
 ExecutionDict: TypeAlias = dict[int, list[ExecutionGroup]]
@@ -40,14 +47,20 @@ def _from_grouped_execution_dataframe(executions_df: DataFrame) -> list[Executio
             "quantity": float(row[ExecutionDataCol.QUANTITY]),
             "avgPx": row[ExecutionDataCol.AVG_PX],
             "realizedPnL": row[ExecutionDataCol.REALIZED_PNL],
+            "realizedPnLSum": row[ExecutionDataCol.REALIZED_PNL_SUM],
             "profit": row[ExecutionDataCol.PROFIT],
             "loss": row[ExecutionDataCol.LOSS],
             "winRate": row[ExecutionDataCol.WIN_RATE],
-            "avgTotalProfit": row[ExecutionDataCol.AVG_TOTAL_PROFIT],
-            "avgTotalLoss": row[ExecutionDataCol.AVG_TOTAL_LOSS],
-            "avgTotalRrRatio": row[ExecutionDataCol.AVG_TOTAL_RR_RATIO],
-            "thresholdWinRate": row[ExecutionDataCol.THRESHOLD_WIN_RATE],
-            "totalPnL": row[ExecutionDataCol.TOTAL_PNL],
+            "avgPnLProfit": row[ExecutionDataCol.AVG_PNL_PROFIT],
+            "avgPnLLoss": row[ExecutionDataCol.AVG_PNL_LOSS],
+            "avgPnLRrRatio": row[ExecutionDataCol.AVG_PNL_RR_RATIO],
+            "avgPnLEwr": row[ExecutionDataCol.AVG_PNL_EWR],
+            "pxSide": row[ExecutionDataCol.PX_SIDE],
+            "pxSideSum": row[ExecutionDataCol.PX_SIDE_SUM],
+            "avgPxProfit": row[ExecutionDataCol.AVG_PX_PROFIT],
+            "avgPxLoss": row[ExecutionDataCol.AVG_PX_LOSS],
+            "avgPxRrRatio": row[ExecutionDataCol.AVG_PX_RR_RATIO],
+            "avgPxEwr": row[ExecutionDataCol.AVG_PX_EWR],
         } for _, row in executions_df.iterrows()
     ]
 

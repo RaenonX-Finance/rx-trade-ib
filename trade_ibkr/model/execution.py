@@ -9,7 +9,7 @@ import pandas as pd
 from ibapi.contract import Contract
 from pandas import DataFrame
 
-from trade_ibkr.enums import OrderSideConst, ExecutionDataCol
+from trade_ibkr.enums import ExecutionDataCol, OrderSideConst
 from trade_ibkr.utils import get_contract_identifier
 
 
@@ -92,42 +92,87 @@ class OrderExecutionCollection:
             self._executions[contract_identifier].append(GroupedOrderExecution.from_executions(grouped))
 
     @staticmethod
-    def _init_exec_dataframe_single(grouped_executions: list[GroupedOrderExecution]) -> DataFrame:
+    def _init_exec_dataframe_single(
+            grouped_executions: list[GroupedOrderExecution], multiplier: float
+    ) -> DataFrame:
         df = DataFrame(grouped_executions)
 
+        # Replace `None` with `NaN`
+        df[ExecutionDataCol.REALIZED_PNL].replace([None], np.nan, inplace=True)
+
+        # Profit / Loss / WR
         df[ExecutionDataCol.PROFIT] = (df[ExecutionDataCol.REALIZED_PNL] > 0).cumsum()
         df[ExecutionDataCol.LOSS] = (df[ExecutionDataCol.REALIZED_PNL] < 0).cumsum()
         df[ExecutionDataCol.WIN_RATE] = df[ExecutionDataCol.PROFIT].divide(
             df[ExecutionDataCol.PROFIT] + df[ExecutionDataCol.LOSS]
         )
 
+        # Total Profit / Avg Profit
         df[ExecutionDataCol.TOTAL_PROFIT] = (
             df[df[ExecutionDataCol.REALIZED_PNL] > 0][ExecutionDataCol.REALIZED_PNL].cumsum()
         )
         df[ExecutionDataCol.TOTAL_PROFIT].fillna(0, inplace=True)
-        df[ExecutionDataCol.AVG_TOTAL_PROFIT] = df[ExecutionDataCol.TOTAL_PROFIT] \
+        df[ExecutionDataCol.AVG_PNL_PROFIT] = df[ExecutionDataCol.TOTAL_PROFIT] \
             .divide(df[ExecutionDataCol.PROFIT]) \
             .replace(0, np.nan) \
             .fillna(method="ffill")
 
+        # Total Loss / Avg Loss
         df[ExecutionDataCol.TOTAL_LOSS] = (
             df[df[ExecutionDataCol.REALIZED_PNL] < 0][ExecutionDataCol.REALIZED_PNL].cumsum()
         )
         df[ExecutionDataCol.TOTAL_LOSS].fillna(0, inplace=True)
-        df[ExecutionDataCol.AVG_TOTAL_LOSS] = df[ExecutionDataCol.TOTAL_LOSS] \
+        df[ExecutionDataCol.AVG_PNL_LOSS] = df[ExecutionDataCol.TOTAL_LOSS] \
             .divide(df[ExecutionDataCol.LOSS]) \
             .replace(0, np.nan) \
             .fillna(method="ffill")
 
-        df[ExecutionDataCol.AVG_TOTAL_RR_RATIO] = abs(
-            df[ExecutionDataCol.AVG_TOTAL_PROFIT].divide(df[ExecutionDataCol.AVG_TOTAL_LOSS])
+        # PnL RR ratio / EWR
+        df[ExecutionDataCol.AVG_PNL_RR_RATIO] = abs(
+            df[ExecutionDataCol.AVG_PNL_PROFIT].divide(df[ExecutionDataCol.AVG_PNL_LOSS])
         )
-        df[ExecutionDataCol.THRESHOLD_WIN_RATE] = np.divide(
+        df[ExecutionDataCol.AVG_PNL_EWR] = np.divide(
             1,
-            1 + df[ExecutionDataCol.AVG_TOTAL_RR_RATIO],
+            1 + df[ExecutionDataCol.AVG_PNL_RR_RATIO],
         )
 
-        df[ExecutionDataCol.TOTAL_PNL] = df[ExecutionDataCol.REALIZED_PNL].cumsum()
+        # Total PnL
+        df[ExecutionDataCol.REALIZED_PNL_SUM] = df[ExecutionDataCol.REALIZED_PNL].cumsum()
+
+        # Px Side / Total Px Side
+        df[ExecutionDataCol.PX_SIDE] = (
+                df[ExecutionDataCol.REALIZED_PNL].divide(df[ExecutionDataCol.QUANTITY].astype(float)) / multiplier
+        )
+        df[ExecutionDataCol.PX_SIDE_SUM] = df[ExecutionDataCol.PX_SIDE].cumsum()
+
+        # Total Px+ / Avg Px+
+        df[ExecutionDataCol.TOTAL_PX_PROFIT] = (
+            df[df[ExecutionDataCol.PX_SIDE] > 0][ExecutionDataCol.PX_SIDE].cumsum()
+        )
+        df[ExecutionDataCol.TOTAL_PX_PROFIT].fillna(0, inplace=True)
+        df[ExecutionDataCol.AVG_PX_PROFIT] = df[ExecutionDataCol.TOTAL_PX_PROFIT] \
+            .divide(df[ExecutionDataCol.PROFIT]) \
+            .replace(0, np.nan) \
+            .fillna(method="ffill")
+
+        # Total Px- / Avg Px-
+        df[ExecutionDataCol.TOTAL_PX_LOSS] = (
+            df[df[ExecutionDataCol.PX_SIDE] < 0][ExecutionDataCol.PX_SIDE].cumsum()
+        )
+        df[ExecutionDataCol.TOTAL_PX_LOSS].fillna(0, inplace=True)
+        df[ExecutionDataCol.AVG_PX_LOSS] = df[ExecutionDataCol.TOTAL_PX_LOSS] \
+            .divide(df[ExecutionDataCol.LOSS]) \
+            .replace(0, np.nan) \
+            .fillna(method="ffill")
+
+        # Px RR / EWR
+        df[ExecutionDataCol.AVG_PX_RR_RATIO] = abs(
+            df[ExecutionDataCol.AVG_PX_PROFIT].divide(df[ExecutionDataCol.AVG_PX_LOSS])
+        )
+        df[ExecutionDataCol.AVG_PX_EWR] = np.divide(
+            1,
+            1 + df[ExecutionDataCol.AVG_PX_RR_RATIO],
+        )
 
         # Remove NaNs
         df.fillna(np.nan, inplace=True)
@@ -137,7 +182,10 @@ class OrderExecutionCollection:
 
     def _init_exec_dataframe(self):
         for identifier, grouped_executions in self._executions.items():
-            self._executions_dataframe[identifier] = self._init_exec_dataframe_single(grouped_executions)
+            self._executions_dataframe[identifier] = self._init_exec_dataframe_single(
+                grouped_executions,
+                multiplier=float(grouped_executions[0].contract.multiplier),
+            )
 
     def __init__(self, order_execs: Iterable[OrderExecution], period_sec: int):
         self._executions: DefaultDict[int, list[GroupedOrderExecution]] = defaultdict(list)
@@ -149,8 +197,10 @@ class OrderExecutionCollection:
     def print_executions(self):
         for executions in self._executions.values():
             for execution in executions:
-                print(execution.contract.localSymbol, execution.time_completed, execution.avg_price,
-                      execution.quantity, execution.realized_pnl)
+                print(
+                    execution.contract.localSymbol, execution.time_completed, execution.avg_price,
+                    execution.quantity, execution.realized_pnl
+                )
 
     @property
     def executions(self) -> dict[int, list[GroupedOrderExecution]]:

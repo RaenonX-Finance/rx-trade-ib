@@ -184,7 +184,10 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
         async def execute_after_execution_fetched():
             await self._execution_on_fetched(OnExecutionFetchedEvent(
-                executions=OrderExecutionCollection(self._execution_cache.values(), self._execution_group_period_sec)
+                executions=OrderExecutionCollection(
+                    self._execution_cache.values(),
+                    self._execution_group_period_sec,
+                )
             ))
 
         asyncio.run(execute_after_execution_fetched())
