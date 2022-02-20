@@ -1,4 +1,4 @@
 .idea/
 venv/
+venv-310/
 .wakatime-project
-!/trade_ibkr/obj/api/info/px_data.py
