@@ -7,7 +7,7 @@ from pandas import DataFrame
 from trade_ibkr.enums import PxDataCol
 
 
-@dataclass(kw_only=True)
+@dataclass
 class SRLevel:
     level: float
     fractal: bool
@@ -26,7 +26,7 @@ class SRLevelInitData(TypedDict):
     window: list[float]
 
 
-@dataclass(kw_only=True)
+@dataclass
 class SRLevelsData:
     levels: SRLevelInitData
 

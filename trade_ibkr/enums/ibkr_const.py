@@ -1,5 +1,5 @@
-from typing import Literal, TypeAlias
+from typing import Literal
 
-OrderSideConst: TypeAlias = Literal["BUY", "SELL"]
+OrderSideConst = Literal["BUY", "SELL"]
 
-ExecutionSideConst: TypeAlias = Literal["BOT", "SLD"]
+ExecutionSideConst = Literal["BOT", "SLD"]

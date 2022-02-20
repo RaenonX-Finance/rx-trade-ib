@@ -1,5 +1,5 @@
 import json
-from typing import TYPE_CHECKING, TypeAlias, TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 from trade_ibkr.enums import OrderSideConst
 from ..contract import get_contract_identifier
@@ -16,7 +16,7 @@ class OpenOrderData(TypedDict):
     px: float
 
 
-OpenOrderDict: TypeAlias = dict[int, dict[int, OpenOrderData]]
+OpenOrderDict = dict[int, dict[int, OpenOrderData]]
 
 
 def _from_open_orders(open_orders: list["OpenOrder"]) -> dict[int, OpenOrderData]:

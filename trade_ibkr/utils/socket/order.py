@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from dataclasses import dataclass
 from typing import TypedDict
@@ -13,7 +15,7 @@ class OrderSocketMessage(TypedDict):
     px: float | None
 
 
-@dataclass(kw_only=True)
+@dataclass
 class OrderSocketMessagePack:
     order_id: int | None
     contract_identifier: int

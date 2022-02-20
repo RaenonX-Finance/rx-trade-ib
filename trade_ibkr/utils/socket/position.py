@@ -1,5 +1,5 @@
 import json
-from typing import TYPE_CHECKING, TypeAlias, TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 from ..contract import get_contract_identifier
 
@@ -13,7 +13,7 @@ class PositionEntry(TypedDict):
     avgPx: float
 
 
-PositionDict: TypeAlias = dict[int, PositionEntry]
+PositionDict = dict[int, PositionEntry]
 
 
 def _from_position_data(position_data: "PositionData") -> PositionEntry:

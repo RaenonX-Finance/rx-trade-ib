@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import TYPE_CHECKING, TypeAlias, TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 from pandas import DataFrame
 
@@ -29,7 +31,7 @@ class ExecutionGroup(TypedDict):
     totalPnL: float | None
 
 
-ExecutionDict: TypeAlias = dict[int, list[ExecutionGroup]]
+ExecutionDict = dict[int, list[ExecutionGroup]]
 
 
 def _from_grouped_execution_dataframe(executions_df: DataFrame) -> list[ExecutionGroup]:
