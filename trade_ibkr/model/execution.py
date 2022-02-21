@@ -1,6 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import DefaultDict, Iterable
 
@@ -9,7 +9,7 @@ import pandas as pd
 from ibapi.contract import Contract
 from pandas import DataFrame
 
-from trade_ibkr.enums import ExecutionDataCol, OrderSideConst
+from trade_ibkr.enums import ExecutionDataCol, ExecutionSideConst
 from trade_ibkr.utils import get_contract_identifier
 
 
@@ -19,7 +19,7 @@ class OrderExecution:
     order_id: int
     contract: Contract
     local_time_original: str
-    side: OrderSideConst
+    side: ExecutionSideConst
     cumulative_quantity: Decimal
     avg_price: float
 
@@ -34,7 +34,7 @@ class OrderExecution:
 class GroupedOrderExecution:
     contract: Contract
     time_completed: datetime
-    side: OrderSideConst
+    side: ExecutionSideConst
     quantity: Decimal
     avg_price: float
 
@@ -47,6 +47,10 @@ class GroupedOrderExecution:
         self.epoch_sec = (
             pd.Timestamp(self.time_completed, tz="America/Chicago").tz_convert("UTC").tz_localize(None).timestamp()
         )
+
+    @property
+    def signed_quantity(self) -> Decimal:
+        return self.quantity * (1 if self.side == "BOT" else -1)
 
     @staticmethod
     def from_executions(executions: list[OrderExecution]) -> "GroupedOrderExecution":
@@ -69,8 +73,29 @@ class GroupedOrderExecution:
             realized_pnl=realized_pnl if realized_pnl else None,
         )
 
+    def to_closing_and_opening(self, closing_qty: Decimal) -> tuple["GroupedOrderExecution", "GroupedOrderExecution"]:
+        closing = GroupedOrderExecution(
+            contract=self.contract,
+            # -1 ms for the UI to sort it correctly
+            time_completed=self.time_completed - timedelta(milliseconds=1),
+            side=self.side,
+            quantity=closing_qty,
+            avg_price=self.avg_price,
+            realized_pnl=self.realized_pnl,
+        )
+        opening = GroupedOrderExecution(
+            contract=self.contract,
+            time_completed=self.time_completed,
+            side=self.side,
+            quantity=self.quantity - closing_qty,
+            avg_price=self.avg_price,
+            realized_pnl=None,
+        )
 
-OrderExecutionGroupKey = tuple[int, int, OrderSideConst, int]
+        return closing, opening
+
+
+OrderExecutionGroupKey = tuple[int, ExecutionSideConst, int]
 
 
 class OrderExecutionCollection:
@@ -78,18 +103,46 @@ class OrderExecutionCollection:
         grouped_executions: DefaultDict[OrderExecutionGroupKey, list[OrderExecution]] = defaultdict(list)
         for execution in order_execs:
             key = (
-                int(execution.time.timestamp() / period_sec),
                 execution.order_id,
                 execution.side,
                 get_contract_identifier(execution.contract),
             )
             grouped_executions[key].append(execution)
 
+        # Do not activate the tracker for the 1st execution as it might start with existing position
+        position_tracker: dict[int, Decimal] = {}
         for key in sorted(grouped_executions):
-            _, _, _, contract_identifier = key
-            grouped = grouped_executions[key]
+            _, _, contract_identifier = key
 
-            self._executions[contract_identifier].append(GroupedOrderExecution.from_executions(grouped))
+            grouped = grouped_executions[key]
+            grouped_execution = GroupedOrderExecution.from_executions(grouped)
+
+            if grouped_execution.realized_pnl:
+                if contract_identifier not in position_tracker:
+                    # Activate tracker
+                    position_tracker[contract_identifier] = Decimal(0)
+                else:
+                    position = position_tracker[contract_identifier]
+
+                    # Position reduced or zero-ed
+                    if grouped_execution.quantity > abs(position):
+                        # Position reversed
+                        closing, opening = grouped_execution.to_closing_and_opening(abs(position))
+
+                        # --- Append closing execution
+                        self._executions[contract_identifier].append(closing)
+                        # --- Append opening (reversed) execution
+                        self._executions[contract_identifier].append(opening)
+
+                        position_tracker[contract_identifier] = position + grouped_execution.signed_quantity
+                        continue
+
+                    position_tracker[contract_identifier] += grouped_execution.signed_quantity
+            elif contract_identifier in position_tracker:
+                # Tracking positions
+                position_tracker[contract_identifier] += grouped_execution.signed_quantity
+
+            self._executions[contract_identifier].append(grouped_execution)
 
     @staticmethod
     def _init_exec_dataframe_single(
