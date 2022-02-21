@@ -149,6 +149,7 @@ class OrderExecutionCollection:
             grouped_executions: list[GroupedOrderExecution], multiplier: float
     ) -> DataFrame:
         df = DataFrame(grouped_executions)
+        df.sort_values(by=[ExecutionDataCol.EPOCH_SEC], inplace=True)
 
         # Replace `None` with `NaN`
         df[ExecutionDataCol.REALIZED_PNL].replace([None], np.nan, inplace=True)
