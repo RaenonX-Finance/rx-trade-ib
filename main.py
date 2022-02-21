@@ -97,7 +97,7 @@ def request_earliest_execution_time() -> datetime:
 app.set_on_position_fetched(on_position_fetched)
 app.set_on_open_order_fetched(on_open_order_fetched)
 app.set_on_order_filled(on_order_filled)
-app.set_on_executions_fetched(on_executions_fetched, request_earliest_execution_time, 60)
+app.set_on_executions_fetched(on_executions_fetched, request_earliest_execution_time)
 
 
 @fast_api_socket.on("pxInit")

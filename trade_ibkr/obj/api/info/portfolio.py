@@ -37,7 +37,6 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         self._execution_cache: dict[str, OrderExecution] = {}
         self._execution_on_fetched: OnExecutionFetched | None = None
         self._execution_fetch_earliest_time: OnExecutionFetchEarliestTime | None = None
-        self._execution_group_period_sec: int | None = None
         self._execution_request_ids: set[int] = set()
 
         self._order_pending_contract: Contract | None = None
@@ -174,20 +173,9 @@ class IBapiInfoPortfolio(IBapiInfoBase):
             )
             return
 
-        if not self._execution_group_period_sec:
-            print(
-                "Executions fetched, but no corresponding period sec is set. "
-                "Use `set_on_executions_fetched()` for setting it.",
-                file=sys.stderr,
-            )
-            return
-
         async def execute_after_execution_fetched():
             await self._execution_on_fetched(OnExecutionFetchedEvent(
-                executions=OrderExecutionCollection(
-                    self._execution_cache.values(),
-                    self._execution_group_period_sec,
-                )
+                executions=OrderExecutionCollection(self._execution_cache.values())
             ))
 
         asyncio.run(execute_after_execution_fetched())
@@ -198,11 +186,9 @@ class IBapiInfoPortfolio(IBapiInfoBase):
             self,
             on_execution_fetched: OnExecutionFetched,
             on_execution_fetch_earliest_time: OnExecutionFetchEarliestTime,
-            period_sec: int
     ):
         self._execution_on_fetched = on_execution_fetched
         self._execution_fetch_earliest_time = on_execution_fetch_earliest_time
-        self._execution_group_period_sec = period_sec
 
     def request_all_executions(self):
         if not self._execution_fetch_earliest_time:

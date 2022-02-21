@@ -99,7 +99,7 @@ OrderExecutionGroupKey = tuple[int, ExecutionSideConst, int]
 
 
 class OrderExecutionCollection:
-    def _init_grouped_executions(self, order_execs: Iterable[OrderExecution], period_sec: int):
+    def _init_grouped_executions(self, order_execs: Iterable[OrderExecution]):
         grouped_executions: DefaultDict[OrderExecutionGroupKey, list[OrderExecution]] = defaultdict(list)
         for execution in order_execs:
             key = (
@@ -111,10 +111,12 @@ class OrderExecutionCollection:
 
         # Do not activate the tracker for the 1st execution as it might start with existing position
         position_tracker: dict[int, Decimal] = {}
-        for key in sorted(grouped_executions):
+        for key, grouped in sorted(
+                grouped_executions.items(),
+                key=lambda item: min(execution.time for execution in item[1])
+        ):
             _, _, contract_identifier = key
 
-            grouped = grouped_executions[key]
             grouped_execution = GroupedOrderExecution.from_executions(grouped)
 
             if grouped_execution.realized_pnl:
@@ -263,9 +265,9 @@ class OrderExecutionCollection:
                 multiplier=float(grouped_executions[0].contract.multiplier),
             )
 
-    def __init__(self, order_execs: Iterable[OrderExecution], period_sec: int):
+    def __init__(self, order_execs: Iterable[OrderExecution]):
         self._executions: DefaultDict[int, list[GroupedOrderExecution]] = defaultdict(list)
-        self._init_grouped_executions(order_execs, period_sec)
+        self._init_grouped_executions(order_execs)
 
         self._executions_dataframe: dict[int, DataFrame] = {}
         self._init_exec_dataframe()
