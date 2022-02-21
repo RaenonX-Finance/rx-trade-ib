@@ -16,7 +16,7 @@ def _stop_loss(*, account: Account, contract: Contract, px_data: PxData, desired
     px_diff = position_data.px_diff(candle_current[PxDataCol.CLOSE])
 
     # Amplitude-adjusted stop-loss
-    tolerance = candle_current[PxDataCol.AMPLITUDE] * 1.5
+    tolerance = candle_current[PxDataCol.AMPLITUDE_HL] * 1.5
 
     if px_diff * position_data.side.multiplier < 0 and abs(px_diff) > tolerance:
         print(f"SL - Over tolerance @ {desired_px}")
@@ -43,7 +43,7 @@ def _take_profit(*, account: Account, contract: Contract, px_data: PxData, desir
     # TODO: 1/2 Profit guarantee
 
     # Amplitude-adjusted take-profit
-    amplitude_coeff = candle_current[PxDataCol.AMPLITUDE] * 4
+    amplitude_coeff = candle_current[PxDataCol.AMPLITUDE_HL] * 4
 
     if px_diff * position_data.side.multiplier > 0 and abs(px_diff) > amplitude_coeff:
         print(f"TP - Over tolerance @ {desired_px}")

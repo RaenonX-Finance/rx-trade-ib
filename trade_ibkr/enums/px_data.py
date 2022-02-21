@@ -8,7 +8,9 @@ class PxDataCol:
 
     VWAP = "vwap"
 
-    AMPLITUDE = "amplitude"
+    AMPLITUDE_HL = "amplitude_hl"
+    AMPLITUDE_OC = "amplitude_oc"
+
     DATE = "date"
     DATE_MARKET = "market_date"
 
