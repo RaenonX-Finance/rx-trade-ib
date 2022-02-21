@@ -16,6 +16,14 @@ class ExecutionDataCol:
     LOSS = "loss"
     WIN_RATE = "wr"
 
+    PROFIT_ON_LONG = "profit_long"
+    LOSS_ON_LONG = "loss_long"
+    WIN_RATE_ON_LONG = "wr_long"
+
+    PROFIT_ON_SHORT = "profit_short"
+    LOSS_ON_SHORT = "loss_short"
+    WIN_RATE_ON_SHORT = "wr_short"
+
     TOTAL_PROFIT = "total_profit"
     TOTAL_LOSS = "total_loss"
 

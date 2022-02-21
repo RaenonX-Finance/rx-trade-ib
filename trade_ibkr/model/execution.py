@@ -107,6 +107,28 @@ class OrderExecutionCollection:
             df[ExecutionDataCol.PROFIT] + df[ExecutionDataCol.LOSS]
         )
 
+        # Profit / Loss / WR (Long)
+        df[ExecutionDataCol.PROFIT_ON_LONG] = (
+                (df[ExecutionDataCol.REALIZED_PNL] > 0) & (df[ExecutionDataCol.SIDE] == "SLD")
+        ).cumsum()
+        df[ExecutionDataCol.LOSS_ON_LONG] = (
+                (df[ExecutionDataCol.REALIZED_PNL] < 0) & (df[ExecutionDataCol.SIDE] == "SLD")
+        ).cumsum()
+        df[ExecutionDataCol.WIN_RATE_ON_LONG] = df[ExecutionDataCol.PROFIT_ON_LONG].divide(
+            df[ExecutionDataCol.PROFIT_ON_LONG] + df[ExecutionDataCol.LOSS_ON_LONG]
+        )
+
+        # Profit / Loss / WR (Short)
+        df[ExecutionDataCol.PROFIT_ON_SHORT] = (
+                (df[ExecutionDataCol.REALIZED_PNL] > 0) & (df[ExecutionDataCol.SIDE] == "BOT")
+        ).cumsum()
+        df[ExecutionDataCol.LOSS_ON_SHORT] = (
+                (df[ExecutionDataCol.REALIZED_PNL] < 0) & (df[ExecutionDataCol.SIDE] == "BOT")
+        ).cumsum()
+        df[ExecutionDataCol.WIN_RATE_ON_SHORT] = df[ExecutionDataCol.PROFIT_ON_SHORT].divide(
+            df[ExecutionDataCol.PROFIT_ON_SHORT] + df[ExecutionDataCol.LOSS_ON_SHORT]
+        )
+
         # Total Profit / Avg Profit
         df[ExecutionDataCol.TOTAL_PROFIT] = (
             df[df[ExecutionDataCol.REALIZED_PNL] > 0][ExecutionDataCol.REALIZED_PNL].cumsum()

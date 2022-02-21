@@ -22,6 +22,14 @@ class ExecutionGroup(TypedDict):
     loss: float | None
     winRate: float | None
 
+    profitLong: float | None
+    lossLong: float | None
+    winRateLong: float | None
+
+    profitShort: float | None
+    lossShort: float | None
+    winRateShort: float | None
+
     avgPnLProfit: float | None
     avgPnLLoss: float | None
     avgPnLRrRatio: float | None
@@ -51,6 +59,12 @@ def _from_grouped_execution_dataframe(executions_df: DataFrame) -> list[Executio
             "profit": row[ExecutionDataCol.PROFIT],
             "loss": row[ExecutionDataCol.LOSS],
             "winRate": row[ExecutionDataCol.WIN_RATE],
+            "profitLong": row[ExecutionDataCol.PROFIT_ON_LONG],
+            "lossLong": row[ExecutionDataCol.LOSS_ON_LONG],
+            "winRateLong": row[ExecutionDataCol.WIN_RATE_ON_LONG],
+            "profitShort": row[ExecutionDataCol.PROFIT_ON_SHORT],
+            "lossShort": row[ExecutionDataCol.LOSS_ON_SHORT],
+            "winRateShort": row[ExecutionDataCol.WIN_RATE_ON_SHORT],
             "avgPnLProfit": row[ExecutionDataCol.AVG_PNL_PROFIT],
             "avgPnLLoss": row[ExecutionDataCol.AVG_PNL_LOSS],
             "avgPnLRrRatio": row[ExecutionDataCol.AVG_PNL_RR_RATIO],

@@ -37,10 +37,10 @@ class PxData:
         )
 
         self.dataframe[PxDataCol.LOCAL_MIN] = self.dataframe.iloc[
-            argrelextrema(self.dataframe[PxDataCol.LOW].values, np.less_equal, order=3)[0]
+            argrelextrema(self.dataframe[PxDataCol.LOW].values, np.less_equal, order=7)[0]
         ][PxDataCol.LOW]
         self.dataframe[PxDataCol.LOCAL_MAX] = self.dataframe.iloc[
-            argrelextrema(self.dataframe[PxDataCol.HIGH].values, np.greater_equal, order=3)[0]
+            argrelextrema(self.dataframe[PxDataCol.HIGH].values, np.greater_equal, order=7)[0]
         ][PxDataCol.HIGH]
 
         self.dataframe[PxDataCol.PRICE_TIMES_VOLUME] = np.multiply(
