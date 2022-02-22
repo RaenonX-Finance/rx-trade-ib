@@ -10,13 +10,14 @@ if TYPE_CHECKING:
 
 class PxDataBar(TypedDict):
     epochSec: float
-    amplitudeHL: float
-    amplitudeOC: float
     open: float
     high: float
     low: float
     close: float
     vwap: float
+    amplitudeHL: float
+    amplitudeOC: float
+    ema120: float
 
 
 class PxDataSupportResistanceType(TypedDict):
@@ -48,13 +49,14 @@ def _from_px_data_bars(px_data: "PxData") -> list[PxDataBar]:
     for _, px_data_row in px_data.dataframe.iterrows():
         ret.append({
             "epochSec": px_data_row[PxDataCol.EPOCH_SEC],
-            "amplitudeHL": px_data_row[PxDataCol.AMPLITUDE_HL],
-            "amplitudeOC": px_data_row[PxDataCol.AMPLITUDE_OC],
             "open": px_data_row[PxDataCol.OPEN],
             "high": px_data_row[PxDataCol.HIGH],
             "low": px_data_row[PxDataCol.LOW],
             "close": px_data_row[PxDataCol.CLOSE],
             "vwap": px_data_row[PxDataCol.VWAP],
+            "amplitudeHL": px_data_row[PxDataCol.AMPLITUDE_HL],
+            "amplitudeOC": px_data_row[PxDataCol.AMPLITUDE_OC],
+            "ema120": px_data_row[PxDataCol.EMA_120],
         })
 
     return ret
