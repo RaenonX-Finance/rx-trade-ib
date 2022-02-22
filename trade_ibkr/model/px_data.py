@@ -66,7 +66,7 @@ class PxData:
             self, *,
             contract: ContractDetails,
             bars: list["BarDataDict"] | None = None,
-            dataframe: DataFrame | None = None
+            dataframe: DataFrame | None = None,
     ):
         self.contract: ContractDetails = contract
         self.dataframe: DataFrame = DataFrame(bars) if bars else dataframe
