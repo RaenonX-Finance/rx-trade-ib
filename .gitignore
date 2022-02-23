@@ -1,4 +1,13 @@
+# Project files
 .idea/
+
+# Environment
 venv/
 venv-310/
+
+# Miscellaneous
 .wakatime-project
+
+# Data file / analysis
+*.csv
+*.ipynb

@@ -80,13 +80,6 @@ px_data_req_ids: list[int] = [
         on_px_data_updated=on_px_updated,
         on_market_data_received=on_market_data_received,
     ),
-    # app.get_px_data_keep_update(
-    #     contract=contract_eth,
-    #     duration="2 D",
-    #     bar_size="1 min",
-    #     on_px_data_updated=on_px_updated,
-    #     on_market_data_received=on_market_data_received,
-    # ),
 ]
 
 
