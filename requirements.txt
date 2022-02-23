@@ -2,6 +2,7 @@
 numpy
 scipy
 pandas
+pandas_ta
 wheels/TA_Lib-0.4.24-cp310-cp310-win_amd64.whl
 wheels/ibapi-10.12.1-py310-none-any.whl
 

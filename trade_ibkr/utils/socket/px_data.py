@@ -2,7 +2,6 @@ import json
 from typing import TypedDict, TYPE_CHECKING
 
 from trade_ibkr.enums import PxDataCol
-from ..contract import get_detailed_contract_identifier
 
 if TYPE_CHECKING:
     from trade_ibkr.model import PxData
@@ -31,13 +30,15 @@ class PxDataSupportResistance(TypedDict):
 
 
 class PxDataContract(TypedDict):
+    identifier: int
     minTick: float
     symbol: str
     multiplier: float
 
 
 class PxDataDict(TypedDict):
-    uniqueIdentifier: int
+    uniqueIdentifier: str
+    periodSec: int
     contract: PxDataContract
     data: list[PxDataBar]
     supportResistance: list[PxDataSupportResistance]
@@ -79,6 +80,7 @@ def _from_px_data_support_resistance(px_data: "PxData") -> list[PxDataSupportRes
 
 def _from_px_data_contract(px_data: "PxData") -> PxDataContract:
     return {
+        "identifier": px_data.contract_identifier,
         "symbol": px_data.contract.underSymbol,
         "minTick": px_data.contract.minTick,
         "multiplier": float(px_data.contract.contract.multiplier or 1),
@@ -87,7 +89,8 @@ def _from_px_data_contract(px_data: "PxData") -> PxDataContract:
 
 def _to_px_data_dict(px_data: "PxData") -> PxDataDict:
     return {
-        "uniqueIdentifier": get_detailed_contract_identifier(px_data.contract),
+        "uniqueIdentifier": px_data.unique_identifier,
+        "periodSec": px_data.period_sec,
         "contract": _from_px_data_contract(px_data),
         "data": _from_px_data_bars(px_data),
         "supportResistance": _from_px_data_support_resistance(px_data),

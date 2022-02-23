@@ -21,6 +21,7 @@ R = TypeVar("R")
 @dataclass(kw_only=True)
 class PxDataCacheEntry:
     data: dict[int, BarDataDict]
+    period_sec: int
     contract: ContractDetails | None
     contract_og: Contract
     on_update: OnPxDataUpdatedNoAccount
@@ -59,7 +60,11 @@ class PxDataCacheEntry:
     def to_px_data(self) -> PxData:
         self.last_historical_sent = time.time()
 
-        return PxData(contract=self.contract, bars=[self.data[key] for key in sorted(self.data.keys())])
+        return PxData(
+            contract=self.contract,
+            period_sec=self.period_sec,
+            bars=[self.data[key] for key in sorted(self.data.keys())]
+        )
 
 
 class IBapiInfoPxData(IBapiInfoBase):
@@ -171,22 +176,33 @@ class IBapiInfoPxData(IBapiInfoBase):
 
     def get_px_data_keep_update(
             self, *,
-            contract: Contract, duration: str, bar_size: str,
+            contract: Contract, duration: str, bar_sizes: list[str], period_secs: list[int],
             on_px_data_updated: OnPxDataUpdatedNoAccount,
             on_market_data_received: OnMarketDataReceived,
-    ) -> int:
-        req_px = self.request_px_data(contract=contract, duration=duration, bar_size=bar_size, keep_update=True)
-        req_contract = self.request_contract_data(contract)
-        req_market = self.request_px_data_market(contract)
-        self._px_req_id_to_contract_req_id[req_px] = req_contract
-        self._px_market_to_px_data[req_market] = req_px
+    ) -> list[int]:
+        if len(period_secs) != len(bar_sizes):
+            raise ValueError(
+                f"`period_secs` ({len(period_secs)}) should have the same length of `bar_sizes` ({len(bar_sizes)})"
+            )
 
-        self._px_data_cache[req_px] = PxDataCacheEntry(
-            contract=None,
-            contract_og=contract,
-            data={},
-            on_update=on_px_data_updated,
-            on_update_market=on_market_data_received,
-        )
+        req_px_ids: list[int] = []
 
-        return req_px
+        for bar_size, period_sec in zip(bar_sizes, period_secs):
+            req_px = self.request_px_data(contract=contract, duration=duration, bar_size=bar_size, keep_update=True)
+            req_contract = self.request_contract_data(contract)
+            req_market = self.request_px_data_market(contract)
+            self._px_req_id_to_contract_req_id[req_px] = req_contract
+            self._px_market_to_px_data[req_market] = req_px
+
+            self._px_data_cache[req_px] = PxDataCacheEntry(
+                contract=None,
+                period_sec=period_sec,
+                contract_og=contract,
+                data={},
+                on_update=on_px_data_updated,
+                on_update_market=on_market_data_received,
+            )
+
+            req_px_ids.append(req_px)
+
+        return req_px_ids

@@ -12,7 +12,7 @@ from scipy.signal import argrelextrema
 from trade_ibkr.calc import calc_support_resistance_levels
 from trade_ibkr.const import console
 from trade_ibkr.enums import CandlePos, PxDataCol
-from trade_ibkr.utils import closest_diff
+from trade_ibkr.utils import closest_diff, get_detailed_contract_identifier
 
 if TYPE_CHECKING:
     from trade_ibkr.model import BarDataDict
@@ -65,10 +65,12 @@ class PxData:
     def __init__(
             self, *,
             contract: ContractDetails,
+            period_sec: int,
             bars: list["BarDataDict"] | None = None,
             dataframe: DataFrame | None = None,
     ):
         self.contract: ContractDetails = contract
+        self.period_sec: int = period_sec
         self.dataframe: DataFrame = DataFrame(bars) if bars else dataframe
 
         if self.dataframe is None:
@@ -145,3 +147,11 @@ class PxData:
     @property
     def current_close(self) -> float:
         return self.dataframe.iloc[-1][PxDataCol.CLOSE]
+
+    @property
+    def contract_identifier(self) -> int:
+        return get_detailed_contract_identifier(self.contract)
+
+    @property
+    def unique_identifier(self) -> str:
+        return f"{self.contract_identifier}@{self.period_sec}"
