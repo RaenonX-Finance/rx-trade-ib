@@ -40,12 +40,16 @@ class PxDataCacheEntry:
     @property
     def is_send_px_data_ok(self) -> bool:
         # Debounce the data because `priceTick` and historical data update frequently
-        return time.time() - self.last_historical_sent > 3
+        return self.is_minute_changed_for_historical or time.time() - self.last_historical_sent > 3
 
     @property
     def is_send_market_px_data_ok(self) -> bool:
         # Limit market data output rate
         return time.time() - self.last_market_update > 0.15
+
+    @property
+    def is_minute_changed_for_historical(self) -> bool:
+        return int(self.last_historical_sent / 60) != int(time.time() / 60)
 
     @property
     def no_market_data_update(self) -> bool:
