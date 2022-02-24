@@ -216,24 +216,6 @@ class IBapiInfoPxData(IBapiInfoBase):
 
         return request_id
 
-    def get_px_data_one_time(self, *, keep_update_req_ids: list[int]):
-        for old_req_id in keep_update_req_ids:
-            params = self._px_req_params[old_req_id]
-
-            req_px = self._request_px_data(
-                contract=params.contract,
-                duration=params.duration,
-                bar_size=params.bar_size,
-                keep_update=False
-            )
-            self._px_data_cache[req_px] = PxDataCacheEntryOneTime(
-                contract=self._contract_data[self._px_req_id_to_contract_req_id[old_req_id]],
-                period_sec=params.period_sec,
-                contract_og=params.contract,
-                data={},
-                on_update=params.on_px_data_updated,
-            )
-
     def get_px_data_keep_update(
             self, *,
             contract: Contract, duration: str, bar_sizes: list[str], period_secs: list[int],
@@ -261,13 +243,6 @@ class IBapiInfoPxData(IBapiInfoBase):
                 data={},
                 on_update=on_px_data_updated,
                 on_update_market=on_market_data_received,
-            )
-            self._px_req_params[req_px] = PxDataRequestParams(
-                contract=contract,
-                duration=duration,
-                bar_size=bar_size,
-                period_sec=period_sec,
-                on_px_data_updated=on_px_data_updated,
             )
 
             req_px_ids.append(req_px)

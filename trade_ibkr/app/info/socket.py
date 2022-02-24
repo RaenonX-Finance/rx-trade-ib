@@ -14,12 +14,6 @@ def register_socket_endpoints(app: IBapiInfo, px_data_req_ids: list[int]):
             to_socket_message_px_data_list([app.get_px_data_from_cache(req_id) for req_id in px_data_req_ids])
         )
 
-    @fast_api_socket.on("pxRequest")
-    async def on_request_px_data_history(*_):
-        print_log("[Socket] Received `pxRequest`")
-
-        app.get_px_data_one_time(keep_update_req_ids=px_data_req_ids)
-
     @fast_api_socket.on("position")
     async def on_request_position(*_):
         print_log("[Socket] Received `position`")
