@@ -244,12 +244,8 @@ class IBapiInfoPxData(IBapiInfoBase):
     def is_all_px_data_ready(self, px_data_req_ids: list[int]) -> bool:
         return all(self._px_data_cache[px_data_req_id].is_ready for px_data_req_id in px_data_req_ids)
 
-    def get_px_data_from_cache(self, req_id: int) -> PxData | None:
-        px_data_entry = self._px_data_cache.get(req_id)
-
-        if not px_data_entry:
-            return None
-
+    def get_px_data_from_cache(self, req_id: int) -> PxData:
+        px_data_entry = self._px_data_cache[req_id]
         return px_data_entry.to_px_data()
 
     def _request_px_data(self, *, contract: Contract, duration: str, bar_size: str, keep_update: bool) -> int:

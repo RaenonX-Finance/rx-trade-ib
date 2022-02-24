@@ -35,7 +35,7 @@ def prepare_info_app():
     ]
 
     while not app.is_all_px_data_ready(px_data_req_ids):
-        time.sleep(0.1)
+        time.sleep(0.25)
         print_log("[System] Waiting the initial data to ready")
 
     register_socket_endpoints(app, px_data_req_ids)
