@@ -1,7 +1,8 @@
 import asyncio
 import time
+from abc import ABC
 from dataclasses import dataclass, field
-from typing import ParamSpec, TypeVar
+from typing import TypeVar
 
 from ibapi.common import BarData, TickAttrib, TickerId
 from ibapi.contract import Contract, ContractDetails
@@ -14,18 +15,14 @@ from trade_ibkr.model import (
 )
 from .base import IBapiInfoBase
 
-P = ParamSpec("P")
-R = TypeVar("R")
-
 
 @dataclass(kw_only=True)
-class PxDataCacheEntry:
+class PxDataCacheEntry(ABC):
     data: dict[int, BarDataDict]
     period_sec: int
     contract: ContractDetails | None
     contract_og: Contract
     on_update: OnPxDataUpdatedNoAccount
-    on_update_market: OnMarketDataReceived
 
     last_historical_sent: float = field(init=False)
     last_market_update: float = field(init=False)
@@ -40,12 +37,18 @@ class PxDataCacheEntry:
 
     @property
     def is_send_px_data_ok(self) -> bool:
+        if not self.is_ready:
+            return False
+
         # Debounce the data because `priceTick` and historical data update frequently
         return self.is_minute_changed_for_historical or time.time() - self.last_historical_sent > 3
 
     @property
     def is_send_market_px_data_ok(self) -> bool:
         # Limit market data output rate
+        if not self.contract:
+            return False
+
         return time.time() - self.last_market_update > 0.15
 
     @property
@@ -67,13 +70,36 @@ class PxDataCacheEntry:
         )
 
 
+@dataclass(kw_only=True)
+class PxDataCacheEntryOneTime(PxDataCacheEntry):
+    pass
+
+
+@dataclass(kw_only=True)
+class PxDataCacheEntryKeepUpdate(PxDataCacheEntry):
+    on_update_market: OnMarketDataReceived
+
+
+@dataclass(kw_only=True)
+class PxDataRequestParams:
+    contract: Contract
+    duration: str
+    bar_size: str
+    period_sec: int
+    on_px_data_updated: OnPxDataUpdatedNoAccount
+
+
+T = TypeVar("T", bound=PxDataCacheEntry)
+
+
 class IBapiInfoPxData(IBapiInfoBase):
     def __init__(self):
         super().__init__()
 
-        self._px_data_cache: dict[int, PxDataCacheEntry] = {}
+        self._px_data_cache: dict[int, T] = {}
         self._px_data_complete: set[int] = set()
         self._px_req_id_to_contract_req_id: dict[int, int] = {}
+        self._px_req_params: dict[int, PxDataRequestParams] = {}
         self._px_market_to_px_data: dict[int, int] = {}
 
     # region Historical Data
@@ -101,6 +127,19 @@ class IBapiInfoPxData(IBapiInfoBase):
 
         return is_new_bar
 
+    @staticmethod
+    def _trigger_on_px_data_updated(px_data_cache_entry: T):
+        _time = time.time()
+
+        async def execute_on_update():
+            await px_data_cache_entry.on_update(OnPxDataUpdatedEventNoAccount(
+                contract=px_data_cache_entry.contract,
+                px_data=px_data_cache_entry.to_px_data(),
+                proc_sec=time.time() - _time,
+            ))
+
+        asyncio.run(execute_on_update())
+
     def historicalData(self, reqId: int, bar: BarData):
         self._on_historical_data_return(reqId, bar, remove_old=False)
 
@@ -110,20 +149,20 @@ class IBapiInfoPxData(IBapiInfoBase):
 
         px_data_cache_entry = self._px_data_cache[reqId]
 
-        if px_data_cache_entry.is_ready and px_data_cache_entry.is_send_px_data_ok:
-            async def execute_on_update():
-                await px_data_cache_entry.on_update(OnPxDataUpdatedEventNoAccount(
-                    contract=px_data_cache_entry.contract,
-                    px_data=px_data_cache_entry.to_px_data(),
-                    proc_sec=time.time() - _time,
-                ))
-
-            asyncio.run(execute_on_update())
+        if isinstance(px_data_cache_entry, PxDataCacheEntryKeepUpdate) and px_data_cache_entry.is_send_px_data_ok:
+            self._trigger_on_px_data_updated(px_data_cache_entry)
 
         if px_data_cache_entry.no_market_data_update:
             # Re-trigger market data feed if stopped
-            req_market = self.request_px_data_market(px_data_cache_entry.contract_og)
+            req_market = self._request_px_data_market(px_data_cache_entry.contract_og)
             self._px_market_to_px_data[req_market] = reqId
+
+    def historicalDataEnd(self, reqId: int, start: str, end: str):
+        _time = time.time()
+        px_data_cache_entry = self._px_data_cache[reqId]
+
+        if px_data_cache_entry.is_send_px_data_ok:
+            self._trigger_on_px_data_updated(px_data_cache_entry)
 
     # endregion
 
@@ -137,7 +176,10 @@ class IBapiInfoPxData(IBapiInfoBase):
 
         px_data_cache_entry = self._px_data_cache[self._px_market_to_px_data[reqId]]
 
-        if not px_data_cache_entry.contract or not px_data_cache_entry.is_send_market_px_data_ok:
+        if (
+                not isinstance(px_data_cache_entry, PxDataCacheEntryKeepUpdate) or
+                not px_data_cache_entry.is_send_market_px_data_ok
+        ):
             return
 
         async def execute_on_update():
@@ -152,7 +194,7 @@ class IBapiInfoPxData(IBapiInfoBase):
 
     # endregion
 
-    def get_px_data(self, req_id: int) -> PxData | None:
+    def get_px_data_from_cache(self, req_id: int) -> PxData | None:
         px_data_entry = self._px_data_cache.get(req_id)
 
         if not px_data_entry:
@@ -160,19 +202,37 @@ class IBapiInfoPxData(IBapiInfoBase):
 
         return px_data_entry.to_px_data()
 
-    def request_px_data(self, *, contract: Contract, duration: str, bar_size: str, keep_update: bool) -> int:
+    def _request_px_data(self, *, contract: Contract, duration: str, bar_size: str, keep_update: bool) -> int:
         request_id = self.next_valid_request_id
 
         self.reqHistoricalData(request_id, contract, "", duration, bar_size, "TRADES", 0, 2, keep_update, [])
 
         return request_id
 
-    def request_px_data_market(self, contract: Contract) -> int:
+    def _request_px_data_market(self, contract: Contract) -> int:
         request_id = self.next_valid_request_id
 
         self.reqMktData(request_id, contract, "", False, False, [])
 
         return request_id
+
+    def get_px_data_one_time(self, *, keep_update_req_ids: list[int]):
+        for old_req_id in keep_update_req_ids:
+            params = self._px_req_params[old_req_id]
+
+            req_px = self._request_px_data(
+                contract=params.contract,
+                duration=params.duration,
+                bar_size=params.bar_size,
+                keep_update=False
+            )
+            self._px_data_cache[req_px] = PxDataCacheEntryOneTime(
+                contract=self._contract_data[self._px_req_id_to_contract_req_id[old_req_id]],
+                period_sec=params.period_sec,
+                contract_og=params.contract,
+                data={},
+                on_update=params.on_px_data_updated,
+            )
 
     def get_px_data_keep_update(
             self, *,
@@ -188,19 +248,26 @@ class IBapiInfoPxData(IBapiInfoBase):
         req_px_ids: list[int] = []
 
         for bar_size, period_sec in zip(bar_sizes, period_secs):
-            req_px = self.request_px_data(contract=contract, duration=duration, bar_size=bar_size, keep_update=True)
-            req_contract = self.request_contract_data(contract)
-            req_market = self.request_px_data_market(contract)
+            req_px = self._request_px_data(contract=contract, duration=duration, bar_size=bar_size, keep_update=True)
+            req_contract = self._request_contract_data(contract)
+            req_market = self._request_px_data_market(contract)
             self._px_req_id_to_contract_req_id[req_px] = req_contract
             self._px_market_to_px_data[req_market] = req_px
 
-            self._px_data_cache[req_px] = PxDataCacheEntry(
+            self._px_data_cache[req_px] = PxDataCacheEntryKeepUpdate(
                 contract=None,
                 period_sec=period_sec,
                 contract_og=contract,
                 data={},
                 on_update=on_px_data_updated,
                 on_update_market=on_market_data_received,
+            )
+            self._px_req_params[req_px] = PxDataRequestParams(
+                contract=contract,
+                duration=duration,
+                bar_size=bar_size,
+                period_sec=period_sec,
+                on_px_data_updated=on_px_data_updated,
             )
 
             req_px_ids.append(req_px)

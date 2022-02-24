@@ -19,7 +19,7 @@ class IBapiInfoBase(EWrapper, EClient):
     def contractDetails(self, reqId: int, contractDetails: ContractDetails):
         self._contract_data[reqId] = contractDetails
 
-    def request_contract_data(self, contract: Contract) -> int:
+    def _request_contract_data(self, contract: Contract) -> int:
         request_id = self.next_valid_request_id
 
         self.reqContractDetails(request_id, contract)
