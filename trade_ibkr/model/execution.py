@@ -127,7 +127,7 @@ class OrderExecutionCollection:
                     position = position_tracker[contract_identifier]
 
                     # Position reduced or zero-ed
-                    if grouped_execution.quantity > abs(position):
+                    if position and grouped_execution.quantity > abs(position):
                         # Position reversed
                         closing, opening = grouped_execution.to_closing_and_opening(abs(position))
 
