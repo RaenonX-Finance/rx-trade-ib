@@ -241,6 +241,9 @@ class IBapiInfoPxData(IBapiInfoBase):
 
     # endregion
 
+    def is_all_px_data_ready(self, px_data_req_ids: list[int]) -> bool:
+        return all(self._px_data_cache[px_data_req_id].is_ready for px_data_req_id in px_data_req_ids)
+
     def get_px_data_from_cache(self, req_id: int) -> PxData | None:
         px_data_entry = self._px_data_cache.get(req_id)
 

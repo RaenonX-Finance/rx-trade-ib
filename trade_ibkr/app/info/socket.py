@@ -11,7 +11,7 @@ def register_socket_endpoints(app: IBapiInfo, px_data_req_ids: list[int]):
 
         await fast_api_socket.emit(
             "pxInit",
-            to_socket_message_px_data_list([app.get_px_data_from_cache(req_id) for req_id in px_data_req_ids])
+            to_socket_message_px_data_list(app.get_px_data_from_cache(req_id) for req_id in px_data_req_ids)
         )
 
     @fast_api_socket.on("position")
