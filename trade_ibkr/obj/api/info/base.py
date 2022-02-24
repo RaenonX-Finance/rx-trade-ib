@@ -9,7 +9,8 @@ class IBapiInfoBase(EWrapper, EClient):
 
         self._contract_data: dict[int, ContractDetails | None] = {}
 
-        self._request_id = -1
+        # Start from 1 to avoid false-negative
+        self._request_id = 1
 
     @property
     def next_valid_request_id(self) -> int:
