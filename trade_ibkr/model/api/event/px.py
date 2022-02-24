@@ -27,7 +27,10 @@ class OnPxDataUpdatedEventNoAccount:
     proc_sec: float
 
     def __str__(self):
-        return f"{self.contract.underSymbol} {self.px_data.current_close:.2f} @ {self.proc_sec:.3f} s"
+        return (
+            f"{self.contract.underSymbol} - {self.px_data.current_close:.2f} "
+            f"({self.px_data.latest_time} @ {self.px_data.period_sec // 60}) / {self.proc_sec:.3f} s"
+        )
 
 
 OnPxDataUpdatedNoAccount: TypeAlias = Callable[[OnPxDataUpdatedEventNoAccount], Coroutine[Any, Any, None]]

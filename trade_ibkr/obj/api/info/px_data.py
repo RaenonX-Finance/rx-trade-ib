@@ -32,6 +32,10 @@ class PxDataCacheEntry(ABC):
         self.last_market_update = 0
 
     @property
+    def current_epoch_sec(self) -> int:
+        return int(time.time()) // self.period_sec * self.period_sec
+
+    @property
     def is_ready(self) -> bool:
         return self.contract is not None and self.data
 
@@ -69,6 +73,56 @@ class PxDataCacheEntry(ABC):
             bars=[self.data[key] for key in sorted(self.data.keys())]
         )
 
+    def remove_oldest(self):
+        self.data.pop(min(self.data.keys()))
+
+    def update_latest_px(self, current: float):
+        epoch_latest = max(self.data.keys())
+        epoch_current = self.current_epoch_sec
+
+        if epoch_current > epoch_latest:
+            # Current epoch is greater than the latest epoch
+            new_bar: BarDataDict = {
+                PxDataCol.OPEN: current,
+                PxDataCol.HIGH: current,
+                PxDataCol.LOW: current,
+                PxDataCol.CLOSE: current,
+                PxDataCol.EPOCH_SEC: epoch_current,
+                PxDataCol.VOLUME: 0,
+            }
+            self.data[epoch_current] = new_bar
+            self.remove_oldest()
+            return
+
+        bar_current = self.data[epoch_current]
+        self.data[epoch_current] = bar_current | {
+            PxDataCol.HIGH: max(bar_current[PxDataCol.HIGH], current),
+            PxDataCol.LOW: min(bar_current[PxDataCol.LOW], current),
+            PxDataCol.CLOSE: current,
+        }
+
+    def update_latest_bar(self, bar: BarData, /, is_realtime_update: bool):
+        # If `bar.barCount` is -1, the data is incorrect
+        if bar.barCount == -1:
+            return
+
+        bar_data_dict = to_bar_data_dict(bar)
+
+        epoch_to_rec = bar_data_dict[PxDataCol.EPOCH_SEC]
+        epoch_current = self.current_epoch_sec
+
+        if is_realtime_update and epoch_current > epoch_to_rec:
+            # Epoch is newer, do nothing (let market update add the new bar)
+            return
+
+        self.data[epoch_to_rec] = bar_data_dict
+
+        is_new_bar = epoch_to_rec not in self.data
+
+        if is_new_bar and is_realtime_update:
+            # Keep price data in a fixed size
+            self.remove_oldest()
+
 
 @dataclass(kw_only=True)
 class PxDataCacheEntryOneTime(PxDataCacheEntry):
@@ -78,15 +132,6 @@ class PxDataCacheEntryOneTime(PxDataCacheEntry):
 @dataclass(kw_only=True)
 class PxDataCacheEntryKeepUpdate(PxDataCacheEntry):
     on_update_market: OnMarketDataReceived
-
-
-@dataclass(kw_only=True)
-class PxDataRequestParams:
-    contract: Contract
-    duration: str
-    bar_size: str
-    period_sec: int
-    on_px_data_updated: OnPxDataUpdatedNoAccount
 
 
 T = TypeVar("T", bound=PxDataCacheEntry)
@@ -99,36 +144,21 @@ class IBapiInfoPxData(IBapiInfoBase):
         self._px_data_cache: dict[int, T] = {}
         self._px_data_complete: set[int] = set()
         self._px_req_id_to_contract_req_id: dict[int, int] = {}
-        self._px_req_params: dict[int, PxDataRequestParams] = {}
         self._px_market_to_px_data: dict[int, int] = {}
 
     # region Historical Data
 
-    def _on_historical_data_return(self, reqId: int, bar: BarData, /, remove_old: bool) -> bool:
-        # If `bar.barCount` is -1, the data is incorrect
-        if bar.barCount == -1:
-            return False
-
-        bar_data_dict = to_bar_data_dict(bar)
-        epoch = bar_data_dict[PxDataCol.EPOCH_SEC]
-
+    def _on_historical_data_return(self, reqId: int, bar: BarData, /, is_realtime_update: bool):
         cache_entry = self._px_data_cache[reqId]
-        cache_entry.data[bar_data_dict[PxDataCol.EPOCH_SEC]] = bar_data_dict
-
-        is_new_bar = epoch not in cache_entry.data
-
-        if is_new_bar and remove_old:
-            # Keep price data in a fixed size
-            cache_entry.data.pop(min(cache_entry.data.keys()))
 
         if contract_req_id := self._px_req_id_to_contract_req_id.get(reqId):
             # Add contract detail to PxData object
             cache_entry.contract = self._contract_data[contract_req_id]
 
-        return is_new_bar
+        cache_entry.update_latest_bar(bar, is_realtime_update=is_realtime_update)
 
     @staticmethod
-    def _trigger_on_px_data_updated(px_data_cache_entry: T):
+    def _on_px_data_updated(px_data_cache_entry: T):
         _time = time.time()
 
         async def execute_on_update():
@@ -141,16 +171,16 @@ class IBapiInfoPxData(IBapiInfoBase):
         asyncio.run(execute_on_update())
 
     def historicalData(self, reqId: int, bar: BarData):
-        self._on_historical_data_return(reqId, bar, remove_old=False)
+        self._on_historical_data_return(reqId, bar, is_realtime_update=False)
 
     def historicalDataUpdate(self, reqId: int, bar: BarData):
         _time = time.time()
-        self._on_historical_data_return(reqId, bar, remove_old=True)
+        self._on_historical_data_return(reqId, bar, is_realtime_update=True)
 
         px_data_cache_entry = self._px_data_cache[reqId]
 
         if isinstance(px_data_cache_entry, PxDataCacheEntryKeepUpdate) and px_data_cache_entry.is_send_px_data_ok:
-            self._trigger_on_px_data_updated(px_data_cache_entry)
+            self._on_px_data_updated(px_data_cache_entry)
 
         if px_data_cache_entry.no_market_data_update:
             # Re-trigger market data feed if stopped
@@ -162,7 +192,7 @@ class IBapiInfoPxData(IBapiInfoBase):
         px_data_cache_entry = self._px_data_cache[reqId]
 
         if px_data_cache_entry.is_send_px_data_ok:
-            self._trigger_on_px_data_updated(px_data_cache_entry)
+            self._on_px_data_updated(px_data_cache_entry)
 
     # endregion
 
@@ -190,6 +220,7 @@ class IBapiInfoPxData(IBapiInfoBase):
 
         asyncio.run(execute_on_update())
 
+        px_data_cache_entry.update_latest_px(price)
         px_data_cache_entry.last_market_update = time.time()
 
     # endregion

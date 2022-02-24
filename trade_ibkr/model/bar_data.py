@@ -15,5 +15,4 @@ def to_bar_data_dict(data: BarData) -> BarDataDict:
         PxDataCol.CLOSE: float(data.close),
         PxDataCol.EPOCH_SEC: int(data.date),
         PxDataCol.VOLUME: int(data.volume),
-        PxDataCol.VWAP: float(data.wap),
     }
