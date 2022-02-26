@@ -17,7 +17,7 @@ def prepare_info_app():
         req_id for req_ids in [
             app.get_px_data_keep_update(
                 contract=contract_mnq,
-                duration="3 D",
+                duration="86400 S",
                 bar_sizes=["1 min", "5 mins"],
                 period_secs=[60, 300],
                 on_px_data_updated=on_px_updated,
@@ -25,7 +25,7 @@ def prepare_info_app():
             ),
             app.get_px_data_keep_update(
                 contract=contract_mym,
-                duration="3 D",
+                duration="86400 S",
                 bar_sizes=["1 min", "5 mins"],
                 period_secs=[60, 300],
                 on_px_data_updated=on_px_updated,

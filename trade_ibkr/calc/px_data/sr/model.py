@@ -20,7 +20,7 @@ class SRLevelInitData(TypedDict):
 class SRLevelsData:
     levels: SRLevelInitData
 
-    bar_hl_avg: float
+    min_gap: float
 
     df: DataFrame
 
@@ -32,7 +32,7 @@ class SRLevelsData:
                 is_close_to_level = False
 
                 for level_of_data in self.levels_data.keys():
-                    if abs(level_of_data - current_level) > self.bar_hl_avg:
+                    if abs(level_of_data - current_level) > self.min_gap:
                         continue
 
                     self.levels_data[level_of_data].window = (

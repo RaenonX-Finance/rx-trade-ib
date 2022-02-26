@@ -7,4 +7,5 @@ console = Console()
 fast_api = FastAPI()
 fast_api_socket = SocketManager(app=fast_api)
 
-AVG_MULTIPLIER = 2
+SR_PERIOD = 60
+SR_MULTIPLIER = 1.2

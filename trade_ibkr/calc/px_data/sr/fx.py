@@ -12,7 +12,7 @@ def is_far_from_level(value: float, levels: list[float], avg: float) -> bool:
     return not np.any([abs(value - level) < avg for level in levels])
 
 
-def support_resistance_fractal(df: DataFrame, bar_hl_avg: float) -> list[float]:
+def support_resistance_fractal(df: DataFrame, min_gap: float) -> list[float]:
     series_high = df[PxDataCol.HIGH].tolist()
     series_low = df[PxDataCol.LOW].tolist()
 
@@ -33,17 +33,17 @@ def support_resistance_fractal(df: DataFrame, bar_hl_avg: float) -> list[float]:
     for i in range(2, len(df.index) - 2):
         if is_bullish_fractal(i):
             low = series_low[i]
-            if is_far_from_level(low, levels, bar_hl_avg):
+            if is_far_from_level(low, levels, min_gap):
                 levels.append(low)
         elif is_bearish_fractal(i):
             high = series_high[i]
-            if is_far_from_level(high, levels, bar_hl_avg):
+            if is_far_from_level(high, levels, min_gap):
                 levels.append(high)
 
     return sorted(levels)
 
 
-def support_resistance_window(df: DataFrame, bar_hl_avg: float) -> list[float]:
+def support_resistance_window(df: DataFrame, min_gap: float) -> list[float]:
     levels = []
     max_list = []
     min_list = []
@@ -62,7 +62,7 @@ def support_resistance_window(df: DataFrame, bar_hl_avg: float) -> list[float]:
         max_list.append(current_max)
 
         # if the maximum value remains the same after shifting 5 times
-        if len(max_list) == 5 and is_far_from_level(current_max, levels, bar_hl_avg):
+        if len(max_list) == 5 and is_far_from_level(current_max, levels, min_gap):
             levels.append(current_max)
 
         current_min = min(series_low[i - 5:i + 5])
@@ -72,7 +72,7 @@ def support_resistance_window(df: DataFrame, bar_hl_avg: float) -> list[float]:
 
         min_list.append(current_min)
 
-        if len(min_list) == 5 and is_far_from_level(current_min, levels, bar_hl_avg):
+        if len(min_list) == 5 and is_far_from_level(current_min, levels, min_gap):
             levels.append(current_min)
 
     return sorted(levels)
