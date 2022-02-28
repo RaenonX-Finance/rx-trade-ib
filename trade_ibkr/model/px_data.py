@@ -95,6 +95,17 @@ class PxData:
     def get_last_n(self, n: int) -> Series:
         return self.dataframe.iloc[-n]
 
+    def get_last_day_close(self) -> float | None:
+        market_date_prev = self.dataframe[PxDataCol.DATE_MARKET].unique()[-2]
+
+        last_day_df = self.dataframe[self.dataframe[PxDataCol.DATE_MARKET] == market_date_prev]
+
+        if not len(last_day_df.index):
+            return None
+
+        last_day_last_entry = last_day_df.iloc[-1]
+        return last_day_last_entry[PxDataCol.CLOSE]
+
     @staticmethod
     def _get_series_at(original: Series, candle_pos: CandlePos) -> Series:
         series = original.copy()
@@ -150,7 +161,7 @@ class PxData:
 
     @property
     def current_close(self) -> float:
-        return self.dataframe.iloc[-1][PxDataCol.CLOSE]
+        return self.get_current()[PxDataCol.CLOSE]
 
     @property
     def contract_identifier(self) -> int:

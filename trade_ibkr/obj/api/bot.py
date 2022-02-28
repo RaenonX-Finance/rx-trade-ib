@@ -1,7 +1,7 @@
 import time
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Callable, ParamSpec, TypeVar
+from typing import Callable
 
 from ibapi.client import EClient
 from ibapi.common import BarData, OrderId
@@ -14,9 +14,6 @@ from trade_ibkr.model import (
     BacktestAccount, BrokerAccount, ActionStatus, BarDataDict, PxData, Position, PositionData,
     to_bar_data_dict, OnPxDataUpdated, OnPxDataUpdatedEvent,
 )
-
-P = ParamSpec("P")
-R = TypeVar("R")
 
 
 @dataclass(kw_only=True)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import Callable, ParamSpec, TypeVar
+from typing import Callable
 
 from ibapi.client import EClient
 from ibapi.common import BarData
@@ -14,9 +14,6 @@ from trade_ibkr.model import (
     BacktestAccount, BarDataDict, OnPxDataUpdated, OnPxDataUpdatedEvent, Position, PositionData, PxData,
     to_bar_data_dict,
 )
-
-P = ParamSpec("P")
-R = TypeVar("R")
 
 
 @dataclass(kw_only=True)
