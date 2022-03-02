@@ -262,7 +262,8 @@ class OrderExecutionCollection:
         for identifier, grouped_executions in self._executions.items():
             self._executions_dataframe[identifier] = self._init_exec_dataframe_single(
                 grouped_executions,
-                multiplier=float(grouped_executions[0].contract.multiplier),
+                # Equity doesn't have multiplier
+                multiplier=float(grouped_executions[0].contract.multiplier or 1),
             )
 
     def __init__(self, order_execs: Iterable[OrderExecution]):
