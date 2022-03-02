@@ -7,6 +7,7 @@ from .portfolio import IBapiInfoPortfolio
 from .px_data import IBapiInfoPxData
 
 _error_code_ignore: set[int] = {
+    202,  # Order canceled
     2109,  # Out of RTH order is still processed
 }
 
