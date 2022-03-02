@@ -1,1 +1,0 @@
-mypy trade_ibkr
