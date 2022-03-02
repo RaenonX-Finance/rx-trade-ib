@@ -7,7 +7,7 @@ from .socket import register_socket_endpoints
 
 
 def prepare_info_app():
-    app, _ = start_app_info(is_demo=True)
+    app, _ = start_app_info(is_demo=False)
 
     contract_mnq = make_futures_contract("MNQH2", "GLOBEX")
     contract_mym = make_futures_contract("MYM  MAR 22", "ECBOT")

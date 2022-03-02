@@ -1,3 +1,4 @@
+from .generic import OnError, OnErrorEvent
 from .px import (
     OnPxDataUpdatedEvent, OnPxDataUpdated,
     OnPxDataUpdatedEventNoAccount, OnPxDataUpdatedNoAccount,
