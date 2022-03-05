@@ -17,6 +17,8 @@ with open("config.yaml", "r") as config_file:
     console.print("[cyan]--- Config content ---[/cyan]")
     console.print(yaml.dump(config, default_flow_style=False))
 
+IS_DEMO = config["system"]["demo"]
+
 SR_PERIOD = config["support-resistance"]["period"]
 SR_MULTIPLIER = config["support-resistance"]["multiplier"]
 

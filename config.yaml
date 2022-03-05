@@ -1,3 +1,6 @@
+system:
+  demo: false
+
 support-resistance:
   period: 120
   multiplier: 1.2
