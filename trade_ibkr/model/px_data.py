@@ -9,7 +9,7 @@ from ibapi.contract import ContractDetails
 from pandas import DataFrame, DatetimeIndex, Series, to_datetime
 from scipy.signal import argrelextrema
 
-from trade_ibkr.calc import calc_support_resistance_levels
+from trade_ibkr.calc import analyze_extrema, calc_support_resistance_levels
 from trade_ibkr.const import console
 from trade_ibkr.enums import CandlePos, PxDataCol
 from trade_ibkr.utils import closest_diff, get_detailed_contract_identifier
@@ -43,10 +43,10 @@ class PxData:
         )
 
         self.dataframe[PxDataCol.LOCAL_MIN] = self.dataframe.iloc[
-            argrelextrema(self.dataframe[PxDataCol.LOW].values, np.less_equal, order=7)[0]
+            argrelextrema(self.dataframe[PxDataCol.LOW].values, np.less_equal, order=5)[0]
         ][PxDataCol.LOW]
         self.dataframe[PxDataCol.LOCAL_MAX] = self.dataframe.iloc[
-            argrelextrema(self.dataframe[PxDataCol.HIGH].values, np.greater_equal, order=7)[0]
+            argrelextrema(self.dataframe[PxDataCol.HIGH].values, np.greater_equal, order=5)[0]
         ][PxDataCol.HIGH]
 
         self.dataframe[PxDataCol.PRICE_TIMES_VOLUME] = np.multiply(
@@ -79,6 +79,7 @@ class PxData:
         self._proc_df()
 
         self.sr_levels_data = calc_support_resistance_levels(self.dataframe)
+        self.extrema = analyze_extrema(self.dataframe)
 
     def get_px_sr_score(self, px: float) -> float:
         if not self.sr_levels_data.levels["window"] or not self.sr_levels_data.levels["fractal"]:

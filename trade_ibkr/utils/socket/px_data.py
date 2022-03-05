@@ -1,10 +1,16 @@
 import json
-from typing import Iterable, TypedDict, TYPE_CHECKING
+from typing import Iterable, TYPE_CHECKING, TypedDict
 
 from trade_ibkr.enums import PxDataCol
+from trade_ibkr.utils import cdf
 
 if TYPE_CHECKING:
     from trade_ibkr.model import PxData
+
+
+class PxDataBarExtrema(TypedDict):
+    min: bool
+    max: bool
 
 
 class PxDataBar(TypedDict):
@@ -16,6 +22,7 @@ class PxDataBar(TypedDict):
     vwap: float
     amplitudeHL: float
     amplitudeOC: float
+    extrema: PxDataBarExtrema
     ema120: float
 
 
@@ -41,11 +48,35 @@ class PxDataLastDayDiff(TypedDict):
     percent: float
 
 
+class PxDataExtremaData(TypedDict):
+    pos: list[float]
+    neg: list[float]
+
+
+class PxDataExtremaCurrentData(TypedDict):
+    val: float
+    pct: float
+
+
+class PxDataExtremaCurrentStats(TypedDict):
+    swingDiff: PxDataExtremaCurrentData
+    swingDiffAmplRatio: PxDataExtremaCurrentData
+    duration: PxDataExtremaCurrentData
+
+
+class PxDataExtrema(TypedDict):
+    diff: PxDataExtremaData
+    diffAmplRatio: PxDataExtremaData
+    length: PxDataExtremaData
+    current: PxDataExtremaCurrentStats
+
+
 class PxDataDict(TypedDict):
     uniqueIdentifier: str
     periodSec: int
     contract: PxDataContract
     data: list[PxDataBar]
+    extrema: PxDataExtrema
     supportResistance: list[PxDataSupportResistance]
     lastDayClose: float | None
 
@@ -63,6 +94,10 @@ def _from_px_data_bars(px_data: "PxData") -> list[PxDataBar]:
             "vwap": px_data_row[PxDataCol.VWAP],
             "amplitudeHL": px_data_row[PxDataCol.AMPLITUDE_HL],
             "amplitudeOC": px_data_row[PxDataCol.AMPLITUDE_OC],
+            "extrema": {
+                "min": bool(px_data_row[PxDataCol.LOCAL_MIN]),
+                "max": bool(px_data_row[PxDataCol.LOCAL_MAX])
+            },
             "ema120": px_data_row[PxDataCol.EMA_120],
         })
 
@@ -93,12 +128,54 @@ def _from_px_data_contract(px_data: "PxData") -> PxDataContract:
     }
 
 
+def _from_px_data_current_stats(px_data: "PxData") -> PxDataExtremaCurrentStats:
+    points = px_data.extrema.points_in_use
+
+    swing_diff = px_data.current_close - px_data.extrema.last_extrema.px
+    swing_diff_ampl_ratio = px_data.extrema.current_ampl_avg
+    duration = px_data.extrema.current_length
+
+    return {
+        "swingDiff": {
+            "val": swing_diff,
+            "pct": cdf(swing_diff, list(map(lambda point: point.diff, points))),
+        },
+        "swingDiffAmplRatio": {
+            "val": swing_diff_ampl_ratio,
+            "pct": cdf(swing_diff_ampl_ratio, list(map(lambda point: point.diff_ampl_ratio, points))),
+        },
+        "duration": {
+            "val": duration,
+            "pct": cdf(duration, list(map(lambda point: point.length, points))),
+        },
+    }
+
+
+def _from_px_data_extrema(px_data: "PxData") -> PxDataExtrema:
+    return {
+        "diff": {
+            "pos": list(map(lambda point: point.diff, px_data.extrema.points_pos)),
+            "neg": list(map(lambda point: point.diff, px_data.extrema.points_neg)),
+        },
+        "diffAmplRatio": {
+            "pos": list(map(lambda point: point.diff_ampl_ratio, px_data.extrema.points_pos)),
+            "neg": list(map(lambda point: point.diff_ampl_ratio, px_data.extrema.points_neg)),
+        },
+        "length": {
+            "pos": list(map(lambda point: point.length, px_data.extrema.points_pos)),
+            "neg": list(map(lambda point: point.length, px_data.extrema.points_neg)),
+        },
+        "current": _from_px_data_current_stats(px_data)
+    }
+
+
 def _to_px_data_dict(px_data: "PxData") -> PxDataDict:
     return {
         "uniqueIdentifier": px_data.unique_identifier,
         "periodSec": px_data.period_sec,
         "contract": _from_px_data_contract(px_data),
         "data": _from_px_data_bars(px_data),
+        "extrema": _from_px_data_extrema(px_data),
         "supportResistance": _from_px_data_support_resistance(px_data),
         "lastDayClose": px_data.get_last_day_close()
     }
