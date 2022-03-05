@@ -59,15 +59,15 @@ class PxDataExtremaCurrentData(TypedDict):
 
 
 class PxDataExtremaCurrentStats(TypedDict):
-    swingDiff: PxDataExtremaCurrentData
-    swingDiffAmplRatio: PxDataExtremaCurrentData
+    swing: PxDataExtremaCurrentData
+    swingAmplRatio: PxDataExtremaCurrentData
     duration: PxDataExtremaCurrentData
 
 
 class PxDataExtrema(TypedDict):
-    diff: PxDataExtremaData
-    diffAmplRatio: PxDataExtremaData
-    length: PxDataExtremaData
+    swing: PxDataExtremaData
+    swingAmplRatio: PxDataExtremaData
+    duration: PxDataExtremaData
     current: PxDataExtremaCurrentStats
 
 
@@ -136,32 +136,32 @@ def _from_px_data_current_stats(px_data: "PxData") -> PxDataExtremaCurrentStats:
     duration = px_data.extrema.current_length
 
     return {
-        "swingDiff": {
+        "swing": {
             "val": swing_diff,
-            "pct": cdf(swing_diff, list(map(lambda point: point.diff, points))),
+            "pct": (1 - cdf(swing_diff, list(map(lambda point: point.diff, points)))) * 100,
         },
-        "swingDiffAmplRatio": {
+        "swingAmplRatio": {
             "val": swing_diff_ampl_ratio,
-            "pct": cdf(swing_diff_ampl_ratio, list(map(lambda point: point.diff_ampl_ratio, points))),
+            "pct": (1 - cdf(swing_diff_ampl_ratio, list(map(lambda point: point.diff_ampl_ratio, points)))) * 100,
         },
         "duration": {
             "val": duration,
-            "pct": cdf(duration, list(map(lambda point: point.length, points))),
+            "pct": (1 - cdf(duration, list(map(lambda point: point.length, points)))) * 100,
         },
     }
 
 
 def _from_px_data_extrema(px_data: "PxData") -> PxDataExtrema:
     return {
-        "diff": {
+        "swing": {
             "pos": list(map(lambda point: point.diff, px_data.extrema.points_pos)),
             "neg": list(map(lambda point: point.diff, px_data.extrema.points_neg)),
         },
-        "diffAmplRatio": {
+        "swingAmplRatio": {
             "pos": list(map(lambda point: point.diff_ampl_ratio, px_data.extrema.points_pos)),
             "neg": list(map(lambda point: point.diff_ampl_ratio, px_data.extrema.points_neg)),
         },
-        "length": {
+        "duration": {
             "pos": list(map(lambda point: point.length, px_data.extrema.points_pos)),
             "neg": list(map(lambda point: point.length, px_data.extrema.points_neg)),
         },
