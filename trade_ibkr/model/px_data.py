@@ -164,6 +164,10 @@ class PxData:
         return self.get_current()[PxDataCol.CLOSE]
 
     @property
+    def current_ampl_hc(self) -> float:
+        return self.get_current()[PxDataCol.AMPLITUDE_HL]
+
+    @property
     def contract_identifier(self) -> int:
         return get_detailed_contract_identifier(self.contract)
 

@@ -5,7 +5,7 @@ from trade_ibkr.model import (
 )
 from trade_ibkr.obj import IBapiInfo
 from trade_ibkr.utils import (
-    print_log,
+    print_error, print_log,
     to_socket_message_error, to_socket_message_execution, to_socket_message_open_order, to_socket_message_order_filled,
     to_socket_message_position, to_socket_message_px_data, to_socket_message_px_data_market,
 )
@@ -52,7 +52,7 @@ async def on_order_filled(e: OnOrderFilledEvent):
 
 
 async def on_error(e: OnErrorEvent):
-    print_log(f"[TWS] Error ({e})")
+    print_error(f"[TWS] Error ({e})")
     await fast_api_socket.emit("error", to_socket_message_error(e))
 
 

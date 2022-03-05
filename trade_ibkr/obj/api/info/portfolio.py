@@ -9,6 +9,7 @@ from ibapi.execution import Execution, ExecutionFilter
 from ibapi.order import Order
 from ibapi.order_state import OrderState
 
+from trade_ibkr.const import AMPL_COEFF_SL, AMPL_COEFF_TP
 from trade_ibkr.enums import OrderSideConst
 from trade_ibkr.model import (
     OnExecutionFetchEarliestTime, OnExecutionFetched, OnExecutionFetchedEvent, OnOpenOrderFetched,
@@ -18,7 +19,9 @@ from trade_ibkr.model import (
     OrderExecutionCollection, Position, PositionData,
 )
 from trade_ibkr.utils import (
-    get_contract_identifier, get_order_trigger_price, make_limit_order, make_market_order, make_stop_order,
+    get_contract_identifier, get_order_trigger_price,
+    make_limit_bracket_order, make_market_order, make_stop_order,
+    print_error, print_log, update_order_price,
 )
 from .base import IBapiInfoBase
 
@@ -39,13 +42,12 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         self._execution_fetch_earliest_time: OnExecutionFetchEarliestTime | None = None
         self._execution_request_ids: set[int] = set()
 
-        self._order_pending_contract: Contract | None = None
-        self._order_pending_order: Order | None = None
         self._order_cache: dict[int, Order] = {}
 
         self._order_filled_perm_id: int | None = None
         self._order_filled_avg_px: float | None = None
         self._order_on_filled: OnOrderFilled | None = None
+        self._order_valid_id: int | None = None
 
     # region Action on Order Updated
 
@@ -256,82 +258,85 @@ class IBapiInfoPortfolio(IBapiInfoBase):
                 self.request_completed_orders()
 
     def nextValidId(self, orderId: int):
-        # Requesting a new order ID should indicate that an order is to be placed
-        if not self._order_pending_contract:
-            print(
-                "Order ID requested, which means there's an order to be placed - but contract is not set",
-                file=sys.stderr
-            )
-            return
+        print_log(f"[API] Fetched next valid order ID {orderId}")
+        self._order_valid_id = orderId
 
-        if not self._order_pending_order:
-            print(
-                "Order ID requested, which means there's an order to be placed - but order is not set",
-                file=sys.stderr
-            )
-            return
-
-        super().placeOrder(orderId, self._order_pending_contract, self._order_pending_order)
-
-    def _make_order(
+    def _make_new_order(
             self, *,
             side: OrderSideConst, quantity: float, order_px: float | None,
-            current_px: float, order_id: int | None
-    ) -> Order:
+            current_px: float, amplitude_hc: float, order_id: int, min_tick: float,
+    ) -> list[Order]:
         quantity = Decimal(quantity)
 
         if not order_px:
-            return make_market_order(side, quantity, order_id)
+            return [make_market_order(side, quantity, order_id)]
 
         match side:
             case "BUY":
-                if order_px > current_px:
-                    return make_stop_order(side, quantity, order_px, order_id)
+                if order_px < current_px:
+                    return make_limit_bracket_order(
+                        side, quantity, order_px, order_id,
+                        take_profit_px_diff=amplitude_hc * AMPL_COEFF_TP,
+                        stop_loss_px_diff=amplitude_hc * AMPL_COEFF_SL,
+                        min_tick=min_tick,
+                    )
 
-                return make_limit_order(side, quantity, order_px, order_id)
+                return [make_stop_order(side, quantity, order_px, order_id)]
             case "SELL":
                 if order_px > current_px:
-                    return make_limit_order(side, quantity, order_px, order_id)
+                    return make_limit_bracket_order(
+                        side, quantity, order_px, order_id,
+                        take_profit_px_diff=amplitude_hc * AMPL_COEFF_TP,
+                        stop_loss_px_diff=amplitude_hc * AMPL_COEFF_SL,
+                        min_tick=min_tick,
+                    )
 
-                return make_stop_order(side, quantity, order_px, order_id)
+                return [make_stop_order(side, quantity, order_px, order_id)]
 
         raise ValueError(f"Unhandled order side: {side}")
+
+    def _update_order(self, *, existing_order: Order, quantity: float, order_px: float):
+        quantity = Decimal(quantity)
+
+        update_order_price(existing_order, order_px)
+        existing_order.totalQuantity = quantity
 
     def place_order(
             self, *,
             contract: Contract, side: OrderSideConst, quantity: float, order_px: float | None,
-            current_px: float, order_id: int | None,
+            current_px: float, amplitude_hc: float, order_id: int | None, min_tick: float,
     ):
-        order = self._make_order(
+        if order_id:
+            # Have order ID means it's order modification
+            existing_order = self._order_cache.get(order_id)
+
+            if existing_order:
+                self._update_order(existing_order=existing_order, quantity=quantity, order_px=order_px)
+
+                super().placeOrder(order_id, contract, existing_order)
+                return
+
+        if not self._order_valid_id:
+            print_error("Valid order ID unavailable, request order ID first")
+            return
+
+        # Not order modification, create new order
+        order_list = self._make_new_order(
             side=side,
             order_px=order_px,
             quantity=quantity,
             current_px=current_px,
-            order_id=order_id,
+            order_id=self._order_valid_id,
+            amplitude_hc=amplitude_hc,
+            min_tick=min_tick,
         )
 
-        if order_id:
-            # Have order ID means it's order modification
-            existing_order = self._order_cache.get(order_id)
-            if existing_order and order.orderType != existing_order.orderType:
-                # Order type changed, just fill the order as market
-                self.cancel_order(order_id)
-                order = self._make_order(
-                    side=side,
-                    quantity=quantity,
-                    current_px=current_px,
-                    order_id=None,
-                    order_px=None,
-                )
+        for order in order_list:
+            super().placeOrder(order.orderId, contract, order)
 
-            super().placeOrder(order_id, contract, order)
-        else:
-            # No order ID means it's new order
-            self._order_pending_contract = contract
-            self._order_pending_order = order
-
-            # Related handling should occur in `nextValidId`
-            self.reqIds(-1)
+        # Request next valid order ID for future use
+        # `-1` as the doc mentioned, the parameter is not being used
+        self.reqIds(-1)
 
     def cancel_order(self, order_id: int):
         self.cancelOrder(order_id)
