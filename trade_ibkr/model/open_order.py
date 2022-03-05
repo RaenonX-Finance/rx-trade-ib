@@ -15,6 +15,12 @@ class OpenOrder:
     quantity: Decimal
     side: OrderSideConst
 
+    parent_id: int
+
+    @property
+    def has_parent(self) -> bool:
+        return self.parent_id != 0
+
 
 class OpenOrderBook:
     def __init__(self, open_order: list[OpenOrder]):

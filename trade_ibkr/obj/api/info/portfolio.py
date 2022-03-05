@@ -107,6 +107,7 @@ class IBapiInfoPortfolio(IBapiInfoBase):
             price=get_order_trigger_price(order),
             quantity=order.totalQuantity,
             side=order.action,
+            parent_id=order.parentId,
         ))
 
     def openOrderEnd(self):
