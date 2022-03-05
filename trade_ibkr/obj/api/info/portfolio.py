@@ -194,7 +194,7 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
     def request_all_executions(self):
         if not self._execution_fetch_earliest_time:
-            print("`self._execution_fetch_earliest_time()` must be defined before requesting execution")
+            print_error("`self._execution_fetch_earliest_time()` must be defined before requesting execution")
             return
 
         exec_filter = ExecutionFilter()

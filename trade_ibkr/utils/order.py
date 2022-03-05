@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from ibapi.order import Order
 
-from trade_ibkr.enums import OrderSideConst
+from trade_ibkr.enums import OrderSideConst, reverse_order_side
 from trade_ibkr.utils import force_min_tick
 
 
@@ -76,14 +76,15 @@ def make_limit_bracket_order(
         *, take_profit_px_diff: float, stop_loss_px_diff: float, min_tick: float,
 ) -> list[Order]:
     diff_coeff = 1 if side == "BUY" else -1
+    side_reversed = reverse_order_side(side)
 
     main_order = make_limit_order(side, quantity, px, order_id, transmit=False)
     take_profit = make_limit_order(
-        side, quantity, force_min_tick(px + take_profit_px_diff * diff_coeff, min_tick), order_id + 1,
+        side_reversed, quantity, force_min_tick(px + take_profit_px_diff * diff_coeff, min_tick), order_id + 1,
         parent_id=order_id, transmit=False,
     )
     stop_loss = make_stop_order(
-        side, quantity, force_min_tick(px - stop_loss_px_diff * diff_coeff, min_tick), order_id + 2,
+        side_reversed, quantity, force_min_tick(px - stop_loss_px_diff * diff_coeff, min_tick), order_id + 2,
         parent_id=order_id, transmit=True,
     )
 
