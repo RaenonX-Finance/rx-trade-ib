@@ -1,0 +1,7 @@
+support-resistance:
+  period: 120
+  multiplier: 1.2
+
+risk-management:
+  take-profit-ampl: 2.2
+  stop-loss-ampl: 1

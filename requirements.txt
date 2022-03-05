@@ -21,3 +21,6 @@ rich
 fastapi[all]
 fastapi-socketio
 uvicorn[standard]
+
+# Config
+pyyaml
