@@ -1,0 +1,132 @@
+import time
+from abc import ABC
+from dataclasses import dataclass, field
+from typing import Generic, TypeVar
+
+from ibapi.common import BarData
+from ibapi.contract import Contract, ContractDetails
+
+from .bar_data import BarDataDict, to_bar_data_dict
+from ..enums import PxDataCol
+
+
+@dataclass(kw_only=True)
+class PxDataCacheEntryBase(ABC):
+    data: dict[int, BarDataDict]
+    period_sec: int
+    contract: ContractDetails | None
+    contract_og: Contract
+
+    last_historical_sent: float = field(init=False)
+    last_market_update: float | None = field(init=False)  # None means no data received yet
+
+    def __post_init__(self):
+        self.last_historical_sent = 0
+        self.last_market_update = None
+
+    @property
+    def current_epoch_sec(self) -> int:
+        return int(time.time()) // self.period_sec * self.period_sec
+
+    @property
+    def is_ready(self) -> bool:
+        return self.contract is not None and self.data
+
+    @property
+    def is_send_px_data_ok(self) -> bool:
+        if not self.is_ready:
+            return False
+
+        # Debounce the data because `priceTick` and historical data update frequently
+        return self.is_minute_changed_for_historical or time.time() - self.last_historical_sent > 3
+
+    @property
+    def is_send_market_px_data_ok(self) -> bool:
+        # Limit market data output rate
+        if not self.contract:
+            return False
+
+        if self.last_market_update is None:
+            # First market data transmission
+            return True
+
+        return time.time() - self.last_market_update > 0.15
+
+    @property
+    def is_minute_changed_for_historical(self) -> bool:
+        return int(self.last_historical_sent / 60) != int(time.time() / 60)
+
+    @property
+    def no_market_data_update(self) -> bool:
+        # > 3 secs no incoming market data
+        return (
+                self.last_market_update is not None
+                and time.time() - self.last_market_update > 3
+                and self.is_ready
+        )
+
+    def remove_oldest(self):
+        self.data.pop(min(self.data.keys()))
+
+    def update_latest_market(self, current: float):
+        self.last_market_update = time.time()
+
+        epoch_latest = max(self.data.keys())
+        epoch_current = self.current_epoch_sec
+
+        if epoch_current > epoch_latest:
+            # Current epoch is greater than the latest epoch
+            new_bar: BarDataDict = {
+                PxDataCol.OPEN: current,
+                PxDataCol.HIGH: current,
+                PxDataCol.LOW: current,
+                PxDataCol.CLOSE: current,
+                PxDataCol.EPOCH_SEC: epoch_current,
+                PxDataCol.VOLUME: 0,
+            }
+            self.data[epoch_current] = new_bar
+            self.remove_oldest()
+            return
+
+        bar_current = self.data[epoch_current]
+        self.data[epoch_current] = bar_current | {
+            PxDataCol.HIGH: max(bar_current[PxDataCol.HIGH], current),
+            PxDataCol.LOW: min(bar_current[PxDataCol.LOW], current),
+            PxDataCol.CLOSE: current,
+        }
+
+    def update_latest_history(self, bar: BarData, /, is_realtime_update: bool):
+        # If `bar.barCount` is -1, the data is incorrect
+        if bar.barCount == -1:
+            return
+
+        bar_data_dict = to_bar_data_dict(bar)
+
+        epoch_to_rec = bar_data_dict[PxDataCol.EPOCH_SEC]
+        epoch_current = self.current_epoch_sec
+
+        if is_realtime_update and epoch_current > epoch_to_rec:
+            # Epoch is newer, do nothing (let market update add the new bar)
+            return
+
+        self.data[epoch_to_rec] = bar_data_dict
+
+        is_new_bar = epoch_to_rec not in self.data
+
+        if is_new_bar and is_realtime_update:
+            # Keep price data in a fixed size
+            self.remove_oldest()
+
+
+T = TypeVar("T", bound=PxDataCacheEntryBase)
+
+
+@dataclass(kw_only=True)
+class PxDataCacheBase(Generic[T], ABC):
+    data: dict[int, T] = field(init=False)
+
+    def __post_init__(self):
+        self.data = {}
+
+    def is_all_px_data_ready(self, px_data_req_ids: list[int]) -> bool:
+        return all(self.data[px_data_req_id].is_ready for px_data_req_id in px_data_req_ids)

@@ -1,3 +1,3 @@
-from .backtest import IBapiBacktest
-from .bot import IBapiBot
+from .base import IBapiBase
+from .bot import *  # noqa
 from .info import IBapiInfo

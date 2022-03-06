@@ -1,2 +1,2 @@
-from .app import start_app, start_app_info, start_app_backtest
+from .app import start_app_bot_spread, start_app_info
 from .api import *  # noqa

@@ -1,1 +1,1 @@
-from .simple import simple_strategy
+from .spread import spread_trading_strategy

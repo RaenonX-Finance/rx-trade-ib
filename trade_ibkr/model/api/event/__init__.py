@@ -1,3 +1,4 @@
+from .bot_spread import OnMarketPxUpdatedOfBotSpread, OnMarketPxUpdatedOfBotSpreadEvent
 from .generic import OnError, OnErrorEvent
 from .px import (
     OnPxDataUpdatedEvent, OnPxDataUpdated,

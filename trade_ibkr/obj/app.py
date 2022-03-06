@@ -2,10 +2,10 @@ import threading
 import time
 from typing import Callable, TypeVar, Union
 
-from .api import IBapiBot, IBapiInfo, IBapiBacktest
+from .api import IBapiBotSpread, IBapiInfo
+from ..model import CommodityPair, OnMarketPxUpdatedOfBotSpread
 
-
-T = TypeVar("T", bound=Union[IBapiInfo | IBapiBot | IBapiBacktest])
+T = TypeVar("T", bound=Union[IBapiInfo | IBapiBotSpread])
 
 
 def init_app(app_callable: Callable[[], T], is_demo: bool = False) -> tuple[T, threading.Thread]:
@@ -28,13 +28,12 @@ def init_app(app_callable: Callable[[], T], is_demo: bool = False) -> tuple[T, t
     return app, api_thread
 
 
-def start_app(*, is_demo: bool = False) -> tuple[IBapiBot, threading.Thread]:
-    return init_app(IBapiBot, is_demo)
+def start_app_bot_spread(
+        *, commodity_pair: CommodityPair, on_px_updated: OnMarketPxUpdatedOfBotSpread,
+        is_demo: bool = False,
+) -> tuple[IBapiBotSpread, threading.Thread]:
+    return init_app(lambda: IBapiBotSpread(commodity_pair=commodity_pair, on_px_updated=on_px_updated), is_demo)
 
 
 def start_app_info(*, is_demo: bool = False) -> tuple[IBapiInfo, threading.Thread]:
     return init_app(IBapiInfo, is_demo)
-
-
-def start_app_backtest(*, is_demo: bool = False) -> tuple[IBapiBacktest, threading.Thread]:
-    return init_app(IBapiBacktest, is_demo)

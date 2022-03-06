@@ -20,21 +20,20 @@ from trade_ibkr.model import (
     OnPositionFetched, OnPositionFetchedEvent,
     OpenOrder, OpenOrderBook,
     OrderExecution, OrderExecutionCollection,
-    Position, PositionData,
+    Position,
 )
 from trade_ibkr.utils import (
     get_contract_identifier, get_order_trigger_price,
     make_limit_bracket_order, make_market_order, make_stop_order,
-    print_error, print_log, update_order_price,
+    print_error, update_order_price,
 )
-from .base import IBapiInfoBase
+from ..base import IBapiBase, IBapiBasePosition
 
 
-class IBapiInfoPortfolio(IBapiInfoBase):
+class IBapiInfoPortfolio(IBapiBasePosition, IBapiBase):
     def __init__(self):
         super().__init__()
 
-        self._position_data_list: list[PositionData] = []
         self._position_on_fetched: OnPositionFetched | None = None
 
         self._open_order_list: list[OpenOrder] | None = None
@@ -52,7 +51,6 @@ class IBapiInfoPortfolio(IBapiInfoBase):
         self._order_filled_perm_id: int | None = None
         self._order_filled_avg_px: float | None = None
         self._order_on_filled: OnOrderFilled | None = None
-        self._order_valid_id: int | None = None
 
     # region Action on Order Updated
 
@@ -65,19 +63,13 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
     # region Position
 
-    def position(self, account: str, contract: Contract, position: Decimal, avgCost: float):
-        self._position_data_list.append(PositionData(
-            contract=contract,
-            position=position,
-            avg_cost=avgCost,
-        ))
-
     def positionEnd(self):
+        super().positionEnd()
+
         if not self._position_on_fetched:
-            print(
+            print_error(
                 "Position fetched, but no corresponding handler is set. "
                 "Use `set_on_position_fetched()` for setting it.",
-                file=sys.stderr,
             )
             return
 
@@ -86,13 +78,8 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
         asyncio.run(execute_after_position_end())
 
-        self._position_data_list = []
-
     def set_on_position_fetched(self, on_position_fetched: OnPositionFetched):
         self._position_on_fetched = on_position_fetched
-
-    def request_positions(self):
-        self.reqPositions()
 
     # endregion
 
@@ -117,10 +104,9 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
     def openOrderEnd(self):
         if not self._open_order_on_fetched:
-            print(
+            print_error(
                 "Open order fetched, but no corresponding handler is set. "
                 "Use `set_on_open_order_fetched()` for setting it.",
-                file=sys.stderr,
             )
             return
 
@@ -167,7 +153,7 @@ class IBapiInfoPortfolio(IBapiInfoBase):
             return
 
         pnl = commissionReport.realizedPNL
-        if pnl == sys.float_info.max:  # Max value PNL means unavailable
+        if pnl == sys.float_info.max:  # Max value PnL means unavailable
             return
 
         self._execution_cache[commissionReport.execId].realized_pnl = commissionReport.realizedPNL
@@ -229,10 +215,7 @@ class IBapiInfoPortfolio(IBapiInfoBase):
             return
 
         if not self._order_on_filled:
-            print(
-                "Order filled handler not set, use `set_on_order_filled()` for setting it",
-                file=sys.stderr
-            )
+            print_error("Order filled handler not set, use `set_on_order_filled()` for setting it.")
 
         async def execute_after_order_filled():
             await self._order_on_filled(OnOrderFilledEvent(
@@ -272,10 +255,6 @@ class IBapiInfoPortfolio(IBapiInfoBase):
                 self._order_filled_perm_id = permId
                 self._order_filled_avg_px = avgFillPrice
                 self.request_completed_orders()
-
-    def nextValidId(self, orderId: int):
-        print_log(f"[API] Fetched next valid order ID {orderId}")
-        self._order_valid_id = orderId
 
     def _make_new_order(
             self, *,
