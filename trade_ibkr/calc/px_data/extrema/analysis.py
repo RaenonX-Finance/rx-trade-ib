@@ -29,11 +29,7 @@ def analyze_extrema(df: DataFrame) -> ExtremaData:
                 extrema[-1] = min(Extrema(idx, local_min), extrema[-1], key=lambda item: item.extrema)
                 continue
 
-            ampl_avg = (
-                abs(local_min - extrema[-1].extrema) / avg(amplitude_queue)
-                if amplitude_queue
-                else None
-            )
+            ampl_avg = avg(amplitude_queue) if amplitude_queue else None
             amplitude_queue = []
             extrema.append(Extrema(idx, local_min))
             extrema_info.append(ExtremaInfo(local_min, ampl_avg))
@@ -44,18 +40,14 @@ def analyze_extrema(df: DataFrame) -> ExtremaData:
                 extrema[-1] = max(Extrema(idx, local_max), extrema[-1], key=lambda item: item.extrema)
                 continue
 
-            ampl_avg = (
-                abs(local_max - extrema[-1].extrema) / avg(amplitude_queue)
-                if amplitude_queue
-                else None
-            )
+            ampl_avg = avg(amplitude_queue) if amplitude_queue else None
             amplitude_queue = []
             extrema.append(Extrema(idx, local_max))
             extrema_info.append(ExtremaInfo(local_max, ampl_avg))
             direction_last = Direction.UP
             continue
 
-    diff = np.diff(np.concatenate(([Extrema(0, extrema[0].extrema)], extrema)), axis=0)\
+    diff = np.diff(np.concatenate(([Extrema(0, extrema[0].extrema)], extrema)), axis=0)
 
     return ExtremaData(
         points=[
