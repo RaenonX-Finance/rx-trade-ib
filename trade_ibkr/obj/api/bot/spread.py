@@ -12,6 +12,7 @@ from trade_ibkr.model import (
     BrokerAccount, CommodityPair, GetSpread, OnMarketPxUpdatedOfBotSpread, OnMarketPxUpdatedOfBotSpreadEvent,
     PxDataCacheBase, PxDataCacheEntryBase, PxDataPair, UnrealizedPnL,
 )
+from trade_ibkr.utils import get_order_trigger_price, print_log
 from ..base import IBapiBase, IBapiBasePosition, IBapiBasePx
 
 
@@ -58,6 +59,7 @@ class IBapiBotSpread(IBapiBasePx[PxDataCacheEntry, PxDataCache], IBapiBasePositi
                 unrlzd_pnl=UnrealizedPnL()
             )
 
+        print_log(f"[TWS] Initialize data subsctiption of: {contract.localSymbol}")
         return super()._get_px_data_keep_update(
             contract=contract, duration="86400 S", bar_sizes=["1 min"], period_secs=[60],
             get_new_cache_entry=get_new_cache_entry,
@@ -80,6 +82,11 @@ class IBapiBotSpread(IBapiBasePx[PxDataCacheEntry, PxDataCache], IBapiBasePositi
     def placeOrder(self, orderId: OrderId, contract: Contract, order: Order):
         self._order_pending = True
 
+        print_log(
+            f"[TWS] Place order: "
+            f"{order.action} {order.orderType} {contract.localSymbol} x {order.totalQuantity} "
+            f"@ {get_order_trigger_price(order)}"
+        )
         super().placeOrder(orderId, contract, order)
 
     def orderStatus(
@@ -107,6 +114,8 @@ class IBapiBotSpread(IBapiBasePx[PxDataCacheEntry, PxDataCache], IBapiBasePositi
         req_id_pnl = self.next_valid_request_id
         self.reqPnLSingle(req_id_pnl, "all", "", contractDetails.underConId)
         self._pnl_req_id_to_contract_req_id[req_id_pnl] = reqId
+
+        print_log(f"[TWS] Subscribe PnL of {contractDetails.underSymbol}")
 
     def pnlSingle(
             self, reqId: int, pos: Decimal, dailyPnL: float, unrealizedPnL: float, realizedPnL: float, value: float
