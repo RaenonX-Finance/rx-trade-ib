@@ -1,16 +1,18 @@
 class ExecutionDataCol:
+    TIME_COMPLETED = "time_completed"
     EPOCH_SEC = "epoch_sec"
     SIDE = "side"
     QUANTITY = "quantity"
     AVG_PX = "avg_price"
     REALIZED_PNL = "realized_pnl"
 
-    # Names above must match the field name of `GroupedOrderExecution`
+    # Values above must match the field name of `GroupedOrderExecution`
 
     REALIZED_PNL_SUM = "realized_pnl_sum"
 
     PX_SIDE = "px_side"
     PX_SIDE_SUM = "px_side_sum"
+    PX_SIDE_AMPL_RATIO = "px_side_ampl_ratio"
 
     PROFIT = "profit"
     LOSS = "loss"

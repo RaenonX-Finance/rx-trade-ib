@@ -15,11 +15,8 @@ def request_earliest_execution_time(app: IBapiInfo, px_data_req_ids: list[int]) 
 
 def get_execution_on_fetched_params(app: IBapiInfo, px_data_req_ids: list[int]) -> OnExecutionFetchedGetParams:
     def wrapper():
-        px_data_list = [app.get_px_data_from_cache(req_id) for req_id in px_data_req_ids]
-
         return OnExecutionFetchedParams(
-            earliest_time=min(px_data.earliest_time for px_data in px_data_list),
-            contract_ids={px_data.contract_identifier for px_data in px_data_list}
+            px_data_list=[app.get_px_data_from_cache(req_id) for req_id in px_data_req_ids]
         )
 
     return wrapper

@@ -1,8 +1,6 @@
 import json
 from typing import TYPE_CHECKING, TypedDict
 
-from trade_ibkr.enums import OrderSideConst
-
 if TYPE_CHECKING:
     from trade_ibkr.model import OnErrorEvent
 

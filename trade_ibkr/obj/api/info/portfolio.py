@@ -13,9 +13,14 @@ from ibapi.order_state import OrderState
 from trade_ibkr.const import AMPL_COEFF_SL, AMPL_COEFF_TP
 from trade_ibkr.enums import OrderSideConst
 from trade_ibkr.model import (
-    OnExecutionFetched, OnExecutionFetchedEvent, OnExecutionFetchedGetParams, OnExecutionFetchedParams,
-    OnOpenOrderFetched, OnOpenOrderFetchedEvent, OnOrderFilled, OnOrderFilledEvent, OnPositionFetched,
-    OnPositionFetchedEvent, OpenOrder, OpenOrderBook, OrderExecution, OrderExecutionCollection, Position, PositionData,
+    OnExecutionFetched, OnExecutionFetchedEvent,
+    OnExecutionFetchedGetParams, OnExecutionFetchedParams,
+    OnOpenOrderFetched, OnOpenOrderFetchedEvent,
+    OnOrderFilled, OnOrderFilledEvent,
+    OnPositionFetched, OnPositionFetchedEvent,
+    OpenOrder, OpenOrderBook,
+    OrderExecution, OrderExecutionCollection,
+    Position, PositionData,
 )
 from trade_ibkr.utils import (
     get_contract_identifier, get_order_trigger_price,
@@ -184,7 +189,7 @@ class IBapiInfoPortfolio(IBapiInfoBase):
             await self._execution_on_fetched(OnExecutionFetchedEvent(
                 executions=OrderExecutionCollection(
                     self._execution_cache.values(),
-                    self._execution_on_fetched_params_processed.contract_ids,
+                    self._execution_on_fetched_params_processed,
                 ),
                 proc_sec=time.time() - _time
             ))
@@ -196,7 +201,7 @@ class IBapiInfoPortfolio(IBapiInfoBase):
     def set_on_executions_fetched(
             self,
             on_execution_fetched: OnExecutionFetched,
-            on_execution_fetched_params: OnExecutionFetchedParams,
+            on_execution_fetched_params: OnExecutionFetchedGetParams,
     ):
         self._execution_on_fetched = on_execution_fetched
         self._execution_on_fetched_params = on_execution_fetched_params

@@ -1,17 +1,17 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Callable, Coroutine
+from typing import Any, Callable, Coroutine, TYPE_CHECKING
 
 from trade_ibkr.enums import OrderSideConst
-from ...execution import OrderExecutionCollection
-from ...open_order import OpenOrderBook
-from ...position import Position
+
+if TYPE_CHECKING:
+    from trade_ibkr.model import OrderExecutionCollection, OpenOrderBook, Position, PxData
 
 
 @dataclass(kw_only=True)
 class OnPositionFetchedEvent:
-    position: Position
+    position: "Position"
 
 
 OnPositionFetched = Callable[[OnPositionFetchedEvent], Coroutine[Any, Any, None]]
@@ -19,7 +19,7 @@ OnPositionFetched = Callable[[OnPositionFetchedEvent], Coroutine[Any, Any, None]
 
 @dataclass(kw_only=True)
 class OnOpenOrderFetchedEvent:
-    open_order: OpenOrderBook
+    open_order: "OpenOrderBook"
 
     def __str__(self):
         return f"{sum(len(orders) for orders in self.open_order.orders.values())}"
@@ -30,7 +30,7 @@ OnOpenOrderFetched = Callable[[OnOpenOrderFetchedEvent], Coroutine[Any, Any, Non
 
 @dataclass(kw_only=True)
 class OnExecutionFetchedEvent:
-    executions: OrderExecutionCollection
+    executions: "OrderExecutionCollection"
 
     proc_sec: float
 
@@ -43,8 +43,21 @@ OnExecutionFetched = Callable[[OnExecutionFetchedEvent], Coroutine[Any, Any, Non
 
 @dataclass(kw_only=True)
 class OnExecutionFetchedParams:
-    earliest_time: datetime
-    contract_ids: set[int]
+    px_data_list: list["PxData"]
+
+    earliest_time: datetime = field(init=False)
+    contract_ids: set[int] = field(init=False)
+
+    px_data_dict_1m: dict[int, "PxData"] = field(init=False)
+
+    def __post_init__(self):
+        self.earliest_time = min(px_data.earliest_time for px_data in self.px_data_list)
+        self.contract_ids = {px_data.contract_identifier for px_data in self.px_data_list}
+        self.px_data_dict_1m = {
+            px_data.contract_identifier: px_data
+            for px_data in self.px_data_list
+            if px_data.period_sec == 60
+        }
 
 
 OnExecutionFetchedGetParams = Callable[[], OnExecutionFetchedParams]
