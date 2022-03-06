@@ -6,6 +6,7 @@ from trade_ibkr.model import OnExecutionFetchedParams
 from .df_init import init_exec_dataframe
 from .exec_init import init_grouped_executions
 from .model import GroupedOrderExecution, OrderExecution
+from ...utils import print_log
 
 
 class OrderExecutionCollection:
@@ -33,6 +34,11 @@ class OrderExecutionCollection:
     @property
     def executions(self) -> dict[int, list[GroupedOrderExecution]]:
         return self._executions
+
+    def save_executions(self):
+        for identifier, exec_df in self._executions_dataframe.items():
+            exec_df.to_csv(f"data-{identifier}.csv")
+            print_log(f"[yellow]Executions of identifier {identifier} saved.[/yellow]")
 
     @property
     def execution_dataframes(self) -> dict[int, DataFrame]:
