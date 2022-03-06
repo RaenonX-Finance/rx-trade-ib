@@ -59,7 +59,7 @@ def _summary(df: DataFrame, multiplier: float, px_data: "PxData"):
         how="left", left_on=ExecutionDataCol.TIME_COMPLETED, right_index=True
     )
     df[ExecutionDataCol.PX_SIDE_AMPL_RATIO] = abs(
-        df_temp[ExecutionDataCol.PX_SIDE].divide(df_temp[PxDataCol.AMPLITUDE_HL])
+        df_temp[ExecutionDataCol.PX_SIDE].divide(df_temp[PxDataCol.AMPLITUDE_HL_EMA_10])
     )
 
 

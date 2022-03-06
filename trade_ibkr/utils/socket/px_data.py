@@ -92,8 +92,8 @@ def _from_px_data_bars(px_data: "PxData") -> list[PxDataBar]:
             "low": px_data_row[PxDataCol.LOW],
             "close": px_data_row[PxDataCol.CLOSE],
             "vwap": px_data_row[PxDataCol.VWAP],
-            "amplitudeHL": px_data_row[PxDataCol.AMPLITUDE_HL],
-            "amplitudeOC": px_data_row[PxDataCol.AMPLITUDE_OC],
+            "amplitudeHL": px_data_row[PxDataCol.AMPLITUDE_HL_EMA_10],
+            "amplitudeOC": px_data_row[PxDataCol.AMPLITUDE_OC_EMA_10],
             "extrema": {
                 "min": bool(px_data_row[PxDataCol.LOCAL_MIN]),
                 "max": bool(px_data_row[PxDataCol.LOCAL_MAX])

@@ -259,7 +259,7 @@ class IBapiInfoPortfolio(IBapiBasePosition, IBapiBase):
     def _make_new_order(
             self, *,
             side: OrderSideConst, quantity: float, order_px: float | None,
-            current_px: float, amplitude_hc: float, order_id: int, min_tick: float,
+            current_px: float, amplitude_hl_ema10: float, order_id: int, min_tick: float,
     ) -> list[Order]:
         quantity = Decimal(quantity)
 
@@ -271,8 +271,8 @@ class IBapiInfoPortfolio(IBapiBasePosition, IBapiBase):
                 if order_px < current_px:
                     return make_limit_bracket_order(
                         side, quantity, order_px, order_id,
-                        take_profit_px_diff=amplitude_hc * AMPL_COEFF_TP,
-                        stop_loss_px_diff=amplitude_hc * AMPL_COEFF_SL,
+                        take_profit_px_diff=amplitude_hl_ema10 * AMPL_COEFF_TP,
+                        stop_loss_px_diff=amplitude_hl_ema10 * AMPL_COEFF_SL,
                         min_tick=min_tick,
                     )
 
@@ -281,8 +281,8 @@ class IBapiInfoPortfolio(IBapiBasePosition, IBapiBase):
                 if order_px > current_px:
                     return make_limit_bracket_order(
                         side, quantity, order_px, order_id,
-                        take_profit_px_diff=amplitude_hc * AMPL_COEFF_TP,
-                        stop_loss_px_diff=amplitude_hc * AMPL_COEFF_SL,
+                        take_profit_px_diff=amplitude_hl_ema10 * AMPL_COEFF_TP,
+                        stop_loss_px_diff=amplitude_hl_ema10 * AMPL_COEFF_SL,
                         min_tick=min_tick,
                     )
 
@@ -299,7 +299,7 @@ class IBapiInfoPortfolio(IBapiBasePosition, IBapiBase):
     def place_order(
             self, *,
             contract: Contract, side: OrderSideConst, quantity: float, order_px: float | None,
-            current_px: float, amplitude_hc: float, order_id: int | None, min_tick: float,
+            current_px: float, amplitude_hl_ema10: float, order_id: int | None, min_tick: float,
     ):
         if order_id:
             # Have order ID means it's order modification
@@ -322,7 +322,7 @@ class IBapiInfoPortfolio(IBapiBasePosition, IBapiBase):
             quantity=quantity,
             current_px=current_px,
             order_id=self._order_valid_id,
-            amplitude_hc=amplitude_hc,
+            amplitude_hl_ema10=amplitude_hl_ema10,
             min_tick=min_tick,
         )
 

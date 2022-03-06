@@ -16,7 +16,7 @@ def analyze_extrema(df: DataFrame) -> ExtremaData:
 
     series_local_min = df[PxDataCol.LOCAL_MIN]
     series_local_max = df[PxDataCol.LOCAL_MAX]
-    series_ampl_hl = df[PxDataCol.AMPLITUDE_HL]
+    series_ampl_hl = df[PxDataCol.AMPLITUDE_HL_EMA_10]
 
     data_zip = zip(range(len(df.index)), series_local_min, series_local_max, series_ampl_hl)
 
@@ -29,22 +29,20 @@ def analyze_extrema(df: DataFrame) -> ExtremaData:
                 extrema[-1] = min(Extrema(idx, local_min), extrema[-1], key=lambda item: item.extrema)
                 continue
 
-            ampl_avg = avg(amplitude_queue) if amplitude_queue else None
-            amplitude_queue = []
             extrema.append(Extrema(idx, local_min))
-            extrema_info.append(ExtremaInfo(local_min, ampl_avg))
+            extrema_info.append(ExtremaInfo(local_min, avg(amplitude_queue)))
             direction_last = Direction.DOWN
+            amplitude_queue = []
             continue
         elif local_max and not math.isnan(local_max):
             if direction_last == Direction.UP:
                 extrema[-1] = max(Extrema(idx, local_max), extrema[-1], key=lambda item: item.extrema)
                 continue
 
-            ampl_avg = avg(amplitude_queue) if amplitude_queue else None
-            amplitude_queue = []
             extrema.append(Extrema(idx, local_max))
-            extrema_info.append(ExtremaInfo(local_max, ampl_avg))
+            extrema_info.append(ExtremaInfo(local_max, avg(amplitude_queue)))
             direction_last = Direction.UP
+            amplitude_queue = []
             continue
 
     diff = np.diff(np.concatenate(([Extrema(0, extrema[0].extrema)], extrema)), axis=0)

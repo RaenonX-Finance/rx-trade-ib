@@ -33,11 +33,11 @@ class PxData:
 
         self.dataframe[PxDataCol.EMA_120] = talib.EMA(self.dataframe[PxDataCol.CLOSE], timeperiod=120)
 
-        self.dataframe[PxDataCol.AMPLITUDE_HL] = talib.EMA(
+        self.dataframe[PxDataCol.AMPLITUDE_HL_EMA_10] = talib.EMA(
             abs(self.dataframe[PxDataCol.HIGH] - self.dataframe[PxDataCol.LOW]),
             timeperiod=10
         )
-        self.dataframe[PxDataCol.AMPLITUDE_OC] = talib.EMA(
+        self.dataframe[PxDataCol.AMPLITUDE_OC_EMA_10] = talib.EMA(
             abs(self.dataframe[PxDataCol.OPEN] - self.dataframe[PxDataCol.CLOSE]),
             timeperiod=10
         )
@@ -165,8 +165,8 @@ class PxData:
         return self.get_current()[PxDataCol.CLOSE]
 
     @property
-    def current_ampl_hc(self) -> float:
-        return self.get_current()[PxDataCol.AMPLITUDE_HL]
+    def current_ampl_hl_ema10(self) -> float:
+        return self.get_current()[PxDataCol.AMPLITUDE_HL_EMA_10]
 
     @property
     def contract_identifier(self) -> int:
