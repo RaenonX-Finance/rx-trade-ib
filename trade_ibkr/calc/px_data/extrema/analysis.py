@@ -58,7 +58,7 @@ def analyze_extrema(df: DataFrame) -> ExtremaData:
             )
             for extrema_diff, info in zip(diff, extrema_info)
         ],
-        current_ampl_avg=(
+        current_ampl_ratio=(
             abs(df[PxDataCol.CLOSE][-1] - extrema[-1].extrema) / avg(amplitude_queue)
             if amplitude_queue
             else 0

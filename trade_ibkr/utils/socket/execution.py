@@ -51,12 +51,12 @@ ExecutionDict: TypeAlias = dict[int, list[ExecutionGroup]]
 
 def _from_grouped_execution_dataframe(executions_df: DataFrame) -> list[ExecutionGroup]:
     df = executions_df.copy()
-    df[ExecutionDataCol.QUANTITY].astype(float, copy=False)
+    df[ExecutionDataCol.QUANTITY] = df[ExecutionDataCol.QUANTITY].astype(float)
 
     columns = {
         ExecutionDataCol.EPOCH_SEC: "epochSec",
         ExecutionDataCol.SIDE: "side",
-        ExecutionDataCol.QUANTITY: "quantity",  # Need float casting?
+        ExecutionDataCol.QUANTITY: "quantity",
         ExecutionDataCol.AVG_PX: "avgPx",
         ExecutionDataCol.REALIZED_PNL: "realizedPnL",
         ExecutionDataCol.REALIZED_PNL_SUM: "realizedPnLSum",
@@ -82,7 +82,7 @@ def _from_grouped_execution_dataframe(executions_df: DataFrame) -> list[Executio
         ExecutionDataCol.AVG_PX_EWR: "avgPxEwr",
     }
 
-    return df_rows_to_list_of_data(executions_df, columns)
+    return df_rows_to_list_of_data(df, columns)
 
 
 def to_socket_message_execution(execution: "OrderExecutionCollection") -> str:

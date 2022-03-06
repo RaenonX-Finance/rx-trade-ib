@@ -71,7 +71,7 @@ class PxDataCacheEntryBase(ABC):
     def update_latest_market(self, current: float):
         self.last_market_update = time.time()
 
-        epoch_latest = max(self.data.keys())
+        epoch_latest = max(self.data.keys()) if self.data else 0
         epoch_current = self.current_epoch_sec
 
         if epoch_current > epoch_latest:
