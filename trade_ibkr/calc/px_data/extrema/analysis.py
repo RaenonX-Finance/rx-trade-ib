@@ -14,13 +14,14 @@ def analyze_extrema(df: DataFrame) -> ExtremaData:
     amplitude_queue: list[float] = []
     direction_last = None
 
+    series_epoch_sec = df[PxDataCol.EPOCH_SEC]
     series_local_min = df[PxDataCol.LOCAL_MIN]
     series_local_max = df[PxDataCol.LOCAL_MAX]
     series_ampl_hl = df[PxDataCol.AMPLITUDE_HL]
 
-    data_zip = zip(range(len(df.index)), series_local_min, series_local_max, series_ampl_hl)
+    data_zip = zip(range(len(df.index)), series_epoch_sec, series_local_min, series_local_max, series_ampl_hl)
 
-    for idx, local_min, local_max, amplitude_hl in data_zip:
+    for idx, epoch_sec, local_min, local_max, amplitude_hl in data_zip:
         if amplitude_hl:
             amplitude_queue.append(amplitude_hl)
 
@@ -31,7 +32,7 @@ def analyze_extrema(df: DataFrame) -> ExtremaData:
 
             direction_last = Direction.DOWN
             extrema.append(Extrema(idx, local_min))
-            extrema_info.append(ExtremaInfo(local_min, avg(amplitude_queue), direction_last.const))
+            extrema_info.append(ExtremaInfo(epoch_sec, local_min, avg(amplitude_queue), direction_last.const))
             amplitude_queue = []
             continue
         elif local_max and not math.isnan(local_max):
@@ -41,7 +42,7 @@ def analyze_extrema(df: DataFrame) -> ExtremaData:
 
             direction_last = Direction.UP
             extrema.append(Extrema(idx, local_max))
-            extrema_info.append(ExtremaInfo(local_max, avg(amplitude_queue), direction_last.const))
+            extrema_info.append(ExtremaInfo(epoch_sec, local_max, avg(amplitude_queue), direction_last.const))
             amplitude_queue = []
             continue
 
@@ -50,6 +51,7 @@ def analyze_extrema(df: DataFrame) -> ExtremaData:
     return ExtremaData(
         points=[
             ExtremaDataPoint(
+                epoch_sec=info.epoch_sec,
                 length=int(extrema_diff[0]),
                 diff=extrema_diff[1],
                 diff_ampl_ratio=abs(extrema_diff[1] / info.ampl_avg) if info.ampl_avg else 0,

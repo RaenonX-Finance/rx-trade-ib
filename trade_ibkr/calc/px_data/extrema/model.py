@@ -10,6 +10,7 @@ class Extrema(NamedTuple):
 
 
 class ExtremaInfo(NamedTuple):
+    epoch_sec: int
     px: float
     ampl_avg: float
     direction: DirectionConst
@@ -17,6 +18,7 @@ class ExtremaInfo(NamedTuple):
 
 @dataclass(kw_only=True)
 class ExtremaDataPoint:
+    epoch_sec: int
     length: int
     diff: float
     diff_ampl_ratio: float

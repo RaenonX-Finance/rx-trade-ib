@@ -47,6 +47,7 @@ class PxDataLastDayDiff(TypedDict):
 
 
 class PxDataExtremaPoint(TypedDict):
+    epochSec: int
     length: int
     diff: float
     amplRatio: float
@@ -151,6 +152,7 @@ def _from_px_data_current_stats(px_data: "PxData") -> PxDataExtremaCurrentStats:
 
 def _from_px_data_extrema_point(point: ExtremaDataPoint) -> PxDataExtremaPoint:
     return {
+        "epochSec": point.epoch_sec,
         "length": point.length,
         "diff": point.diff,
         "amplRatio": point.diff_ampl_ratio,
