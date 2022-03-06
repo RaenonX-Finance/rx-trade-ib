@@ -1,4 +1,4 @@
-from .calc import closest_diff, force_min_tick, cdf
+from .calc import closest_diff, force_min_tick, cdf, avg
 from .contract import (
     make_futures_contract, make_crypto_contract, make_contract_from_unique_identifier,
     get_contract_identifier, get_detailed_contract_identifier,

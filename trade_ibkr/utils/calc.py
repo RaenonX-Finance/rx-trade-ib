@@ -1,3 +1,5 @@
+from typing import cast
+
 import numpy as np
 
 
@@ -12,3 +14,7 @@ def force_min_tick(val: float, tick: float) -> float:
 
 def cdf(val: float, data: list[float]) -> float:
     return sum(abs(val) > abs(item) for item in data) / len(data)
+
+
+def avg(val: list[float]) -> float:
+    return cast(float, np.mean(val))

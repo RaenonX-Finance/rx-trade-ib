@@ -4,6 +4,7 @@ import numpy as np
 from pandas import DataFrame
 
 from trade_ibkr.enums import Direction, PxDataCol
+from trade_ibkr.utils import avg
 from .model import Extrema, ExtremaData, ExtremaDataPoint, ExtremaInfo
 
 
@@ -28,7 +29,11 @@ def analyze_extrema(df: DataFrame) -> ExtremaData:
                 extrema[-1] = min(Extrema(idx, local_min), extrema[-1], key=lambda item: item.extrema)
                 continue
 
-            ampl_avg = sum(amplitude_queue) / len(amplitude_queue) if amplitude_queue else None
+            ampl_avg = (
+                abs(local_min - extrema[-1].extrema) / avg(amplitude_queue)
+                if amplitude_queue
+                else None
+            )
             amplitude_queue = []
             extrema.append(Extrema(idx, local_min))
             extrema_info.append(ExtremaInfo(local_min, ampl_avg))
@@ -39,7 +44,11 @@ def analyze_extrema(df: DataFrame) -> ExtremaData:
                 extrema[-1] = max(Extrema(idx, local_max), extrema[-1], key=lambda item: item.extrema)
                 continue
 
-            ampl_avg = sum(amplitude_queue) / len(amplitude_queue) if amplitude_queue else None
+            ampl_avg = (
+                abs(local_max - extrema[-1].extrema) / avg(amplitude_queue)
+                if amplitude_queue
+                else None
+            )
             amplitude_queue = []
             extrema.append(Extrema(idx, local_max))
             extrema_info.append(ExtremaInfo(local_max, ampl_avg))
@@ -56,7 +65,11 @@ def analyze_extrema(df: DataFrame) -> ExtremaData:
             )
             for extrema_diff, info in zip(np.diff(extrema, axis=0), extrema_info)
         ],
-        current_ampl_avg=sum(amplitude_queue) / len(amplitude_queue) if amplitude_queue else 0,
+        current_ampl_avg=(
+            abs(df[PxDataCol.CLOSE][-1] - extrema[-1].extrema) / avg(amplitude_queue)
+            if amplitude_queue
+            else 0
+        ),
         current_direction=direction_last,
         current_length=len(df.index) - 1 - extrema[-1].idx if extrema else 0
     )
