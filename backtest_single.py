@@ -12,7 +12,7 @@ contract = make_futures_contract("MNQH2", "GLOBEX")
 
 
 @app.trade_on_px_data_backtest(
-    account=account, contract=contract, duration="2 D", bar_size="1 min", min_data_rows=5
+    account=account, contract=contract, duration="10 D", bar_size="1 min", min_data_rows=5
 )
 def main(e: OnPxDataUpdatedEvent):
     pass
