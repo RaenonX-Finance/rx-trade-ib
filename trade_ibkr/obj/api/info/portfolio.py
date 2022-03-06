@@ -1,5 +1,6 @@
 import asyncio
 import sys
+import time
 from decimal import Decimal
 
 from ibapi.commission_report import CommissionReport
@@ -12,11 +13,9 @@ from ibapi.order_state import OrderState
 from trade_ibkr.const import AMPL_COEFF_SL, AMPL_COEFF_TP
 from trade_ibkr.enums import OrderSideConst
 from trade_ibkr.model import (
-    OnExecutionFetchEarliestTime, OnExecutionFetched, OnExecutionFetchedEvent, OnOpenOrderFetched,
-    OnOpenOrderFetchedEvent, OnOrderFilled, OnOrderFilledEvent, OnPositionFetched, OnPositionFetchedEvent, OpenOrder,
-    OpenOrderBook,
-    OrderExecution,
-    OrderExecutionCollection, Position, PositionData,
+    OnExecutionFetched, OnExecutionFetchedEvent, OnExecutionFetchedGetParams, OnExecutionFetchedParams,
+    OnOpenOrderFetched, OnOpenOrderFetchedEvent, OnOrderFilled, OnOrderFilledEvent, OnPositionFetched,
+    OnPositionFetchedEvent, OpenOrder, OpenOrderBook, OrderExecution, OrderExecutionCollection, Position, PositionData,
 )
 from trade_ibkr.utils import (
     get_contract_identifier, get_order_trigger_price,
@@ -39,7 +38,8 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
         self._execution_cache: dict[str, OrderExecution] = {}
         self._execution_on_fetched: OnExecutionFetched | None = None
-        self._execution_fetch_earliest_time: OnExecutionFetchEarliestTime | None = None
+        self._execution_on_fetched_params: OnExecutionFetchedGetParams | None = None
+        self._execution_on_fetched_params_processed: OnExecutionFetchedParams | None = None
         self._execution_request_ids: set[int] = set()
 
         self._order_cache: dict[int, Order] = {}
@@ -169,16 +169,24 @@ class IBapiInfoPortfolio(IBapiInfoBase):
 
     def execDetailsEnd(self, reqId: int):
         if not self._execution_on_fetched:
-            print(
+            print_error(
                 "Executions fetched, but no corresponding handler is set. "
                 "Use `set_on_executions_fetched()` for setting it.",
-                file=sys.stderr,
             )
             return
 
+        if not self._execution_on_fetched_params_processed:
+            self._execution_on_fetched_params_processed = self._execution_on_fetched_params()
+
+        _time = time.time()
+
         async def execute_after_execution_fetched():
             await self._execution_on_fetched(OnExecutionFetchedEvent(
-                executions=OrderExecutionCollection(self._execution_cache.values())
+                executions=OrderExecutionCollection(
+                    self._execution_cache.values(),
+                    self._execution_on_fetched_params_processed.contract_ids,
+                ),
+                proc_sec=time.time() - _time
             ))
 
         asyncio.run(execute_after_execution_fetched())
@@ -188,18 +196,20 @@ class IBapiInfoPortfolio(IBapiInfoBase):
     def set_on_executions_fetched(
             self,
             on_execution_fetched: OnExecutionFetched,
-            on_execution_fetch_earliest_time: OnExecutionFetchEarliestTime,
+            on_execution_fetched_params: OnExecutionFetchedParams,
     ):
         self._execution_on_fetched = on_execution_fetched
-        self._execution_fetch_earliest_time = on_execution_fetch_earliest_time
+        self._execution_on_fetched_params = on_execution_fetched_params
 
     def request_all_executions(self):
-        if not self._execution_fetch_earliest_time:
+        if not self._execution_on_fetched_params:
             print_error("`self._execution_fetch_earliest_time()` must be defined before requesting execution")
             return
 
+        self._execution_on_fetched_params_processed = self._execution_on_fetched_params()
+
         exec_filter = ExecutionFilter()
-        exec_filter.time = self._execution_fetch_earliest_time().strftime("%Y%m%d %H:%M:%S")
+        exec_filter.time = self._execution_on_fetched_params_processed.earliest_time.strftime("%Y%m%d %H:%M:%S")
 
         request_id = self.next_valid_request_id
         self._execution_request_ids.add(request_id)

@@ -7,6 +7,7 @@ from .px import (
 from .portfolio import (
     OnPositionFetched, OnPositionFetchedEvent,
     OnOpenOrderFetched, OnOpenOrderFetchedEvent,
-    OnExecutionFetched, OnExecutionFetchedEvent, OnExecutionFetchEarliestTime,
+    OnExecutionFetched, OnExecutionFetchedEvent,
+    OnExecutionFetchedParams, OnExecutionFetchedGetParams,
     OnOrderFilled, OnOrderFilledEvent,
 )

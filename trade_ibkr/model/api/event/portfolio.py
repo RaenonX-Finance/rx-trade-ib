@@ -32,13 +32,22 @@ OnOpenOrderFetched = Callable[[OnOpenOrderFetchedEvent], Coroutine[Any, Any, Non
 class OnExecutionFetchedEvent:
     executions: OrderExecutionCollection
 
+    proc_sec: float
+
     def __str__(self):
-        return f"{sum(len(executions) for executions in self.executions.executions.values())}"
+        return f"{sum(len(executions) for executions in self.executions.executions.values())} - {self.proc_sec:.3f} s"
 
 
 OnExecutionFetched = Callable[[OnExecutionFetchedEvent], Coroutine[Any, Any, None]]
 
-OnExecutionFetchEarliestTime = Callable[[], datetime]
+
+@dataclass(kw_only=True)
+class OnExecutionFetchedParams:
+    earliest_time: datetime
+    contract_ids: set[int]
+
+
+OnExecutionFetchedGetParams = Callable[[], OnExecutionFetchedParams]
 
 
 @dataclass(kw_only=True)

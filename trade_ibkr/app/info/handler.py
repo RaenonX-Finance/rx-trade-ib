@@ -9,7 +9,7 @@ from trade_ibkr.utils import (
     to_socket_message_error, to_socket_message_execution, to_socket_message_open_order, to_socket_message_order_filled,
     to_socket_message_position, to_socket_message_px_data, to_socket_message_px_data_market,
 )
-from .utils import request_earliest_execution_time
+from .utils import get_execution_on_fetched_params
 
 
 async def on_px_updated(e: OnPxDataUpdatedEventNoAccount):
@@ -60,5 +60,5 @@ def register_handlers(app: IBapiInfo, px_data_req_ids: list[int]):
     app.set_on_position_fetched(on_position_fetched)
     app.set_on_open_order_fetched(on_open_order_fetched)
     app.set_on_order_filled(on_order_filled)
-    app.set_on_executions_fetched(on_executions_fetched, request_earliest_execution_time(app, px_data_req_ids))
+    app.set_on_executions_fetched(on_executions_fetched, get_execution_on_fetched_params(app, px_data_req_ids))
     app.set_on_error(on_error)

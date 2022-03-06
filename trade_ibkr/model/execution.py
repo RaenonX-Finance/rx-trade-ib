@@ -258,28 +258,24 @@ class OrderExecutionCollection:
 
         return df
 
-    def _init_exec_dataframe(self):
+    def _init_exec_dataframe(self, contract_ids: set[int]):
         for identifier, grouped_executions in self._executions.items():
+            if identifier not in contract_ids:
+                # Skip contract IDs not to be included
+                continue
+
             self._executions_dataframe[identifier] = self._init_exec_dataframe_single(
                 grouped_executions,
                 # Equity doesn't have multiplier
                 multiplier=float(grouped_executions[0].contract.multiplier or 1),
             )
 
-    def __init__(self, order_execs: Iterable[OrderExecution]):
+    def __init__(self, order_execs: Iterable[OrderExecution], contract_ids: set[int]):
         self._executions: DefaultDict[int, list[GroupedOrderExecution]] = defaultdict(list)
         self._init_grouped_executions(order_execs)
 
         self._executions_dataframe: dict[int, DataFrame] = {}
-        self._init_exec_dataframe()
-
-    def print_executions(self):
-        for executions in self._executions.values():
-            for execution in executions:
-                print(
-                    execution.contract.localSymbol, execution.time_completed, execution.avg_price,
-                    execution.quantity, execution.realized_pnl
-                )
+        self._init_exec_dataframe(contract_ids)
 
     @property
     def executions(self) -> dict[int, list[GroupedOrderExecution]]:
