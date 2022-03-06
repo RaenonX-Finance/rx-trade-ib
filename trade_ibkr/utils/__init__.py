@@ -9,3 +9,4 @@ from .order import (
     update_order_price,
 )
 from .socket import *  # noqa
+from .system import set_current_process_to_highest_priority

@@ -1,8 +1,5 @@
-import os
-
 from trade_ibkr.app import prepare_bot_app_spread
+from trade_ibkr.utils import set_current_process_to_highest_priority
 
 prepare_bot_app_spread()
-
-# Set current process to the highest priority
-os.system(f"wmic process where processid={os.getpid()} CALL setpriority realtime")
+set_current_process_to_highest_priority()
