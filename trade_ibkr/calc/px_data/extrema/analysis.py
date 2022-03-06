@@ -55,6 +55,8 @@ def analyze_extrema(df: DataFrame) -> ExtremaData:
             direction_last = Direction.UP
             continue
 
+    diff = np.diff(np.concatenate(([Extrema(0, extrema[0].extrema)], extrema)), axis=0)\
+
     return ExtremaData(
         points=[
             ExtremaDataPoint(
@@ -63,7 +65,7 @@ def analyze_extrema(df: DataFrame) -> ExtremaData:
                 diff_ampl_ratio=abs(extrema_diff[1] / info.ampl_avg) if info.ampl_avg else 0,
                 px=info.px,
             )
-            for extrema_diff, info in zip(np.diff(extrema, axis=0), extrema_info)
+            for extrema_diff, info in zip(diff, extrema_info)
         ],
         current_ampl_avg=(
             abs(df[PxDataCol.CLOSE][-1] - extrema[-1].extrema) / avg(amplitude_queue)
