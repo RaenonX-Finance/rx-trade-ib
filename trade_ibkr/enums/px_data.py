@@ -8,6 +8,8 @@ class PxDataCol:
 
     VWAP = "vwap"
 
+    AMPLITUDE_HL = "amplitude_hl"
+
     AMPLITUDE_HL_EMA_10 = "amplitude_hl_ema10"
     AMPLITUDE_OC_EMA_10 = "amplitude_oc_ema10"
 

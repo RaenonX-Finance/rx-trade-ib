@@ -16,7 +16,7 @@ def analyze_extrema(df: DataFrame) -> ExtremaData:
 
     series_local_min = df[PxDataCol.LOCAL_MIN]
     series_local_max = df[PxDataCol.LOCAL_MAX]
-    series_ampl_hl = df[PxDataCol.AMPLITUDE_HL_EMA_10]
+    series_ampl_hl = df[PxDataCol.AMPLITUDE_HL]
 
     data_zip = zip(range(len(df.index)), series_local_min, series_local_max, series_ampl_hl)
 

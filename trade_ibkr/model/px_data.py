@@ -33,9 +33,9 @@ class PxData:
 
         self.dataframe[PxDataCol.EMA_120] = talib.EMA(self.dataframe[PxDataCol.CLOSE], timeperiod=120)
 
+        self.dataframe[PxDataCol.AMPLITUDE_HL] = abs(self.dataframe[PxDataCol.HIGH] - self.dataframe[PxDataCol.LOW])
         self.dataframe[PxDataCol.AMPLITUDE_HL_EMA_10] = talib.EMA(
-            abs(self.dataframe[PxDataCol.HIGH] - self.dataframe[PxDataCol.LOW]),
-            timeperiod=10
+            self.dataframe[PxDataCol.AMPLITUDE_HL], timeperiod=10
         )
         self.dataframe[PxDataCol.AMPLITUDE_OC_EMA_10] = talib.EMA(
             abs(self.dataframe[PxDataCol.OPEN] - self.dataframe[PxDataCol.CLOSE]),
