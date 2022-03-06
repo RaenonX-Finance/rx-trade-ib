@@ -4,4 +4,4 @@ from .execution import ExecutionDataCol
 from .ibkr_const import OrderSideConst, ExecutionSideConst, reverse_order_side
 from .px_data import PxDataCol
 from .status import FetchStatus
-from .side import Side, OrderSide
+from .side import Side

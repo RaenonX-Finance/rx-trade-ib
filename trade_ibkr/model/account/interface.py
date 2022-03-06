@@ -4,7 +4,7 @@ from typing import final
 
 from ibapi.contract import Contract
 
-from trade_ibkr.enums import Side, OrderSide
+from trade_ibkr.enums import OrderSideConst, Side, reverse_order_side
 from ..position import PositionData
 from ..action_status import ActionStatus
 
@@ -77,7 +77,7 @@ class Account(ABC):
         if message:
             print(message)
 
-        self.place_order(contract, order_side, quantity, px)
+        self.place_order(contract, side, quantity, px)
 
     def exit(self, contract: Contract, px: float, message: str | None = None):
         position_data = self.get_current_position_data(contract)
@@ -88,7 +88,7 @@ class Account(ABC):
         if message:
             print(message)
 
-        self.place_order(contract, position_data.side.order_side.reverse, abs(position_data.position), px)
+        self.place_order(contract, reverse_order_side(position_data.side.order_side), abs(position_data.position), px)
 
     @abstractmethod
     def place_order(self, contract: Contract, order_side: OrderSide, quantity: Decimal, px: float):

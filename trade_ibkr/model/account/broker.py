@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 from ibapi.contract import Contract
 
-from trade_ibkr.enums import OrderSide
+from trade_ibkr.enums import OrderSideConst
 from trade_ibkr.utils import make_limit_order
 
 from .interface import Account
@@ -22,8 +22,8 @@ class BrokerAccount(Account):
     def get_current_position_data(self, contract: Contract) -> PositionData | None:
         return self.position.get_position_data(contract)
 
-    def place_order(self, contract: Contract, order_side: OrderSide, quantity: Decimal, px: float):
-        order = make_limit_order(order_side, quantity, px)
+    def place_order(self, contract: Contract, side: OrderSideConst, quantity: Decimal, px: float):
+        order = make_limit_order(side, quantity, px)
 
         self.app.placeOrder(self.app.next_valid_order_id, contract, order)
 
