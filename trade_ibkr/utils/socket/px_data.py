@@ -1,8 +1,10 @@
 import json
 from typing import Iterable, TYPE_CHECKING, TypedDict
 
-from trade_ibkr.enums import PxDataCol
+from trade_ibkr.calc import ExtremaDataPoint
+from trade_ibkr.enums import DirectionConst, PxDataCol
 from trade_ibkr.utils import cdf
+from .utils import df_rows_to_list_of_data
 
 if TYPE_CHECKING:
     from trade_ibkr.model import PxData
@@ -44,9 +46,12 @@ class PxDataLastDayDiff(TypedDict):
     percent: float
 
 
-class PxDataExtremaData(TypedDict):
-    pos: list[float]
-    neg: list[float]
+class PxDataExtremaPoint(TypedDict):
+    length: int
+    diff: float
+    amplRatio: float
+    px: float
+    direction: DirectionConst
 
 
 class PxDataExtremaCurrentData(TypedDict):
@@ -55,15 +60,13 @@ class PxDataExtremaCurrentData(TypedDict):
 
 
 class PxDataExtremaCurrentStats(TypedDict):
-    swing: PxDataExtremaCurrentData
-    swingAmplRatio: PxDataExtremaCurrentData
-    duration: PxDataExtremaCurrentData
+    diff: PxDataExtremaCurrentData
+    amplRatio: PxDataExtremaCurrentData
+    length: PxDataExtremaCurrentData
 
 
 class PxDataExtrema(TypedDict):
-    swing: PxDataExtremaData
-    swingAmplRatio: PxDataExtremaData
-    duration: PxDataExtremaData
+    points: list[PxDataExtremaPoint]
     current: PxDataExtremaCurrentStats
 
 
@@ -126,40 +129,39 @@ def _from_px_data_contract(px_data: "PxData") -> PxDataContract:
 def _from_px_data_current_stats(px_data: "PxData") -> PxDataExtremaCurrentStats:
     points = px_data.extrema.points_in_use
 
-    swing_diff = px_data.current_close - px_data.extrema.last_extrema.px
-    swing_diff_ampl_ratio = px_data.extrema.current_ampl_avg
-    duration = px_data.extrema.current_length
+    diff = px_data.current_close - px_data.extrema.last_extrema.px
+    ampl_ratio = px_data.extrema.current_ampl_ratio
+    length = px_data.extrema.current_length
 
     return {
-        "swing": {
-            "val": swing_diff,
-            "pct": (1 - cdf(swing_diff, list(map(lambda point: point.diff, points)))) * 100,
+        "diff": {
+            "val": diff,
+            "pct": (1 - cdf(diff, list(map(lambda point: point.diff, points)))) * 100,
         },
-        "swingAmplRatio": {
-            "val": swing_diff_ampl_ratio,
-            "pct": (1 - cdf(swing_diff_ampl_ratio, list(map(lambda point: point.diff_ampl_ratio, points)))) * 100,
+        "amplRatio": {
+            "val": ampl_ratio,
+            "pct": (1 - cdf(ampl_ratio, list(map(lambda point: point.diff_ampl_ratio, points)))) * 100,
         },
-        "duration": {
-            "val": duration,
-            "pct": (1 - cdf(duration, list(map(lambda point: point.length, points)))) * 100,
+        "length": {
+            "val": length,
+            "pct": (1 - cdf(length, list(map(lambda point: point.length, points)))) * 100,
         },
+    }
+
+
+def _from_px_data_extrema_point(point: ExtremaDataPoint) -> PxDataExtremaPoint:
+    return {
+        "length": point.length,
+        "diff": point.diff,
+        "amplRatio": point.diff_ampl_ratio,
+        "px": point.px,
+        "direction": point.direction,
     }
 
 
 def _from_px_data_extrema(px_data: "PxData") -> PxDataExtrema:
     return {
-        "swing": {
-            "pos": list(map(lambda point: point.diff, px_data.extrema.points_pos)),
-            "neg": list(map(lambda point: point.diff, px_data.extrema.points_neg)),
-        },
-        "swingAmplRatio": {
-            "pos": list(map(lambda point: point.diff_ampl_ratio, px_data.extrema.points_pos)),
-            "neg": list(map(lambda point: point.diff_ampl_ratio, px_data.extrema.points_neg)),
-        },
-        "duration": {
-            "pos": list(map(lambda point: point.length, px_data.extrema.points_pos)),
-            "neg": list(map(lambda point: point.length, px_data.extrema.points_neg)),
-        },
+        "points": [_from_px_data_extrema_point(point) for point in px_data.extrema.points],
         "current": _from_px_data_current_stats(px_data)
     }
 
