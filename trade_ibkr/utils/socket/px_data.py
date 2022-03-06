@@ -8,11 +8,6 @@ if TYPE_CHECKING:
     from trade_ibkr.model import PxData
 
 
-class PxDataBarExtrema(TypedDict):
-    min: bool
-    max: bool
-
-
 class PxDataBar(TypedDict):
     epochSec: float
     open: float
@@ -22,7 +17,8 @@ class PxDataBar(TypedDict):
     vwap: float
     amplitudeHL: float
     amplitudeOC: float
-    extrema: PxDataBarExtrema
+    extremaMin: bool
+    extremaMax: bool
     ema120: float
 
 
@@ -82,26 +78,25 @@ class PxDataDict(TypedDict):
 
 
 def _from_px_data_bars(px_data: "PxData") -> list[PxDataBar]:
-    ret = []
+    columns = {
+        PxDataCol.EPOCH_SEC: "epochSec",
+        PxDataCol.OPEN: "open",
+        PxDataCol.HIGH: "high",
+        PxDataCol.LOW: "low",
+        PxDataCol.CLOSE: "close",
+        PxDataCol.VWAP: "vwap",
+        PxDataCol.AMPLITUDE_HL_EMA_10: "amplitudeHL",
+        PxDataCol.AMPLITUDE_OC_EMA_10: "amplitudeOC",
+        PxDataCol.LOCAL_MIN: "extremaMin",
+        PxDataCol.LOCAL_MAX: "extremaMax",
+        PxDataCol.EMA_120: "ema120",
+    }
 
-    for _, px_data_row in px_data.dataframe.iterrows():
-        ret.append({
-            "epochSec": px_data_row[PxDataCol.EPOCH_SEC],
-            "open": px_data_row[PxDataCol.OPEN],
-            "high": px_data_row[PxDataCol.HIGH],
-            "low": px_data_row[PxDataCol.LOW],
-            "close": px_data_row[PxDataCol.CLOSE],
-            "vwap": px_data_row[PxDataCol.VWAP],
-            "amplitudeHL": px_data_row[PxDataCol.AMPLITUDE_HL_EMA_10],
-            "amplitudeOC": px_data_row[PxDataCol.AMPLITUDE_OC_EMA_10],
-            "extrema": {
-                "min": bool(px_data_row[PxDataCol.LOCAL_MIN]),
-                "max": bool(px_data_row[PxDataCol.LOCAL_MAX])
-            },
-            "ema120": px_data_row[PxDataCol.EMA_120],
-        })
+    df = px_data.dataframe.copy()
+    df[PxDataCol.LOCAL_MIN].astype(bool, copy=False)
+    df[PxDataCol.LOCAL_MAX].astype(bool, copy=False)
 
-    return ret
+    return df_rows_to_list_of_data(px_data.dataframe, columns)
 
 
 def _from_px_data_support_resistance(px_data: "PxData") -> list[PxDataSupportResistance]:

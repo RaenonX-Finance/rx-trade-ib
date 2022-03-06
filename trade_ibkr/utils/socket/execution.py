@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, TypeAlias, TypedDict
 from pandas import DataFrame
 
 from trade_ibkr.enums import ExecutionDataCol, OrderSideConst
+from .utils import df_rows_to_list_of_data
 
 if TYPE_CHECKING:
     from trade_ibkr.model import OrderExecutionCollection
@@ -49,36 +50,39 @@ ExecutionDict: TypeAlias = dict[int, list[ExecutionGroup]]
 
 
 def _from_grouped_execution_dataframe(executions_df: DataFrame) -> list[ExecutionGroup]:
-    return [
-        {
-            "epochSec": row[ExecutionDataCol.EPOCH_SEC],
-            "side": row[ExecutionDataCol.SIDE],
-            "quantity": float(row[ExecutionDataCol.QUANTITY]),
-            "avgPx": row[ExecutionDataCol.AVG_PX],
-            "realizedPnL": row[ExecutionDataCol.REALIZED_PNL],
-            "realizedPnLSum": row[ExecutionDataCol.REALIZED_PNL_SUM],
-            "profit": row[ExecutionDataCol.PROFIT],
-            "loss": row[ExecutionDataCol.LOSS],
-            "winRate": row[ExecutionDataCol.WIN_RATE],
-            "profitLong": row[ExecutionDataCol.PROFIT_ON_LONG],
-            "lossLong": row[ExecutionDataCol.LOSS_ON_LONG],
-            "winRateLong": row[ExecutionDataCol.WIN_RATE_ON_LONG],
-            "profitShort": row[ExecutionDataCol.PROFIT_ON_SHORT],
-            "lossShort": row[ExecutionDataCol.LOSS_ON_SHORT],
-            "winRateShort": row[ExecutionDataCol.WIN_RATE_ON_SHORT],
-            "avgPnLProfit": row[ExecutionDataCol.AVG_PNL_PROFIT],
-            "avgPnLLoss": row[ExecutionDataCol.AVG_PNL_LOSS],
-            "avgPnLRrRatio": row[ExecutionDataCol.AVG_PNL_RR_RATIO],
-            "avgPnLEwr": row[ExecutionDataCol.AVG_PNL_EWR],
-            "pxSide": row[ExecutionDataCol.PX_SIDE],
-            "pxSideSum": row[ExecutionDataCol.PX_SIDE_SUM],
-            "pxSideAmplRatio": row[ExecutionDataCol.PX_SIDE_AMPL_RATIO],
-            "avgPxProfit": row[ExecutionDataCol.AVG_PX_PROFIT],
-            "avgPxLoss": row[ExecutionDataCol.AVG_PX_LOSS],
-            "avgPxRrRatio": row[ExecutionDataCol.AVG_PX_RR_RATIO],
-            "avgPxEwr": row[ExecutionDataCol.AVG_PX_EWR],
-        } for _, row in executions_df.iterrows()
-    ]
+    df = executions_df.copy()
+    df[ExecutionDataCol.QUANTITY].astype(float, copy=False)
+
+    columns = {
+        ExecutionDataCol.EPOCH_SEC: "epochSec",
+        ExecutionDataCol.SIDE: "side",
+        ExecutionDataCol.QUANTITY: "quantity",  # Need float casting?
+        ExecutionDataCol.AVG_PX: "avgPx",
+        ExecutionDataCol.REALIZED_PNL: "realizedPnL",
+        ExecutionDataCol.REALIZED_PNL_SUM: "realizedPnLSum",
+        ExecutionDataCol.PROFIT: "profit",
+        ExecutionDataCol.LOSS: "loss",
+        ExecutionDataCol.WIN_RATE: "winRate",
+        ExecutionDataCol.PROFIT_ON_LONG: "profitLong",
+        ExecutionDataCol.LOSS_ON_LONG: "lossLong",
+        ExecutionDataCol.WIN_RATE_ON_LONG: "winRateLong",
+        ExecutionDataCol.PROFIT_ON_SHORT: "profitShort",
+        ExecutionDataCol.LOSS_ON_SHORT: "lossShort",
+        ExecutionDataCol.WIN_RATE_ON_SHORT: "winRateShort",
+        ExecutionDataCol.AVG_PNL_PROFIT: "avgPnLProfit",
+        ExecutionDataCol.AVG_PNL_LOSS: "avgPnLLoss",
+        ExecutionDataCol.AVG_PNL_RR_RATIO: "avgPnLRrRatio",
+        ExecutionDataCol.AVG_PNL_EWR: "avgPnLEwr",
+        ExecutionDataCol.PX_SIDE: "pxSide",
+        ExecutionDataCol.PX_SIDE_SUM: "pxSideSum",
+        ExecutionDataCol.PX_SIDE_AMPL_RATIO: "pxSideAmplRatio",
+        ExecutionDataCol.AVG_PX_PROFIT: "avgPxProfit",
+        ExecutionDataCol.AVG_PX_LOSS: "avgPxLoss",
+        ExecutionDataCol.AVG_PX_RR_RATIO: "avgPxRrRatio",
+        ExecutionDataCol.AVG_PX_EWR: "avgPxEwr",
+    }
+
+    return df_rows_to_list_of_data(executions_df, columns)
 
 
 def to_socket_message_execution(execution: "OrderExecutionCollection") -> str:
