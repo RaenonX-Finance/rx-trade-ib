@@ -1,16 +1,18 @@
-from typing import DefaultDict, Iterable
+from typing import DefaultDict, Iterable, TYPE_CHECKING
 
 from pandas import DataFrame
 
-from trade_ibkr.model import OnExecutionFetchedParams
+from trade_ibkr.utils import print_log
 from .df_init import init_exec_dataframe
 from .exec_init import init_grouped_executions
 from .model import GroupedOrderExecution, OrderExecution
-from ...utils import print_log
+
+if TYPE_CHECKING:
+    from trade_ibkr.model import OnExecutionFetchedParams
 
 
 class OrderExecutionCollection:
-    def _init_exec_dataframe(self, params: OnExecutionFetchedParams):
+    def _init_exec_dataframe(self, params: "OnExecutionFetchedParams"):
         for identifier, grouped_executions in self._executions.items():
             if identifier not in params.contract_ids:
                 # Skip contract IDs not to be included
@@ -25,7 +27,7 @@ class OrderExecutionCollection:
                 px_data=px_data,
             )
 
-    def __init__(self, order_execs: Iterable[OrderExecution], params: OnExecutionFetchedParams):
+    def __init__(self, order_execs: Iterable[OrderExecution], params: "OnExecutionFetchedParams"):
         self._executions: DefaultDict[int, list[GroupedOrderExecution]] = init_grouped_executions(order_execs)
 
         self._executions_dataframe: dict[int, DataFrame] = {}

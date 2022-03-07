@@ -68,3 +68,9 @@ class Position:
     @property
     def data(self) -> dict[int, PositionData]:
         return self._data
+
+    def __str__(self):
+        return " / ".join([
+            f"{pos.contract.localSymbol}: {pos.position}"
+            for pos in self._data.values() if pos.position != 0
+        ])

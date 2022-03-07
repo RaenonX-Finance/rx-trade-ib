@@ -1,6 +1,10 @@
 system:
   demo: false
 
+data:
+  # Only used by bot (spread) - needs to run `run_server_info` first
+  market: ws://localhost:8000
+
 support-resistance:
   period: 120
   multiplier: 1.2

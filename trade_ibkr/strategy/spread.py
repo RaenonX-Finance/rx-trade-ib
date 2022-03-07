@@ -5,6 +5,7 @@ from pandas import Series
 
 from trade_ibkr.enums import PxDataPairCol, Side
 from trade_ibkr.model import Account, CommodityPair, OnMarketPxUpdatedOfBotSpreadEvent, UnrealizedPnL
+from trade_ibkr.utils import print_log
 
 
 @dataclass(kw_only=True)
@@ -41,6 +42,8 @@ class SpreadTradeParams:
 
 
 def _is_good_entry_time() -> bool:
+    return True
+
     # Allow entry from 2:30 CST / 3:30 CDT (8:30 UTC) to 6:30 CST / 7:30 CDT (12:30 UTC)
     return time(8, 30) <= datetime.utcnow().time() < time(12, 30)
 
@@ -63,7 +66,13 @@ def _util_exit_all(params: SpreadTradeParams, message: str):
 
 
 def _entry_out_of_band(params: SpreadTradeParams):
-    if params.last_px[PxDataPairCol.SPREAD] > params.last_px[PxDataPairCol.SPREAD_HI]:
+    spread = params.last_px[PxDataPairCol.SPREAD]
+    spread_hi = params.last_px[PxDataPairCol.SPREAD_HI]
+    spread_lo = params.last_px[PxDataPairCol.SPREAD_LO]
+
+    print_log(f"[BOT - Spread] Checking entry - Current: {spread} | High: {spread_hi} | Low: {spread_lo}")
+
+    if spread > spread_hi:
         params.account.long(
             params.on_high.contract, params.on_high.quantity, px=None,
             message=f"ENTRY: Buy on out of BB (high) - {params.on_high.contract.localSymbol}"
@@ -74,7 +83,7 @@ def _entry_out_of_band(params: SpreadTradeParams):
         )
         return
 
-    if params.last_px[PxDataPairCol.SPREAD] < params.last_px[PxDataPairCol.SPREAD_LO]:
+    if spread < spread_lo:
         params.account.long(
             params.on_low.contract, params.on_low.quantity, px=None,
             message=f"ENTRY: Buy on out of BB (low) - {params.on_low.contract.localSymbol}"
@@ -87,7 +96,7 @@ def _entry_out_of_band(params: SpreadTradeParams):
 
 
 def _exit_force_no_cross_day_position(params: SpreadTradeParams):
-    current_utc_time = datetime.now().time()
+    current_utc_time = datetime.utcnow().time()
 
     if (current_utc_time.hour, current_utc_time.minute) != (12, 30):
         return
@@ -97,18 +106,17 @@ def _exit_force_no_cross_day_position(params: SpreadTradeParams):
 
 
 def _exit_take_profit_back_to_mid(params: SpreadTradeParams):
+    spread = params.last_px[PxDataPairCol.SPREAD]
+    spread_mid = params.last_px[PxDataPairCol.SPREAD_MID]
+
     on_high_side = params.account.get_current_position_side(params.on_high.contract)
 
-    if (
-            on_high_side == Side.LONG and
-            params.last_px[PxDataPairCol.SPREAD] < params.last_px[PxDataPairCol.SPREAD_MID]
-    ):
+    print_log(f"[BOT - Spread] Checking exit - Current: {spread} | Mid: {spread_mid} | High Side: {on_high_side}")
+
+    if on_high_side == Side.LONG and spread < spread_mid:
         _util_exit_all(params, "EXIT - PROFIT: Back to BB mid (high)")
 
-    if (
-            on_high_side == Side.SHORT and
-            params.last_px[PxDataPairCol.SPREAD] > params.last_px[PxDataPairCol.SPREAD_MID]
-    ):
+    if on_high_side == Side.SHORT and spread > spread_mid:
         _util_exit_all(params, "EXIT - PROFIT: Back to BB mid (low)")
 
 
@@ -126,6 +134,7 @@ def spread_trading_strategy(params: SpreadTradeParams):
     _exit_force_no_cross_day_position(params)
 
     if not _is_allowed_to_enter(params):
+        print_log(f"[BOT - Spread] Not allowed to enter - Has pending order: {params.has_pending_order}")
         return
 
     has_open_position = _has_open_position(params)

@@ -1,21 +1,25 @@
 import time
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import Generic, TypeVar
+from typing import TypeVar
 
 from ibapi.common import BarData
 from ibapi.contract import Contract, ContractDetails
 
+from trade_ibkr.enums import PxDataCol
 from .bar_data import BarDataDict, to_bar_data_dict
-from ..enums import PxDataCol
+from .px_data import PxData
+from .server import OnPxDataUpdatedNoAccount
 
 
 @dataclass(kw_only=True)
-class PxDataCacheEntryBase(ABC):
+class PxDataCacheEntry(ABC):
     data: dict[int, BarDataDict]
     period_sec: int
     contract: ContractDetails | None
     contract_og: Contract
+
+    on_update: OnPxDataUpdatedNoAccount
 
     last_historical_sent: float = field(init=False)
     last_market_update: float | None = field(init=False)  # None means no data received yet
@@ -117,13 +121,22 @@ class PxDataCacheEntryBase(ABC):
             # Keep price data in a fixed size
             self.remove_oldest()
 
+    def to_px_data(self) -> PxData:
+        self.last_historical_sent = time.time()
 
-E = TypeVar("E", bound=PxDataCacheEntryBase)
+        return PxData(
+            contract=self.contract,
+            period_sec=self.period_sec,
+            bars=[self.data[key] for key in sorted(self.data.keys())]
+        )
+
+
+T = TypeVar("T", bound=PxDataCacheEntry)
 
 
 @dataclass(kw_only=True)
-class PxDataCacheBase(Generic[E], ABC):
-    data: dict[int, E] = field(init=False)
+class PxDataCache:
+    data: dict[int, T] = field(init=False)
 
     def __post_init__(self):
         self.data = {}

@@ -20,6 +20,7 @@ rich
 # Server
 fastapi[all]
 fastapi-socketio
+python-socketio[client]
 uvicorn[standard]
 
 # Config

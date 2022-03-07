@@ -24,3 +24,5 @@ SR_MULTIPLIER = config["support-resistance"]["multiplier"]
 
 AMPL_COEFF_TP = config["risk-management"]["take-profit-ampl"]
 AMPL_COEFF_SL = config["risk-management"]["stop-loss-ampl"]
+
+MARKET_SOCKET_PATH = config["data"]["market"]
