@@ -12,7 +12,7 @@ from scipy.signal import argrelextrema
 from trade_ibkr.calc import analyze_extrema, calc_support_resistance_levels
 from trade_ibkr.const import console
 from trade_ibkr.enums import CandlePos, PxDataCol
-from trade_ibkr.utils import closest_diff, get_detailed_contract_identifier
+from trade_ibkr.utils import closest_diff, get_detailed_contract_identifier, print_log
 
 if TYPE_CHECKING:
     from trade_ibkr.model import BarDataDict
@@ -151,6 +151,14 @@ class PxData:
             # f"{px_diff:9.2f} | "
             f"\n{sr_level_txt}",
         )
+
+    def save_to_file(self):
+        file_path = f"data-{self.contract_identifier}@{self.period_sec}.csv"
+        self.dataframe.to_csv(file_path)
+
+        print_log(f"[yellow]Px data saved to {file_path}[/yellow]")
+
+        return file_path
 
     @property
     def earliest_time(self) -> datetime:
