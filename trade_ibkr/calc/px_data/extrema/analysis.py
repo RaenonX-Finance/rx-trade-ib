@@ -19,7 +19,8 @@ def analyze_extrema(df: DataFrame) -> ExtremaData:
     series_local_max = df[PxDataCol.LOCAL_MAX]
     series_ampl_hl = df[PxDataCol.AMPLITUDE_HL]
 
-    data_zip = zip(range(len(df.index)), series_epoch_sec, series_local_min, series_local_max, series_ampl_hl)
+    # Only count the extrema if it occurs before 3+ period
+    data_zip = zip(range(len(df.index) - 3), series_epoch_sec, series_local_min, series_local_max, series_ampl_hl)
 
     for idx, epoch_sec, local_min, local_max, amplitude_hl in data_zip:
         if amplitude_hl:
