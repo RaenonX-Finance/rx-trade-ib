@@ -1,1 +1,1 @@
-from .main import prepare_bot_app_spread
+from .main import run_bot_spread

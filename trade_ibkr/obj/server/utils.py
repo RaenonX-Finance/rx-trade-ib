@@ -5,12 +5,12 @@ from trade_ibkr.utils import print_log
 from .main import IBapiServer
 
 
-def start_ib_server(*, is_demo: bool = False) -> tuple[IBapiServer, threading.Thread]:
+def start_ib_server(*, is_demo: bool = False, client_id: int | None = None) -> tuple[IBapiServer, threading.Thread]:
     app = IBapiServer()
     app.connect(
         "localhost",
         8384 if is_demo else 8383,  # Configured at TWS
-        50 if is_demo else 100
+        client_id or (50 if is_demo else 100)
     )
 
     def run_loop():

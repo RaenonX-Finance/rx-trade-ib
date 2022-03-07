@@ -17,8 +17,6 @@ class IBapiPosition(IBapiBase, ABC):
         self._position_on_fetched: OnPositionFetched | None = None
 
     def position(self, account: str, contract: Contract, position: Decimal, avgCost: float):
-        super().position(account, contract, position, avgCost)
-
         self._position_data_list.append(PositionData(
             contract=contract,
             position=position,
@@ -26,8 +24,6 @@ class IBapiPosition(IBapiBase, ABC):
         ))
 
     def positionEnd(self):
-        super().positionEnd()
-
         if not self._position_on_fetched:
             print_error(
                 "Position fetched, but no corresponding handler is set. "

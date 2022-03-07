@@ -6,9 +6,9 @@ data:
   market: ws://localhost:8000
 
 support-resistance:
-  period: 120
+  period: 60
   multiplier: 1.2
 
 risk-management:
-  take-profit-ampl: 2.2
-  stop-loss-ampl: 1
+  take-profit-ampl: 3.5
+  stop-loss-ampl: 1.7
