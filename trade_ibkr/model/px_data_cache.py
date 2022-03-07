@@ -118,12 +118,12 @@ class PxDataCacheEntryBase(ABC):
             self.remove_oldest()
 
 
-T = TypeVar("T", bound=PxDataCacheEntryBase)
+E = TypeVar("E", bound=PxDataCacheEntryBase)
 
 
 @dataclass(kw_only=True)
-class PxDataCacheBase(Generic[T], ABC):
-    data: dict[int, T] = field(init=False)
+class PxDataCacheBase(Generic[E], ABC):
+    data: dict[int, E] = field(init=False)
 
     def __post_init__(self):
         self.data = {}

@@ -20,7 +20,6 @@ from trade_ibkr.model import (
     OnPositionFetched, OnPositionFetchedEvent,
     OpenOrder, OpenOrderBook,
     OrderExecution, OrderExecutionCollection,
-    Position,
 )
 from trade_ibkr.utils import (
     get_contract_identifier, get_order_trigger_price,
@@ -74,7 +73,7 @@ class IBapiInfoPortfolio(IBapiBasePosition, IBapiBase):
             return
 
         async def execute_after_position_end():
-            await self._position_on_fetched(OnPositionFetchedEvent(position=Position(self._position_data_list)))
+            await self._position_on_fetched(OnPositionFetchedEvent(position=self._position_data))
 
         asyncio.run(execute_after_position_end())
 

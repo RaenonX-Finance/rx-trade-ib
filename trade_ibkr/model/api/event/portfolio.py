@@ -13,6 +13,9 @@ if TYPE_CHECKING:
 class OnPositionFetchedEvent:
     position: "Position"
 
+    def __str__(self):
+        return str(self.position)
+
 
 OnPositionFetched = Callable[[OnPositionFetchedEvent], Coroutine[Any, Any, None]]
 

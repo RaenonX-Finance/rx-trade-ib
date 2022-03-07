@@ -23,7 +23,7 @@ async def on_market_data_received(e: OnMarketDataReceivedEvent):
 
 
 async def on_position_fetched(e: OnPositionFetchedEvent):
-    print_log("[TWS] Fetched positions")
+    print_log(f"[TWS] Fetched positions ({e})")
     await fast_api_socket.emit(
         "position",
         to_socket_message_position(e.position)
