@@ -7,13 +7,13 @@ from .handler import on_market_data_received, on_px_updated, register_handlers
 from .socket import register_socket_endpoints
 
 
-def run_ib_server(is_demo: bool | None = None):
+def run_ib_server(is_demo: bool | None = None, client_id: int | None = None) -> IBapiServer:
     is_demo = IS_DEMO if is_demo is None else is_demo
 
     app = IBapiServer()
     app.activate(
         8384 if is_demo else 8383,  # Configured at TWS
-        99 if is_demo else 1
+        client_id or (99 if is_demo else 1)
     )
 
     contract_mnq = make_futures_contract("MNQH2", "GLOBEX")
@@ -48,3 +48,5 @@ def run_ib_server(is_demo: bool | None = None):
 
     register_socket_endpoints(app, px_data_req_ids)
     register_handlers(app, px_data_req_ids)
+
+    return app
