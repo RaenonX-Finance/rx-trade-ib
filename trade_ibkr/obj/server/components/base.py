@@ -18,11 +18,19 @@ _error_code_ignore: set[int] = {
 
 
 class IBapiBase(EWrapper, EClient, ABC):
-    def _connect(self):
+    def __init__(self):
+        EClient.__init__(self, self)
+
+        # Start from 1 to avoid false-negative
+        self._request_id = 1
+
+        self._on_error_handler: OnError | None = None
+
+    def activate(self, port: int, client_id: int):
         self.connect(
             "localhost",
-            8385,  # Configured at TWS
-            77
+            port,  # Configured at TWS
+            client_id
         )
 
         def run_loop():
@@ -38,16 +46,6 @@ class IBapiBase(EWrapper, EClient, ABC):
 
         api_thread = threading.Thread(target=run_loop)
         api_thread.start()
-
-    def __init__(self):
-        EClient.__init__(self, self)
-
-        # Start from 1 to avoid false-negative
-        self._request_id = 1
-
-        self._on_error_handler: OnError | None = None
-
-        self._connect()
 
     def set_on_error(self, on_error: OnError):
         self._on_error_handler = on_error

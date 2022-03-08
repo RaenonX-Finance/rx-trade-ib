@@ -1,14 +1,18 @@
 import time
 
 from trade_ibkr.const import IS_DEMO
-from trade_ibkr.obj import start_ib_server
+from trade_ibkr.obj import IBapiServer
 from trade_ibkr.utils import make_futures_contract, print_log
 from .handler import on_market_data_received, on_px_updated, register_handlers
 from .socket import register_socket_endpoints
 
 
 def run_ib_server():
-    app, _ = start_ib_server(is_demo=IS_DEMO)
+    app = IBapiServer()
+    app.activate(
+        8384 if IS_DEMO else 8383,  # Configured at TWS
+        50 if IS_DEMO else 100
+    )
 
     contract_mnq = make_futures_contract("MNQH2", "GLOBEX")
     contract_mym = make_futures_contract("MYM  MAR 22", "ECBOT")
