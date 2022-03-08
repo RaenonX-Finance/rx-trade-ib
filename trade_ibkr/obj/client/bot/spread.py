@@ -1,6 +1,8 @@
 import asyncio
 import sys
+import threading
 import time
+import winsound
 from decimal import Decimal
 
 from ibapi.common import BarData, OrderId, TickAttrib, TickerId
@@ -108,12 +110,19 @@ class IBautoBotSpread(IBapiServer):
     ):
         if status == "Filled":
             print_log(f"[TWS] Order #{orderId} filled")
+            self._beep_on_order_filled()
 
             if orderId in self._order_pending_ids:
                 # `orderStatus` is somehow triggered twice on fill
                 self._order_pending_ids.remove(orderId)
 
             self.request_positions()
+
+    def _beep_on_order_filled(self):
+        def beep():
+            winsound.Beep(2600, 100)
+
+        threading.Thread(target=beep).start()
 
     # endregion
 
