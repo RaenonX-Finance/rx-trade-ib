@@ -7,11 +7,13 @@ from .handler import on_market_data_received, on_px_updated, register_handlers
 from .socket import register_socket_endpoints
 
 
-def run_ib_server():
+def run_ib_server(is_demo: bool | None = None):
+    is_demo = IS_DEMO if is_demo is None else is_demo
+
     app = IBapiServer()
     app.activate(
-        8384 if IS_DEMO else 8383,  # Configured at TWS
-        99 if IS_DEMO else 1
+        8384 if is_demo else 8383,  # Configured at TWS
+        99 if is_demo else 1
     )
 
     contract_mnq = make_futures_contract("MNQH2", "GLOBEX")
