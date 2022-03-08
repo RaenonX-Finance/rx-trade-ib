@@ -8,7 +8,7 @@ from ibapi.contract import Contract, ContractDetails
 from ibapi.order import Order
 from ibapi.ticktype import TickType, TickTypeEnum
 
-from trade_ibkr.const import ACCOUNT_NUMBER_ACTUAL, ACCOUNT_NUMBER_DEMO, IS_DEMO
+from trade_ibkr.const import ACCOUNT_NUMBER_ACTUAL, ACCOUNT_NUMBER_DEMO, BOT_STRATEGY_CHECK_INTERVAL, IS_DEMO
 from trade_ibkr.model import (
     BrokerAccount, CommodityPair, OnBotSpreadPxUpdated, OnBotSpreadPxUpdatedEvent, PxDataPairCache,
     PxDataPairCacheEntry, UnrealizedPnL,
@@ -49,6 +49,8 @@ class IBautoBotSpread(IBapiServer):
         self._pnl_req_id_to_contract_req_id: dict[int, int] = {}
         self._order_pending: bool = False
         self._on_px_updated = on_px_updated
+
+        self._last_px_update: float = 0
 
         # Bot doesn't care after the position is fetched
         self.set_on_position_fetched(None)
@@ -127,6 +129,13 @@ class IBautoBotSpread(IBapiServer):
     # region Px update
 
     def _px_data_updated(self, start_epoch: float):
+        now = time.time()
+
+        if now - self._last_px_update < BOT_STRATEGY_CHECK_INTERVAL:
+            return
+
+        self._last_px_update = now
+
         if not self._position_data:
             self.request_positions()
             return

@@ -4,6 +4,9 @@ system:
     demo: <ACCOUNT_NUMBER>
     actual: <ACCOUNT_NUMBER>
 
+bot:
+  strategy-check-interval-sec: 0.075
+
 data:
   # Only used by bot (spread) - needs to run `run_server_info` first
   market: ws://localhost:8000
