@@ -49,11 +49,11 @@ class Position:
             for position in data
         }
 
-    def get_position_data(self, contract: Contract) -> PositionData | None:
-        return self._data.get(get_contract_identifier(contract))
+    def get_position_data(self, contract_identifier: int) -> PositionData | None:
+        return self._data.get(contract_identifier)
 
-    def get_position_side(self, contract: Contract) -> Side:
-        position_data = self.get_position_data(contract)
+    def get_position_side(self, contract_identifier: int) -> Side:
+        position_data = self.get_position_data(contract_identifier)
 
         return position_data.side if position_data else Side.NEUTRAL
 

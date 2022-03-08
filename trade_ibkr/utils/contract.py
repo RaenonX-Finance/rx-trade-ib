@@ -1,6 +1,8 @@
 """Check https://interactivebrokers.github.io/tws-api/basic_contracts.html for more details."""
 from ibapi.contract import Contract, ContractDetails
 
+from .log import print_error
+
 
 def make_futures_contract(local_symbol: str, exchange: str) -> Contract:
     contract = Contract()
@@ -33,4 +35,8 @@ def get_detailed_contract_identifier(contract: ContractDetails) -> int:
 
 
 def get_contract_identifier(contract: Contract) -> int:
+    if not contract.conId:
+        print_error(f"Contract identifier is potentially erroneous - {contract.localSymbol}")
+        return contract.conId
+
     return contract.conId

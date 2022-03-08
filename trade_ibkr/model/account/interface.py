@@ -6,12 +6,12 @@ from ibapi.contract import Contract
 
 from trade_ibkr.enums import OrderSideConst, Side, reverse_order_side
 from ..position import PositionData
-from ...utils import print_log
+from ...utils import get_contract_identifier, print_log
 
 
 class Account(ABC):
     @abstractmethod
-    def get_current_position_data(self, contract: Contract) -> PositionData | None:
+    def get_current_position_data(self, contract_identifier: int) -> PositionData | None:
         """
         Get the current position data.
 
@@ -22,8 +22,8 @@ class Account(ABC):
         """
         raise NotImplementedError()
 
-    def get_current_position_side(self, contract: Contract) -> Side:
-        if not (position_data := self.get_current_position_data(contract)):
+    def get_current_position_side(self, contract_identifier: int) -> Side:
+        if not (position_data := self.get_current_position_data(contract_identifier)):
             return Side.NEUTRAL
 
         return position_data.side
@@ -37,7 +37,7 @@ class Account(ABC):
 
         Reverses the positions if currently is shorting.
         """
-        position_data = self.get_current_position_data(contract)
+        position_data = self.get_current_position_data(get_contract_identifier(contract))
 
         if position_data:
             match position_data.side:
@@ -58,7 +58,7 @@ class Account(ABC):
 
         Reverses the positions if currently is longing.
         """
-        position_data = self.get_current_position_data(contract)
+        position_data = self.get_current_position_data(get_contract_identifier(contract))
 
         if position_data:
             match position_data.side:
@@ -80,7 +80,7 @@ class Account(ABC):
         self.place_order(contract, side, quantity, px)
 
     def exit(self, *, contract: Contract, px: float | None = None, message: str | None = None):
-        position_data = self.get_current_position_data(contract)
+        position_data = self.get_current_position_data(get_contract_identifier(contract))
 
         if not position_data:
             return

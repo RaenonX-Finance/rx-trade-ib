@@ -18,8 +18,8 @@ class BrokerAccount(Account):
         self.app = app
         self.position = position
 
-    def get_current_position_data(self, contract: Contract) -> Union["PositionData", None]:
-        return self.position.get_position_data(contract)
+    def get_current_position_data(self, contract_identifier: int) -> Union["PositionData", None]:
+        return self.position.get_position_data(contract_identifier)
 
     def place_order(self, contract: Contract, side: OrderSideConst, quantity: Decimal, px: float | None):
         if px:

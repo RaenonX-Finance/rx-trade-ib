@@ -6,7 +6,7 @@ from typing import Literal
 from ibapi.contract import Contract
 
 from trade_ibkr.model import OnPositionFetched, OnPositionFetchedEvent, Position, PositionData
-from trade_ibkr.utils import print_error
+from trade_ibkr.utils import print_error, print_log
 from .base import IBapiBase
 
 
@@ -17,8 +17,10 @@ class IBapiPosition(IBapiBase, ABC):
         self._position_data_list: list[PositionData] = []
         self._position_data: Position | None = None
         self._position_on_fetched: OnPositionFetched | None | Literal["UNDEFINED"] = "UNDEFINED"
+        self._position_fetching: bool = False
 
     def position(self, account: str, contract: Contract, position: Decimal, avgCost: float):
+        self._position_fetching = True
         self._position_data_list.append(PositionData(
             contract=contract,
             position=position,
@@ -26,6 +28,8 @@ class IBapiPosition(IBapiBase, ABC):
         ))
 
     def positionEnd(self):
+        self._position_fetching = False
+
         if self._position_on_fetched == "UNDEFINED":
             print_error(
                 "Position fetched, but no corresponding handler is set. "
@@ -47,7 +51,12 @@ class IBapiPosition(IBapiBase, ABC):
         asyncio.run(execute_after_position_end())
 
     def request_positions(self):
+        if self._position_fetching:
+            return
+
+        print_log("[TWS] Position request sent")
         self._position_data_list = []
+        self._position_fetching = True
         self.reqPositions()
 
     def set_on_position_fetched(self, on_position_fetched: OnPositionFetched | None):

@@ -30,6 +30,6 @@ def run_bot_spread():
         on_px_updated=on_px_updated,
     )
     app.activate(
-        8384,  # Force demo
+        8384,  # FIXME: Force demo
         77
     )

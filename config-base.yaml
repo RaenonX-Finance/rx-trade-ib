@@ -6,6 +6,7 @@ system:
 
 bot:
   strategy-check-interval-sec: 0.075
+  position-fetch-interval-sec: 3
 
 data:
   # Only used by bot (spread) - needs to run `run_server_info` first

@@ -5,7 +5,7 @@ from pandas import Series
 
 from trade_ibkr.enums import PxDataPairCol, Side
 from trade_ibkr.model import Account, CommodityPair, OnBotSpreadPxUpdatedEvent, UnrealizedPnL
-from trade_ibkr.utils import print_log
+from trade_ibkr.utils import get_contract_identifier, print_log
 
 
 @dataclass(kw_only=True)
@@ -52,7 +52,7 @@ def _is_allowed_to_enter(params: SpreadTradeParams) -> bool:
 
 def _has_open_position(params: SpreadTradeParams) -> bool:
     for commodity in params.commodity_pair.commodities:
-        if params.account.get_current_position_side(commodity.contract) != Side.NEUTRAL:
+        if params.account.get_current_position_side(get_contract_identifier(commodity.contract)) != Side.NEUTRAL:
             return True
 
     return False
@@ -110,9 +110,12 @@ def _exit_take_profit_back_to_mid(params: SpreadTradeParams):
     spread = params.last_px[PxDataPairCol.SPREAD]
     spread_mid = params.last_px[PxDataPairCol.SPREAD_MID]
 
-    on_high_side = params.account.get_current_position_side(params.on_high.contract)
+    spread_diff = params.last_px[PxDataPairCol.SPREAD_HI] - spread_mid
+    spread_loc = (spread - spread_mid) / spread_diff
 
-    print_log(f"[BOT - Spread] Checking exit - Current: {spread} | Mid: {spread_mid} | High Side: {on_high_side}")
+    on_high_side = params.account.get_current_position_side(get_contract_identifier(params.on_high.contract))
+
+    print_log(f"[BOT - Spread] Checking exit - Current @ {spread_loc:.2%} (100% - 0%) | High Side: {on_high_side}")
 
     if on_high_side == Side.LONG and spread < spread_mid:
         _util_exit_all(params, "EXIT - PROFIT: Back to BB mid (high)")

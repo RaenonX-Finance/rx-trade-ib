@@ -8,7 +8,10 @@ from ibapi.contract import Contract, ContractDetails
 from ibapi.order import Order
 from ibapi.ticktype import TickType, TickTypeEnum
 
-from trade_ibkr.const import ACCOUNT_NUMBER_ACTUAL, ACCOUNT_NUMBER_DEMO, BOT_STRATEGY_CHECK_INTERVAL, IS_DEMO
+from trade_ibkr.const import (
+    ACCOUNT_NUMBER_ACTUAL, ACCOUNT_NUMBER_DEMO, BOT_POSITION_FETCH_INTERVAL,
+    BOT_STRATEGY_CHECK_INTERVAL, IS_DEMO,
+)
 from trade_ibkr.model import (
     BrokerAccount, CommodityPair, OnBotSpreadPxUpdated, OnBotSpreadPxUpdatedEvent, PxDataPairCache,
     PxDataPairCacheEntry, UnrealizedPnL,
@@ -39,6 +42,8 @@ class IBautoBotSpread(IBapiServer):
             unrlzd_pnl=UnrealizedPnL()
         )
 
+        print_log(f"[BOT - Spread] Subscribe Px update for {contract.localSymbol} ({req_px})")
+
         return req_px
 
     def __init__(self, *, commodity_pair: CommodityPair, on_px_updated: OnBotSpreadPxUpdated):
@@ -51,6 +56,7 @@ class IBautoBotSpread(IBapiServer):
         self._on_px_updated = on_px_updated
 
         self._last_px_update: float = 0
+        self._last_position_fetch: float = 0
 
         # Bot doesn't care after the position is fetched
         self.set_on_position_fetched(None)
@@ -64,6 +70,20 @@ class IBautoBotSpread(IBapiServer):
         self._px_data_cache.px_req_id_low = (
             self._init_px_data_subscription(self._commodity_pair.buy_on_low.contract)
         )
+        self.request_positions()
+
+    def _override_commodity_contract(self, contract_req_id: int, contract_details: ContractDetails):
+        px_req_id = next(iter(self._contract_req_id_to_px_req_id[contract_req_id]))
+        if px_req_id == self._px_data_cache.px_req_id_high:
+            self._commodity_pair.buy_on_high.contract = contract_details.contract
+        elif px_req_id == self._px_data_cache.px_req_id_low:
+            self._commodity_pair.buy_on_low.contract = contract_details.contract
+
+    def contractDetails(self, reqId: int, contractDetails: ContractDetails):
+        super().contractDetails(reqId, contractDetails)
+
+        self._request_pnl_single(reqId, contractDetails)
+        self._override_commodity_contract(reqId, contractDetails)
 
     # region Order
 
@@ -85,32 +105,34 @@ class IBautoBotSpread(IBapiServer):
             parentId: int, lastFillPrice: float, clientId: int,
             whyHeld: str, mktCapPrice: float
     ):
-        super().orderStatus(
-            orderId, status, filled, remaining, avgFillPrice, permId,
-            parentId, lastFillPrice, clientId, whyHeld, mktCapPrice
-        )
-
         if status == "Filled":
             self._order_pending = False
             self.request_positions()
 
     # endregion
 
+    # region Position tracking
+
+    def positionEnd(self):
+        super().positionEnd()
+
+        self._last_position_fetch = time.time()
+
+    # endregion
+
     # region PnL tracking
 
-    def contractDetails(self, reqId: int, contractDetails: ContractDetails):
-        super().contractDetails(reqId, contractDetails)
-
+    def _request_pnl_single(self, contract_req_id: int, contract_details: ContractDetails):
         req_id_pnl = self.next_valid_request_id
         self.reqPnLSingle(
             req_id_pnl,
             ACCOUNT_NUMBER_DEMO if IS_DEMO else ACCOUNT_NUMBER_ACTUAL,
             "",
-            contractDetails.underConId
+            contract_details.underConId
         )
-        self._pnl_req_id_to_contract_req_id[req_id_pnl] = reqId
+        self._pnl_req_id_to_contract_req_id[req_id_pnl] = contract_req_id
 
-        print_log(f"[TWS] Subscribe PnL of {contractDetails.underSymbol}")
+        print_log(f"[TWS] Subscribe PnL of {contract_details.underSymbol}")
 
     def pnlSingle(
             self, reqId: int, pos: Decimal, dailyPnL: float, unrealizedPnL: float, realizedPnL: float, value: float
@@ -131,14 +153,16 @@ class IBautoBotSpread(IBapiServer):
     def _px_data_updated(self, start_epoch: float):
         now = time.time()
 
-        if now - self._last_px_update < BOT_STRATEGY_CHECK_INTERVAL:
+        if now - self._last_px_update < BOT_STRATEGY_CHECK_INTERVAL or self._position_fetching:
             return
 
         self._last_px_update = now
 
-        if not self._position_data:
+        if not self._position_data or now - self._last_position_fetch > BOT_POSITION_FETCH_INTERVAL:
             self.request_positions()
-            return
+
+            if not self._position_data:
+                return
 
         if not self._px_data_cache.is_data_ready():
             print_error("[yellow][TWS] Px data not ready - spread px updated event not triggered[/yellow]")
