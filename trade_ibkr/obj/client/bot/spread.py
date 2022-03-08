@@ -167,11 +167,14 @@ class IBautoBotSpread(IBapiServer):
 
     def _px_data_updated(self, start_epoch: float):
         now = time.time()
-
-        if now - self._last_px_update < BOT_STRATEGY_CHECK_INTERVAL or self._position_fetching:
-            return
+        # Have to store the results to make sure `_last_px_update` is updated for each px update
+        # > Early termination could block updating
+        is_not_allowed_execute_further = now - self._last_px_update < BOT_STRATEGY_CHECK_INTERVAL
 
         self._last_px_update = now
+
+        if is_not_allowed_execute_further:
+            return
 
         if not self._position_data or now - self._last_position_fetch > BOT_POSITION_FETCH_INTERVAL:
             self.request_positions()

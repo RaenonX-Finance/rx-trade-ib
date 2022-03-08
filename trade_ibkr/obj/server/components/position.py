@@ -17,10 +17,8 @@ class IBapiPosition(IBapiBase, ABC):
         self._position_data_list: list[PositionData] = []
         self._position_data: Position | None = None
         self._position_on_fetched: OnPositionFetched | None | Literal["UNDEFINED"] = "UNDEFINED"
-        self._position_fetching: bool = False
 
     def position(self, account: str, contract: Contract, position: Decimal, avgCost: float):
-        self._position_fetching = True
         self._position_data_list.append(PositionData(
             contract=contract,
             position=position,
@@ -29,7 +27,6 @@ class IBapiPosition(IBapiBase, ABC):
 
     def positionEnd(self):
         print_log("[TWS] Position fetch completed")
-        self._position_fetching = False
 
         if self._position_on_fetched == "UNDEFINED":
             print_error(
@@ -54,7 +51,6 @@ class IBapiPosition(IBapiBase, ABC):
     def request_positions(self):
         print_log("[TWS] Position request sent")
         self._position_data_list = []
-        self._position_fetching = True
         self.reqPositions()
 
     def set_on_position_fetched(self, on_position_fetched: OnPositionFetched | None):
