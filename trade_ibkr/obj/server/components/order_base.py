@@ -38,4 +38,8 @@ class IBapiOrderBase(IBapiBase, ABC):
             print_log("[API] Waiting next valid order ID...")
             time.sleep(0.25)
 
-        return self._order_valid_id
+        ret = self._order_valid_id
+
+        self._order_valid_id += 1
+
+        return ret

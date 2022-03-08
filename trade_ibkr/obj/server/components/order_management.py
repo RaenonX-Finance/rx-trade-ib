@@ -119,27 +119,19 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
                 super().placeOrder(order_id, contract, existing_order)
                 return
 
-        if not self._order_valid_id:
-            print_error("Valid order ID unavailable, request order ID first")
-            return
-
         # Not order modification, create new order
         order_list = self._make_new_order(
             side=side,
             order_px=order_px,
             quantity=quantity,
             current_px=current_px,
-            order_id=self._order_valid_id,
+            order_id=self.next_valid_order_id,
             amplitude_hl_ema10=amplitude_hl_ema10,
             min_tick=min_tick,
         )
 
         for order in order_list:
             super().placeOrder(order.orderId, contract, order)
-
-        # Request next valid order ID for future use
-        # `-1` as the doc mentioned, the parameter is not being used
-        self.reqIds(-1)
 
     def cancel_order(self, order_id: int):
         self.cancelOrder(order_id)
