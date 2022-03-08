@@ -1,5 +1,6 @@
 import asyncio
 from abc import ABC
+from typing import Literal
 
 from ibapi.common import OrderId
 from ibapi.contract import Contract
@@ -16,7 +17,7 @@ class IBapiOpenOrder(IBapiOrderBase, ABC):
         super().__init__()
 
         self._open_order_list: list[OpenOrder] | None = None
-        self._open_order_on_fetched: OnOpenOrderFetched | None = None
+        self._open_order_on_fetched: OnOpenOrderFetched | None | Literal["UNDEFINED"] = "UNDEFINED"
 
     def openOrder(self, orderId: OrderId, contract: Contract, order: Order, orderState: OrderState):
         if self._open_order_list is None:
@@ -36,14 +37,20 @@ class IBapiOpenOrder(IBapiOrderBase, ABC):
         ))
 
     def openOrderEnd(self):
-        if not self._open_order_on_fetched:
+        if self._open_order_on_fetched == "UNDEFINED":
             print_error(
-                "Open order fetched, but no corresponding handler is set. "
-                "Use `set_on_open_order_fetched()` for setting it.",
+                "[TWS] Open order fetched, but no corresponding handler is set. "
+                "Use `set_on_open_order_fetched()` for setting it.\n"
+                "If this is intended, call `set_on_open_order_fetched(None)`",
             )
+            self._open_order_list = None
+            return
+        elif not self._open_order_on_fetched:
+            self._open_order_list = None
             return
 
         async def execute_after_open_order_fetched():
+            # noinspection PyCallingNonCallable
             await self._open_order_on_fetched(OnOpenOrderFetchedEvent(
                 open_order=OpenOrderBook(self._open_order_list or [])
             ))
@@ -52,7 +59,7 @@ class IBapiOpenOrder(IBapiOrderBase, ABC):
 
         self._open_order_list = None
 
-    def set_on_open_order_fetched(self, on_open_order_fetched: OnOpenOrderFetched):
+    def set_on_open_order_fetched(self, on_open_order_fetched: OnOpenOrderFetched | None):
         self._open_order_on_fetched = on_open_order_fetched
 
     def request_open_orders(self):

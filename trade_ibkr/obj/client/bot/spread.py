@@ -58,8 +58,9 @@ class IBautoBotSpread(IBapiServer):
         self._last_px_update: float = 0
         self._last_position_fetch: float = 0
 
-        # Bot doesn't care after the position is fetched
+        # Don't care on those events
         self.set_on_position_fetched(None)
+        self.set_on_open_order_fetched(None)
 
     def activate(self, port: int, client_id: int):
         super().activate(port, client_id)

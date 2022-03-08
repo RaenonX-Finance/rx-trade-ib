@@ -28,13 +28,14 @@ class IBapiPosition(IBapiBase, ABC):
         ))
 
     def positionEnd(self):
+        print_log("[TWS] Position fetch completed")
         self._position_fetching = False
 
         if self._position_on_fetched == "UNDEFINED":
             print_error(
                 "Position fetched, but no corresponding handler is set. "
                 "Use `set_on_position_fetched()` for setting it.\n"
-                "If this is intended, use `set_on_position_fetched(None)`",
+                "If this is intended, call `set_on_position_fetched(None)`",
             )
             return
 
