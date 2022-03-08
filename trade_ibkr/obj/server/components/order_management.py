@@ -22,13 +22,14 @@ from .position import IBapiPosition
 class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
     def _handle_on_order_filled(self, contract: Contract, order: Order):
         if order.permId != self._order_filled_perm_id:
+            self._order_filled_perm_id = None
+            self._order_filled_avg_px = None
             return
-
-        self._order_filled_perm_id = None
-        self._order_filled_avg_px = None
 
         if not self._order_on_filled:
             print_error("Order filled handler not set, use `set_on_order_filled()` for setting it.")
+            self._order_filled_perm_id = None
+            self._order_filled_avg_px = None
             return
 
         async def execute_after_order_filled():
@@ -41,6 +42,9 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
             ))
 
         asyncio.run(execute_after_order_filled())
+
+        self._order_filled_perm_id = None
+        self._order_filled_avg_px = None
 
     def completedOrder(self, contract: Contract, order: Order, orderState: OrderState):
         self._handle_on_order_filled(contract, order)
