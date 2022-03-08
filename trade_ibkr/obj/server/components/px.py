@@ -1,9 +1,9 @@
 import asyncio
 import time
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import DefaultDict
+from typing import DefaultDict, TypeVar
 
 from ibapi.common import BarData, TickAttrib, TickerId
 from ibapi.contract import Contract
@@ -26,11 +26,18 @@ class PxDataCacheEntryKeepUpdate(PxDataCacheEntry):
     on_update_market: OnMarketDataReceived
 
 
+T = TypeVar("T", bound=PxDataCache)
+
+
 class IBapiPx(IBapiContract, ABC):
+    @abstractmethod
+    def _init_get_px_data_cache(self) -> T:
+        raise NotImplementedError()
+
     def __init__(self):
         super().__init__()
 
-        self._px_data_cache: PxDataCache = PxDataCache()
+        self._px_data_cache: T = self._init_get_px_data_cache()
         self._px_req_id_to_contract_req_id: dict[int, int] = {}
         self._px_market_to_px_data: DefaultDict[int, set[int]] = defaultdict(set)
         self._contract_req_id_to_px_req_id: DefaultDict[int, set[int]] = defaultdict(set)
@@ -112,7 +119,7 @@ class IBapiPx(IBapiContract, ABC):
     def tickPrice(self, reqId: TickerId, tickType: TickType, price: float, attrib: TickAttrib):
         name = TickTypeEnum.idx2name[tickType]
 
-        if name != "LAST" or not self._px_market_to_px_data[reqId]:
+        if name != "LAST":
             return
 
         px_req_id = next(px_req_id for px_req_id in self._px_market_to_px_data[reqId])
@@ -133,6 +140,7 @@ class IBapiPx(IBapiContract, ABC):
 
         asyncio.run(execute_on_update())
 
+        # Must be placed after `is_send_market_px_data_ok`
         self._px_data_cache.data[px_req_id].update_latest_market(price)
 
     # endregion

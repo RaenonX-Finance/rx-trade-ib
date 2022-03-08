@@ -1,1 +1,1 @@
-from .spread import *  # noqa
+from .bot import *  # noqa

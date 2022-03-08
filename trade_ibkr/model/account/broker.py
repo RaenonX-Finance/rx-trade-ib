@@ -9,12 +9,12 @@ from trade_ibkr.utils import make_limit_order, make_market_order
 from .interface import Account
 
 if TYPE_CHECKING:
-    from trade_ibkr.obj import IBapiBase
+    from trade_ibkr.obj import IBapiOrderManagement
     from trade_ibkr.model import Position, PositionData
 
 
 class BrokerAccount(Account):
-    def __init__(self, /, app: "IBapiBase", position: "Position"):
+    def __init__(self, /, app: "IBapiOrderManagement", position: "Position"):
         self.app = app
         self.position = position
 

@@ -1,6 +1,7 @@
 import asyncio
 from abc import ABC
 from decimal import Decimal
+from typing import Literal
 
 from ibapi.contract import Contract
 
@@ -14,7 +15,8 @@ class IBapiPosition(IBapiBase, ABC):
         super().__init__()
 
         self._position_data_list: list[PositionData] = []
-        self._position_on_fetched: OnPositionFetched | None = None
+        self._position_data: Position | None = None
+        self._position_on_fetched: OnPositionFetched | None | Literal["UNDEFINED"] = "UNDEFINED"
 
     def position(self, account: str, contract: Contract, position: Decimal, avgCost: float):
         self._position_data_list.append(PositionData(
@@ -24,22 +26,29 @@ class IBapiPosition(IBapiBase, ABC):
         ))
 
     def positionEnd(self):
-        if not self._position_on_fetched:
+        if self._position_on_fetched == "UNDEFINED":
             print_error(
                 "Position fetched, but no corresponding handler is set. "
-                "Use `set_on_position_fetched()` for setting it.",
+                "Use `set_on_position_fetched()` for setting it.\n"
+                "If this is intended, use `set_on_position_fetched(None)`",
             )
             return
 
+        self._position_data = Position(self._position_data_list)
+        self._position_data_list = []
+
+        if not self._position_on_fetched:
+            return
+
         async def execute_after_position_end():
-            await self._position_on_fetched(OnPositionFetchedEvent(position=Position(self._position_data_list)))
+            # noinspection PyCallingNonCallable
+            await self._position_on_fetched(OnPositionFetchedEvent(position=self._position_data))
 
         asyncio.run(execute_after_position_end())
 
-        self._position_data_list = []
-
     def request_positions(self):
+        self._position_data_list = []
         self.reqPositions()
 
-    def set_on_position_fetched(self, on_position_fetched: OnPositionFetched):
+    def set_on_position_fetched(self, on_position_fetched: OnPositionFetched | None):
         self._position_on_fetched = on_position_fetched

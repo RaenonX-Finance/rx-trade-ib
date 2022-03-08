@@ -4,13 +4,13 @@ from datetime import datetime, time
 from pandas import Series
 
 from trade_ibkr.enums import PxDataPairCol, Side
-from trade_ibkr.model import Account, CommodityPair, OnMarketPxUpdatedOfBotSpreadEvent, UnrealizedPnL
+from trade_ibkr.model import Account, CommodityPair, OnBotSpreadPxUpdatedEvent, UnrealizedPnL
 from trade_ibkr.utils import print_log
 
 
 @dataclass(kw_only=True)
 class SpreadTradeParams:
-    e: OnMarketPxUpdatedOfBotSpreadEvent
+    e: OnBotSpreadPxUpdatedEvent
 
     @property
     def last_px(self) -> Series:
@@ -26,7 +26,7 @@ class SpreadTradeParams:
 
     @property
     def commodity_pair(self) -> CommodityPair:
-        return self.commodity_pair
+        return self.e.commodity_pair
 
     @property
     def account(self) -> Account:
@@ -42,8 +42,6 @@ class SpreadTradeParams:
 
 
 def _is_good_entry_time() -> bool:
-    return True
-
     # Allow entry from 2:30 CST / 3:30 CDT (8:30 UTC) to 6:30 CST / 7:30 CDT (12:30 UTC)
     return time(8, 30) <= datetime.utcnow().time() < time(12, 30)
 
@@ -70,7 +68,10 @@ def _entry_out_of_band(params: SpreadTradeParams):
     spread_hi = params.last_px[PxDataPairCol.SPREAD_HI]
     spread_lo = params.last_px[PxDataPairCol.SPREAD_LO]
 
-    print_log(f"[BOT - Spread] Checking entry - Current: {spread} | High: {spread_hi} | Low: {spread_lo}")
+    print_log(
+        f"[BOT - Spread] Checking entry - "
+        f"High: {spread_hi:.10f} | Current: {spread:.10f} | Low: {spread_lo:.10f}"
+    )
 
     if spread > spread_hi:
         params.account.long(

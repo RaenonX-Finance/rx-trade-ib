@@ -131,12 +131,12 @@ class PxDataCacheEntry(ABC):
         )
 
 
-T = TypeVar("T", bound=PxDataCacheEntry)
+E = TypeVar("E", bound=PxDataCacheEntry)
 
 
 @dataclass(kw_only=True)
-class PxDataCache(Generic[T]):
-    data: dict[int, T] = field(init=False)
+class PxDataCache(Generic[E]):
+    data: dict[int, E] = field(init=False)
 
     def __post_init__(self):
         self.data = {}

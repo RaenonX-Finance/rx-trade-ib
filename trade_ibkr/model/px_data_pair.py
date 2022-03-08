@@ -17,7 +17,6 @@ class PxDataPair:
         df[PxDataCol.DATE] = to_datetime(
             df[PxDataCol.EPOCH_SEC], utc=True, unit="s"
         ).dt.tz_convert("America/Chicago").dt.tz_localize(None)
-        df.set_index(DatetimeIndex(df[PxDataCol.DATE]), inplace=True)
 
     def _get_merged_df(self, get_spread: "GetSpread") -> DataFrame:
         df = pd.merge(
@@ -25,7 +24,6 @@ class PxDataPair:
             on=PxDataCol.DATE, suffixes=(PxDataPairSuffix.ON_HI, PxDataPairSuffix.ON_LO)
         )
         df.index = pd.to_datetime(df[PxDataPairCol.DATE])
-        df.drop(columns=[PxDataPairCol.DATE], inplace=True)
 
         df[PxDataPairCol.SPREAD] = get_spread(df[PxDataPairCol.CLOSE_HI], df[PxDataPairCol.CLOSE_LO])
         upper, mid, lower = talib.BBANDS(
@@ -43,6 +41,11 @@ class PxDataPair:
             bars_on_hi: list["BarDataDict"],
             get_spread: "GetSpread",
     ):
+        if not bars_on_low:
+            raise ValueError("`bars_on_low` is empty")
+        if not bars_on_hi:
+            raise ValueError("`bars_on_hi` is empty")
+
         self.dataframe_on_low: DataFrame = DataFrame(bars_on_low)
         self._proc_df(self.dataframe_on_low)
 

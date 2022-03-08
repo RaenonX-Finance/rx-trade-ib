@@ -62,7 +62,6 @@ async def on_order_filled(e: OnOrderFilledEvent):
 
 
 async def on_error(e: OnErrorEvent):
-    print_error(f"[TWS] Error ({e})")
     await fast_api_socket.emit(SocketEvent.ERROR, to_socket_message_error(e))
 
 

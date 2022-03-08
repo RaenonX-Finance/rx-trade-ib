@@ -11,7 +11,7 @@ def run_ib_server():
     app = IBapiServer()
     app.activate(
         8384 if IS_DEMO else 8383,  # Configured at TWS
-        50 if IS_DEMO else 100
+        99 if IS_DEMO else 1
     )
 
     contract_mnq = make_futures_contract("MNQH2", "GLOBEX")

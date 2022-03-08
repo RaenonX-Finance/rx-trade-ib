@@ -9,8 +9,8 @@ class PxDataPairSuffix:
 class PxDataPairCol:
     DATE = PxDataCol.DATE
 
-    CLOSE_HI = f"close_{PxDataPairSuffix.ON_HI}"
-    CLOSE_LO = f"close_{PxDataPairSuffix.ON_LO}"
+    CLOSE_HI = f"close{PxDataPairSuffix.ON_HI}"
+    CLOSE_LO = f"close{PxDataPairSuffix.ON_LO}"
 
     SPREAD = "spread"
 
