@@ -1,6 +1,5 @@
 from .base import IBapiBase
 from .contract import IBapiContract
-from .error import IBapiError
 from .execution import IBapiExecution
 from .open_order import IBapiOpenOrder
 from .order_base import IBapiOrderBase

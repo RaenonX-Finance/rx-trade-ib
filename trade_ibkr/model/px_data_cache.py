@@ -1,7 +1,7 @@
 import time
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import TypeVar
+from typing import Generic, TypeVar
 
 from ibapi.common import BarData
 from ibapi.contract import Contract, ContractDetails
@@ -135,7 +135,7 @@ T = TypeVar("T", bound=PxDataCacheEntry)
 
 
 @dataclass(kw_only=True)
-class PxDataCache:
+class PxDataCache(Generic[T]):
     data: dict[int, T] = field(init=False)
 
     def __post_init__(self):

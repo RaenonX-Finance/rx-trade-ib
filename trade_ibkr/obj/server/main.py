@@ -1,5 +1,5 @@
-from .components import IBapiError, IBapiPx, IBapiOrderManagement
+from .components import IBapiPx, IBapiOrderManagement
 
 
-class IBapiServer(IBapiPx, IBapiOrderManagement, IBapiError):
+class IBapiServer(IBapiPx, IBapiOrderManagement):
     pass

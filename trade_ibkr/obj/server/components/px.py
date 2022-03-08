@@ -46,8 +46,7 @@ class IBapiPx(IBapiContract, ABC):
 
         cache_entry.update_latest_history(bar, is_realtime_update=is_realtime_update)
 
-    @staticmethod
-    def _on_px_data_updated(start_epoch: float, px_data_cache_entry: PxDataCacheEntry):
+    def _on_px_data_updated(self, start_epoch: float, px_data_cache_entry: PxDataCacheEntry):
         async def execute_on_update():
             await px_data_cache_entry.on_update(OnPxDataUpdatedEventNoAccount(
                 contract=px_data_cache_entry.contract,
@@ -110,7 +109,7 @@ class IBapiPx(IBapiContract, ABC):
     def tickPrice(self, reqId: TickerId, tickType: TickType, price: float, attrib: TickAttrib):
         name = TickTypeEnum.idx2name[tickType]
 
-        if name != "LAST":
+        if name != "LAST" or not self._px_market_to_px_data[reqId]:
             return
 
         px_req_id = next(px_req_id for px_req_id in self._px_market_to_px_data[reqId])
