@@ -10,7 +10,7 @@ from trade_ibkr.utils import make_futures_contract
 
 
 def get_spread(on_high: Series, on_low: Series) -> Series:
-    return np.log(on_high.divide(on_low))
+    return np.log(on_low.divide(on_high))
 
 
 async def on_px_updated(e: OnBotSpreadPxUpdatedEvent):

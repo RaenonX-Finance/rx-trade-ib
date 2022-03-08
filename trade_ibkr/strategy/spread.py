@@ -71,7 +71,11 @@ def _entry_out_of_band(params: SpreadTradeParams):
     spread_diff = spread_hi - spread_lo
     spread_loc = (spread - spread_lo) / spread_diff
 
-    print_log(f"[BOT - Spread] Checking entry | HI - {1 - spread_loc:.2%} - CUR - {spread_loc:.2%} - LO")
+    print_log(
+        f"[BOT - Spread] Checking entry | "
+        f"{spread:.6f} | "
+        f"HI - {1 - spread_loc:.2%} - CUR - {spread_loc:.2%} - LO"
+    )
 
     if spread > spread_hi:
         params.account.long(
@@ -115,7 +119,10 @@ def _exit_take_profit_back_to_mid(params: SpreadTradeParams):
 
     on_high_side = params.account.get_current_position_side(get_contract_identifier(params.on_high.contract))
 
-    print_log(f"[BOT - Spread] Checking exit - Current @ {spread_loc:.2%} (100% - 0%) | High Side: {on_high_side}")
+    print_log(
+        f"[BOT - Spread] Checking exit - Current @ {spread_loc:.2%} (100% - 0%) | "
+        f"{spread:.6f} | High Side: {on_high_side}"
+    )
 
     if on_high_side == Side.LONG and spread < spread_mid:
         _util_exit_all(params, "EXIT - PROFIT: Back to BB mid (high)")

@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 import talib
-from pandas import DataFrame, DatetimeIndex, Series, to_datetime
+from pandas import DataFrame, Series, to_datetime
 from talib import MA_Type
 
 from trade_ibkr.enums import PxDataCol, PxDataPairCol, PxDataPairSuffix
@@ -20,7 +20,7 @@ class PxDataPair:
 
     def _get_merged_df(self, get_spread: "GetSpread") -> DataFrame:
         df = pd.merge(
-            self.dataframe_on_low, self.dataframe_on_hi,
+            self.dataframe_on_hi, self.dataframe_on_low,
             on=PxDataCol.DATE, suffixes=(PxDataPairSuffix.ON_HI, PxDataPairSuffix.ON_LO)
         )
         df.index = pd.to_datetime(df[PxDataPairCol.DATE])
