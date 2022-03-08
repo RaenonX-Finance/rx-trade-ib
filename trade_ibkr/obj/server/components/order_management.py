@@ -137,6 +137,10 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
         for order in order_list:
             super().placeOrder(order.orderId, contract, order)
 
+        # Request next valid order ID for future use
+        # `-1` as the doc mentioned, the parameter is not being used
+        self.reqIds(-1)
+
     def cancel_order(self, order_id: int):
         self.cancelOrder(order_id)
 
