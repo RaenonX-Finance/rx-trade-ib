@@ -52,9 +52,6 @@ class IBapiPosition(IBapiBase, ABC):
         asyncio.run(execute_after_position_end())
 
     def request_positions(self):
-        if self._position_fetching:
-            return
-
         print_log("[TWS] Position request sent")
         self._position_data_list = []
         self._position_fetching = True

@@ -52,7 +52,7 @@ class IBautoBotSpread(IBapiServer):
         self._commodity_pair = commodity_pair
 
         self._pnl_req_id_to_contract_req_id: dict[int, int] = {}
-        self._order_pending: bool = False
+        self._order_pending_ids: set[int] = set()
         self._on_px_updated = on_px_updated
 
         self._last_px_update: float = 0
@@ -89,12 +89,12 @@ class IBautoBotSpread(IBapiServer):
     # region Order
 
     def placeOrder(self, orderId: OrderId, contract: Contract, order: Order):
-        self._order_pending = True
+        self._order_pending_ids.add(orderId)
 
         px = get_order_trigger_price(order)
 
         print_log(
-            f"[TWS] Place order: "
+            f"[TWS] Place order #{orderId}: "
             f"{order.action} {order.orderType} {contract.localSymbol} x {order.totalQuantity} "
             f"@ {'MKT' if px == sys.float_info.max else px}"
         )
@@ -107,7 +107,12 @@ class IBautoBotSpread(IBapiServer):
             whyHeld: str, mktCapPrice: float
     ):
         if status == "Filled":
-            self._order_pending = False
+            print_log(f"[TWS] Order #{orderId} filled")
+
+            if orderId in self._order_pending_ids:
+                # `orderStatus` is somehow triggered twice on fill
+                self._order_pending_ids.remove(orderId)
+
             self.request_positions()
 
     # endregion
@@ -175,7 +180,7 @@ class IBautoBotSpread(IBapiServer):
                 commodity_pair=self._commodity_pair,
                 px_data_pair=self._px_data_cache.to_px_data_pair(self._commodity_pair.get_spread),
                 unrlzd_pnl=self._px_data_cache.to_unrlzd_pnl(),
-                has_pending_order=self._order_pending,
+                has_pending_order=bool(self._order_pending_ids),
                 proc_sec=time.time() - start_epoch,
             ))
 
