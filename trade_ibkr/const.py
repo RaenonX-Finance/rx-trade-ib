@@ -18,6 +18,8 @@ with open("config.yaml", "r") as config_file:
     console.print(yaml.dump(config, default_flow_style=False))
 
 IS_DEMO = config["system"]["demo"]
+ACCOUNT_NUMBER_DEMO = config["system"]["account"]["demo"]
+ACCOUNT_NUMBER_ACTUAL = config["system"]["account"]["actual"]
 
 SR_PERIOD = config["support-resistance"]["period"]
 SR_MULTIPLIER = config["support-resistance"]["multiplier"]
@@ -26,3 +28,4 @@ AMPL_COEFF_TP = config["risk-management"]["take-profit-ampl"]
 AMPL_COEFF_SL = config["risk-management"]["stop-loss-ampl"]
 
 MARKET_SOCKET_PATH = config["data"]["market"]
+

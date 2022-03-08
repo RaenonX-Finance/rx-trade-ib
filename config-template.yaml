@@ -1,5 +1,8 @@
 system:
   demo: false
+  account:
+    demo: <ACCOUNT_NUMBER>
+    actual: <ACCOUNT_NUMBER>
 
 data:
   # Only used by bot (spread) - needs to run `run_server_info` first

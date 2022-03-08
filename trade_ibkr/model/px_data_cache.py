@@ -19,7 +19,7 @@ class PxDataCacheEntry(ABC):
     contract: ContractDetails | None
     contract_og: Contract
 
-    on_update: OnPxDataUpdatedNoAccount
+    on_update: OnPxDataUpdatedNoAccount | None
 
     last_historical_sent: float = field(init=False)
     last_market_update: float | None = field(init=False)  # None means no data received yet

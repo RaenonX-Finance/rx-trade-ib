@@ -47,6 +47,9 @@ class IBapiPx(IBapiContract, ABC):
         cache_entry.update_latest_history(bar, is_realtime_update=is_realtime_update)
 
     def _on_px_data_updated(self, start_epoch: float, px_data_cache_entry: PxDataCacheEntry):
+        if not px_data_cache_entry.on_update:
+            return
+
         async def execute_on_update():
             await px_data_cache_entry.on_update(OnPxDataUpdatedEventNoAccount(
                 contract=px_data_cache_entry.contract,
