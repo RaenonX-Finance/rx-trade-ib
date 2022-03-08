@@ -68,10 +68,10 @@ def _entry_out_of_band(params: SpreadTradeParams):
     spread_hi = params.last_px[PxDataPairCol.SPREAD_HI]
     spread_lo = params.last_px[PxDataPairCol.SPREAD_LO]
 
-    print_log(
-        f"[BOT - Spread] Checking entry - "
-        f"High: {spread_hi:.10f} | Current: {spread:.10f} | Low: {spread_lo:.10f}"
-    )
+    spread_diff = spread_hi - spread_lo
+    spread_loc = (spread - spread_lo) / spread_diff
+
+    print_log(f"[BOT - Spread] Checking entry | HI - {1 - spread_loc:.2%} - CUR - {spread_loc:.2%} - LO")
 
     if spread > spread_hi:
         params.account.long(
