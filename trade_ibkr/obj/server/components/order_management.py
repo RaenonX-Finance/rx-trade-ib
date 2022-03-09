@@ -76,7 +76,7 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
         quantity = Decimal(quantity)
 
         if not order_px:
-            return [make_market_order(side, quantity, order_id)]
+            return [make_limit_order(side, quantity, current_px, order_id)]
 
         match side:
             case "BUY":
