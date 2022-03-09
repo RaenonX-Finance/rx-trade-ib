@@ -1,6 +1,6 @@
 import time
 
-from trade_ibkr.const import IS_DEMO
+from trade_ibkr.const import IS_DEMO, SERVER_CONTRACTS
 from trade_ibkr.obj import IBapiServer
 from trade_ibkr.utils import make_futures_contract, print_log
 from .handler import on_market_data_received, on_px_updated, register_handlers
@@ -16,28 +16,17 @@ def run_ib_server(is_demo: bool | None = None, client_id: int | None = None) -> 
         client_id or (99 if is_demo else 1)
     )
 
-    contract_mnq = make_futures_contract("MNQH2", "GLOBEX")
-    contract_mym = make_futures_contract("MYM  MAR 22", "ECBOT")
-
     px_data_req_ids: list[int] = [
         req_id_same_contract for req_ids_cross_contract
         in [
             app.get_px_data_keep_update(
-                contract=contract_mnq,
-                duration="86400 S",
-                bar_sizes=["1 min", "5 mins"],
-                period_secs=[60, 300],
+                contract=make_futures_contract(contract["symbol"], contract["exchange"]),
+                duration=contract["duration"],
+                bar_sizes=contract["bar-sizes"],
+                period_secs=contract["period-secs"],
                 on_px_data_updated=on_px_updated,
                 on_market_data_received=on_market_data_received,
-            ),
-            app.get_px_data_keep_update(
-                contract=contract_mym,
-                duration="86400 S",
-                bar_sizes=["1 min", "5 mins"],
-                period_secs=[60, 300],
-                on_px_data_updated=on_px_updated,
-                on_market_data_received=on_market_data_received,
-            ),
+            ) for contract in SERVER_CONTRACTS
         ]
         for req_id_same_contract in req_ids_cross_contract
     ]

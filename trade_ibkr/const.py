@@ -37,3 +37,5 @@ POSITION_ON_FIRST_REALIZED = {
     for identifier, position
     in config["server"]["position-on-first-realized"].items()
 }
+
+SERVER_CONTRACTS = config["server"]["contract"]

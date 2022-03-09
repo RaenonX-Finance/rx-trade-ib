@@ -26,3 +26,22 @@ server:
     461318792: 1
     # MYM MAR 22
     477836934: 0
+  contract:
+    - symbol: MNQH2
+      exchange: GLOBEX
+      duration: 86400 S
+      bar-sizes:
+        - 1 min
+        - 5 mins
+      period-secs:
+        - 60
+        - 300
+    - symbol: MYM  MAR 22
+      exchange: ECBOT
+      duration: 86400 S
+      bar-sizes:
+        - 1 min
+        - 5 mins
+      period-secs:
+        - 60
+        - 300
