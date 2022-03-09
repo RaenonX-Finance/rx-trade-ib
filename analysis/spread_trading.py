@@ -25,7 +25,11 @@ class SpreadTradingParams:
     data_1: SpreadTradingCommodity
     data_2: SpreadTradingCommodity
 
+    time_start: str
+    time_end: str
+
     commission_single: float
+    div_reverse: bool
 
 
 def get_data_df(params: SpreadTradingParams) -> DataFrame:
@@ -41,15 +45,18 @@ def get_data_df(params: SpreadTradingParams) -> DataFrame:
 
 
 def attach_data_to_df(df: DataFrame, params: SpreadTradingParams) -> None:
-    df["px_diff"] = np.log(df[f"close_{params.data_1.name}"].divide(df[f"close_{params.data_2.name}"]))
+    if params.div_reverse:
+        df["px_diff"] = np.log(df[f"close_{params.data_2.name}"].divide(df[f"close_{params.data_1.name}"]))
+    else:
+        df["px_diff"] = np.log(df[f"close_{params.data_1.name}"].divide(df[f"close_{params.data_2.name}"]))
     upper, mid, lower = talib.BBANDS(df["px_diff"], timeperiod=10, nbdevup=2, nbdevdn=2, matype=MA_Type.SMA)
     df["px_diff_upper"] = upper
     df["px_diff_mid"] = mid
     df["px_diff_lower"] = lower
 
 
-def get_df_between_time(df: DataFrame, start: str, end: str) -> DataFrame:
-    return df.between_time(start, end)
+def get_df_between_time(df: DataFrame, params: SpreadTradingParams) -> DataFrame:
+    return df.between_time(params.time_start, params.time_end)
 
 
 def apply_strategy(df: DataFrame, params: SpreadTradingParams) -> DataFrame:
@@ -58,6 +65,9 @@ def apply_strategy(df: DataFrame, params: SpreadTradingParams) -> DataFrame:
         f"Weighted Px 1: {params.data_1.get_weighted_px(df[f'close_{params.data_1.name}'][-1]):.2f}\n"
         f"Weighted Px 2: {params.data_2.get_weighted_px(df[f'close_{params.data_2.name}'][-1]):.2f}"
     )
+
+    if df["px_diff"][-1] < 0:
+        print("Px diff value is negative, the division order should be reversed!")
 
     name_1 = params.data_1.name
     name_2 = params.data_2.name
@@ -70,7 +80,7 @@ def apply_strategy(df: DataFrame, params: SpreadTradingParams) -> DataFrame:
 
         # Exit - no cross-day position
         # noinspection PyUnresolvedReferences
-        if dt.time() == time(6, 30):
+        if dt.time() == time(6, 30) and last["position"] == "open":
             executions[-1] |= {
                 f"exit_{name_1}": row[f"close_{name_1}"],
                 f"exit_{name_2}": row[f"close_{name_2}"],
@@ -79,12 +89,14 @@ def apply_strategy(df: DataFrame, params: SpreadTradingParams) -> DataFrame:
             }
             continue
 
+        print(current_pnl, f"{last['entry_t']} {last['position']}" if last else "", dt)
+
         # Entry - out of band
         if not last or last["position"] == "close":
             if row["px_diff"] > row["px_diff_upper"]:
                 executions.append({
-                    "buy": name_1,
-                    "sell": name_2,
+                    "buy": name_2,
+                    "sell": name_1,
                     "entry_t": dt,
                     f"entry_{name_1}": row[f"close_{name_1}"],
                     f"entry_{name_2}": row[f"close_{name_2}"],
@@ -98,8 +110,8 @@ def apply_strategy(df: DataFrame, params: SpreadTradingParams) -> DataFrame:
 
             if row["px_diff"] < row["px_diff_lower"]:
                 executions.append({
-                    "buy": name_2,
-                    "sell": name_1,
+                    "buy": name_1,
+                    "sell": name_2,
                     "entry_t": dt,
                     f"entry_{name_1}": row[f"close_{name_1}"],
                     f"entry_{name_2}": row[f"close_{name_2}"],
@@ -127,10 +139,16 @@ def apply_strategy(df: DataFrame, params: SpreadTradingParams) -> DataFrame:
 
         # Record PnL
         if last["position"] == "open":
-            pnl_1 = (row[f"close_{name_1}"] - last[f"entry_{name_1}"]) * (
-                1 if last["buy"] == name_1 else -1) * params.data_1.lot * params.data_1.multiplier
-            pnl_2 = (row[f"close_{name_2}"] - last[f"entry_{name_2}"]) * (
-                1 if last["buy"] == name_2 else -1) * params.data_2.lot * params.data_2.multiplier
+            pnl_1 = (
+                    (row[f"close_{name_1}"] - last[f"entry_{name_1}"]) *
+                    (1 if last["buy"] == name_1 else -1)
+                    * params.data_1.lot * params.data_1.multiplier
+            )
+            pnl_2 = (
+                    (row[f"close_{name_2}"] - last[f"entry_{name_2}"])
+                    * (1 if last["buy"] == name_2 else -1)
+                    * params.data_2.lot * params.data_2.multiplier
+            )
 
             current_pnl = pnl_1 + pnl_2
 
@@ -159,34 +177,38 @@ def apply_strategy(df: DataFrame, params: SpreadTradingParams) -> DataFrame:
 
     df_exec = DataFrame(executions)
     df_exec["hold_period"] = df_exec["exit_t"] - df_exec["entry_t"]
-    df_exec[f"px_side_{name_1}"] = (df_exec[f"exit_{name_1}"] - df_exec[f"entry_{name_1}"]) * np.where(
-        df_exec["buy"] == name_1, 1, -1)
-    df_exec[f"px_side_{name_2}"] = (df_exec[f"exit_{name_2}"] - df_exec[f"entry_{name_2}"]) * np.where(
-        df_exec["buy"] == name_2, 1, -1)
+    df_exec[f"px_side_{name_1}"] = (
+            (df_exec[f"exit_{name_1}"] - df_exec[f"entry_{name_1}"])
+            * np.where(df_exec["buy"] == name_1, 1, -1)
+    )
+    df_exec[f"px_side_{name_2}"] = (
+            (df_exec[f"exit_{name_2}"] - df_exec[f"entry_{name_2}"])
+            * np.where(df_exec["buy"] == name_2, 1, -1)
+    )
     df_exec[f"pnl_{name_1}"] = df_exec[f"px_side_{name_1}"] * params.data_1.lot * params.data_1.multiplier
     df_exec[f"pnl_{name_2}"] = df_exec[f"px_side_{name_2}"] * params.data_2.lot * params.data_2.multiplier
     df_exec["pnl_single"] = (
             df_exec[f"pnl_{name_1}"]
             + df_exec[f"pnl_{name_2}"]
             - params.commission_single
-            * (params.data_2.lot + params.data_2.lot)
+            * (params.data_1.lot + params.data_2.lot)
     )
     df_exec["pnl_cum"] = df_exec["pnl_single"].cumsum()
 
     return df_exec
 
 
-def show_pnl_plot(df_exec: DataFrame):
-    fig = px.line(df_exec, x=df_exec.index, y="pnl_cum")
+def show_pnl_plot(df_exec: DataFrame, params: SpreadTradingParams):
+    fig = px.line(df_exec, x=df_exec.index, y="pnl_cum", title=f"{params.data_1.name} / {params.data_2.name}")
     fig.show()
 
 
 def all_in_one(params: SpreadTradingParams):
     df = get_data_df(params)
     attach_data_to_df(df, params)
-    df_selected = get_df_between_time(df, "02:30", "06:30")
+    df_selected = get_df_between_time(df, params)
     df_exec = apply_strategy(df_selected, params)
-    show_pnl_plot(df_exec)
+    show_pnl_plot(df_exec, params)
 
 
 if __name__ == '__main__':
@@ -197,16 +219,19 @@ if __name__ == '__main__':
 
     all_in_one(SpreadTradingParams(
         data_1=SpreadTradingCommodity(
+            file_path="../archive/futures/YM/20220222-20220307-1.csv",
+            name="YM",
+            lot=6,
+            multiplier=0.5,
+        ),
+        data_2=SpreadTradingCommodity(
             file_path="../archive/futures/NQ/20220222-20220307-1.csv",
             name="NQ",
             lot=2,
             multiplier=2,
         ),
-        data_2=SpreadTradingCommodity(
-            file_path="../archive/futures/ES/20220222-20220307-1.csv",
-            name="ES",
-            lot=5,
-            multiplier=5,
-        ),
+        time_start="02:30",
+        time_end="06:30",
         commission_single=0.52,
+        div_reverse=False,
     ))
