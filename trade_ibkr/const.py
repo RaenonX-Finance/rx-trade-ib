@@ -31,3 +31,9 @@ MARKET_SOCKET_PATH = config["data"]["market"]
 
 BOT_STRATEGY_CHECK_INTERVAL = config["bot"]["strategy-check-interval-sec"]
 BOT_POSITION_FETCH_INTERVAL = config["bot"]["position-fetch-interval-sec"]
+
+POSITION_ON_FIRST_REALIZED = {
+    int(identifier): int(position)
+    for identifier, position
+    in config["server"]["position-on-first-realized"].items()
+}

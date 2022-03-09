@@ -19,3 +19,10 @@ support-resistance:
 risk-management:
   take-profit-ampl: 3.5
   stop-loss-ampl: 1.7
+
+server:
+  position-on-first-realized:
+    # MNQH2
+    461318792: 1
+    # MYM MAR 22
+    477836934: 0

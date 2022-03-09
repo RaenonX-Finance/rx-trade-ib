@@ -5,6 +5,7 @@ from typing import DefaultDict, Iterable
 from trade_ibkr.utils import get_contract_identifier
 from .model import GroupedOrderExecution, OrderExecution
 from .type import OrderExecutionGroupKey
+from ...const import POSITION_ON_FIRST_REALIZED
 
 
 def init_grouped_executions(order_execs: Iterable[OrderExecution]) -> DefaultDict[int, list[GroupedOrderExecution]]:
@@ -32,7 +33,7 @@ def init_grouped_executions(order_execs: Iterable[OrderExecution]) -> DefaultDic
         if grouped_execution.realized_pnl:
             if contract_identifier not in position_tracker:
                 # Activate tracker
-                position_tracker[contract_identifier] = Decimal(0)
+                position_tracker[contract_identifier] = Decimal(POSITION_ON_FIRST_REALIZED[contract_identifier])
             else:
                 position = position_tracker[contract_identifier]
 
