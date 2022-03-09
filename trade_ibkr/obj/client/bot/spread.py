@@ -131,6 +131,7 @@ class IBautoBotSpread(IBapiServer):
     def positionEnd(self):
         super().positionEnd()
 
+        print_log(f"[BOT - Spread] Position: {self._position_data}")
         self._last_position_fetch = time.time()
 
     # endregion
