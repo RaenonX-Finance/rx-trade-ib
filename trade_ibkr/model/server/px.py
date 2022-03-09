@@ -28,7 +28,7 @@ class OnPxDataUpdatedEventNoAccount:
 
     def __str__(self):
         return (
-            f"{self.contract.underSymbol} - {self.px_data.current_close:.2f} "
+            f"{self.contract.underSymbol} ({self.contract.contract.conId}) - {self.px_data.current_close:.2f} "
             f"/ {self.px_data.latest_time} @ {self.px_data.period_sec // 60} / {self.proc_sec:.3f} s"
         )
 
@@ -42,7 +42,7 @@ class OnMarketDataReceivedEvent:
     px: float
 
     def __str__(self):
-        return f"{self.contract.underSymbol} - {self.px:.2f}"
+        return f"{self.contract.underSymbol} ({self.contract.contract.conId}) - {self.px:.2f}"
 
 
 OnMarketDataReceived: TypeAlias = Callable[[OnMarketDataReceivedEvent], Coroutine[Any, Any, None]]
