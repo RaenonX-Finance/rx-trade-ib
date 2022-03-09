@@ -7,11 +7,11 @@ from ibapi.contract import Contract
 from ibapi.order import Order
 from ibapi.order_state import OrderState
 
-from trade_ibkr.const import AMPL_COEFF_SL, AMPL_COEFF_TP
 from trade_ibkr.enums import OrderSideConst
 from trade_ibkr.model import OnOrderFilled, OnOrderFilledEvent
 from trade_ibkr.utils import (
-    get_contract_identifier, make_limit_bracket_order, make_market_order, make_stop_order, print_error,
+    get_contract_identifier, make_limit_order, make_market_order, make_stop_order,
+    print_error,
     update_order_price,
 )
 from .execution import IBapiExecution
@@ -81,22 +81,12 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
         match side:
             case "BUY":
                 if order_px < current_px:
-                    return make_limit_bracket_order(
-                        side, quantity, order_px, order_id,
-                        take_profit_px_diff=amplitude_hl_ema10 * AMPL_COEFF_TP,
-                        stop_loss_px_diff=amplitude_hl_ema10 * AMPL_COEFF_SL,
-                        min_tick=min_tick,
-                    )
+                    return [make_limit_order(side, quantity, order_px, order_id)]
 
                 return [make_stop_order(side, quantity, order_px, order_id)]
             case "SELL":
                 if order_px > current_px:
-                    return make_limit_bracket_order(
-                        side, quantity, order_px, order_id,
-                        take_profit_px_diff=amplitude_hl_ema10 * AMPL_COEFF_TP,
-                        stop_loss_px_diff=amplitude_hl_ema10 * AMPL_COEFF_SL,
-                        min_tick=min_tick,
-                    )
+                    return [make_limit_order(side, quantity, order_px, order_id)]
 
                 return [make_stop_order(side, quantity, order_px, order_id)]
 
