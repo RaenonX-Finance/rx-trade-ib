@@ -60,7 +60,11 @@ def _has_open_position(params: SpreadTradeParams) -> bool:
 
 def _util_exit_all(params: SpreadTradeParams, message: str):
     for commodity in params.commodity_pair.commodities:
-        params.account.exit(contract=commodity.contract, message=message)
+        try:
+            params.account.exit(contract=commodity.contract, message=message)
+        except ValueError:
+            # No order side - already exited
+            pass
 
 
 def _entry_out_of_band(params: SpreadTradeParams):
