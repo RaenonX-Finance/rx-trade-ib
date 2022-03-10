@@ -40,3 +40,5 @@ POSITION_ON_FIRST_REALIZED = {
 }
 
 SERVER_CONTRACTS = config["server"]["contract"]
+SERVER_CLIENT_ID_LIVE = config["server"]["client-id"]["live"]
+SERVER_CLIENT_ID_DEMO = config["server"]["client-id"]["demo"]

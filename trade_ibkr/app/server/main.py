@@ -1,6 +1,6 @@
 import time
 
-from trade_ibkr.const import IS_DEMO, SERVER_CONTRACTS
+from trade_ibkr.const import IS_DEMO, SERVER_CLIENT_ID_DEMO, SERVER_CLIENT_ID_LIVE, SERVER_CONTRACTS
 from trade_ibkr.obj import IBapiServer
 from trade_ibkr.utils import make_futures_contract, print_log
 from .handler import on_market_data_received, on_px_updated, register_handlers
@@ -13,7 +13,7 @@ def run_ib_server(is_demo: bool | None = None, client_id: int | None = None) -> 
     app = IBapiServer()
     app.activate(
         8384 if is_demo else 8383,  # Configured at TWS
-        client_id or (99 if is_demo else 1)
+        client_id or (SERVER_CLIENT_ID_LIVE if is_demo else SERVER_CLIENT_ID_DEMO)
     )
 
     px_data_req_ids: list[int] = []
@@ -32,8 +32,8 @@ def run_ib_server(is_demo: bool | None = None, client_id: int | None = None) -> 
     while not app.is_all_px_data_ready(px_data_req_ids):
         time.sleep(0.25)
         print_log("[System] Waiting the initial data to ready")
-
     register_socket_endpoints(app, px_data_req_ids)
+
     register_handlers(app, px_data_req_ids)
 
     return app
