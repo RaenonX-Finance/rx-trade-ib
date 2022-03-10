@@ -148,9 +148,13 @@ def _exit_stop_loss_force(params: SpreadTradeParams):
 def spread_trading_strategy(params: SpreadTradeParams):
     _exit_force_no_cross_day_position(params)
 
-    if not _is_allowed_to_enter(params):
-        print_log(f"[BOT - Spread] Not allowed to enter - Has pending order: {params.has_pending_order}")
-        return
+    # Only attempt to enter at :00
+    if datetime.now().second == 0:
+        if not _is_allowed_to_enter(params):
+            print_log(f"[BOT - Spread] Not allowed to enter - Has pending order: {params.has_pending_order}")
+            return
+
+        _entry_out_of_band(params)
 
     has_open_position = _has_open_position(params)
 
@@ -159,6 +163,3 @@ def spread_trading_strategy(params: SpreadTradeParams):
         _exit_take_profit_lock_profit(params)
         _exit_stop_loss_force(params)
         return
-
-    if datetime.now().second == 0:
-        _entry_out_of_band(params)
