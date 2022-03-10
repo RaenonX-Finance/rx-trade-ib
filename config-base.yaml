@@ -13,8 +13,14 @@ data:
   market: ws://localhost:8000
 
 support-resistance:
+  # Period of the amplitude value (to be used with multiplier)
   period: 60
+  # Level distance must be greater than this multiplier of the last <period> average amplitude
   multiplier: 1.2
+  method:
+    fractal: true
+    window: true
+    extrema: true
 
 risk-management:
   take-profit-ampl: 3.5

@@ -9,11 +9,13 @@ class SRLevel:
     level: float
     fractal: bool
     window: bool
+    extrema: bool
 
 
 class SRLevelInitData(TypedDict):
     fractal: list[float]
     window: list[float]
+    extrema: list[float]
 
 
 @dataclass(kw_only=True)
@@ -43,6 +45,10 @@ class SRLevelsData:
                             self.levels_data[level_of_data].fractal
                             or key == "fractal"
                     )
+                    self.levels_data[level_of_data].extrema = (
+                            self.levels_data[level_of_data].extrema
+                            or key == "extrema"
+                    )
                     is_close_to_level = True
                     break
 
@@ -52,7 +58,8 @@ class SRLevelsData:
                 self.levels_data[current_level] = SRLevel(
                     level=current_level,
                     window=key == "window",
-                    fractal=key == "fractal"
+                    fractal=key == "fractal",
+                    extrema=key == "extrema",
                 )
 
     def __post_init__(self):

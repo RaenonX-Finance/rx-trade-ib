@@ -27,6 +27,7 @@ class PxDataBar(TypedDict):
 class PxDataSupportResistanceType(TypedDict):
     window: bool
     fractal: bool
+    extrema: bool
 
 
 class PxDataSupportResistance(TypedDict):
@@ -112,6 +113,7 @@ def _from_px_data_support_resistance(px_data: "PxData") -> list[PxDataSupportRes
             "type": {
                 "window": level_data.window,
                 "fractal": level_data.fractal,
+                "extrema": level_data.extrema,
             },
         })
 

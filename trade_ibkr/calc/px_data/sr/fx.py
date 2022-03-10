@@ -76,3 +76,18 @@ def support_resistance_window(df: DataFrame, min_gap: float) -> list[float]:
             levels.append(current_min)
 
     return sorted(levels)
+
+
+def support_resistance_extrema(df: DataFrame, min_gap: float) -> list[float]:
+    levels = []
+
+    series_maxima = df[PxDataCol.LOCAL_MAX]
+    series_minima = df[PxDataCol.LOCAL_MIN]
+
+    for maxima, minima in zip(series_maxima, series_minima):
+        if maxima and is_far_from_level(maxima, levels, min_gap):
+            levels.append(maxima)
+        if minima and is_far_from_level(minima, levels, min_gap):
+            levels.append(minima)
+
+    return levels

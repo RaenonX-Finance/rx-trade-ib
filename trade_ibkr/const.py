@@ -23,6 +23,7 @@ ACCOUNT_NUMBER_ACTUAL = config["system"]["account"]["actual"]
 
 SR_PERIOD = config["support-resistance"]["period"]
 SR_MULTIPLIER = config["support-resistance"]["multiplier"]
+SR_METHOD = config["support-resistance"]["method"]
 
 AMPL_COEFF_TP = config["risk-management"]["take-profit-ampl"]
 AMPL_COEFF_SL = config["risk-management"]["stop-loss-ampl"]
