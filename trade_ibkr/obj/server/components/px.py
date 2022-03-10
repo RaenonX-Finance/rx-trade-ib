@@ -171,8 +171,6 @@ class IBapiPx(IBapiContract, ABC):
         req_contract = self.request_contract_data(contract)
         req_market = self._request_px_data_market(contract)
 
-        print(contract.localSymbol, duration, bar_size, period_sec, req_contract, req_market)
-
         req_px = self._request_px_data(contract=contract, duration=duration, bar_size=bar_size, keep_update=True)
         self._px_req_id_to_contract_req_id[req_px] = req_contract
         self._contract_req_id_to_px_req_id[req_contract].add(req_px)
