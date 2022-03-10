@@ -160,4 +160,5 @@ def spread_trading_strategy(params: SpreadTradeParams):
         _exit_stop_loss_force(params)
         return
 
-    _entry_out_of_band(params)
+    if datetime.now().second == 0:
+        _entry_out_of_band(params)
