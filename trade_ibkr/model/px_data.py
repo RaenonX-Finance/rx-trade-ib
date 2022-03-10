@@ -49,15 +49,19 @@ class PxData:
             argrelextrema(self.dataframe[PxDataCol.HIGH].values, np.greater_equal, order=7)[0]
         ][PxDataCol.HIGH]
 
-        self.dataframe[PxDataCol.PRICE_TIMES_VOLUME] = np.multiply(
-            self.dataframe[PxDataCol.CLOSE],
-            self.dataframe[PxDataCol.VOLUME]
-        )
-        mkt_data_group = self.dataframe.groupby(PxDataCol.DATE_MARKET)
-        self.dataframe[PxDataCol.VWAP] = np.divide(
-            mkt_data_group[PxDataCol.PRICE_TIMES_VOLUME].transform(pd.Series.cumsum),
-            mkt_data_group[PxDataCol.VOLUME].transform(pd.Series.cumsum),
-        )
+        # Don't calculate VWAP if period is 3600s+ (meaningless)
+        if self.period_sec >= 3600:
+            self.dataframe[PxDataCol.VWAP] = np.full(len(self.dataframe.index), np.nan)
+        else:
+            self.dataframe[PxDataCol.PRICE_TIMES_VOLUME] = np.multiply(
+                self.dataframe[PxDataCol.CLOSE],
+                self.dataframe[PxDataCol.VOLUME]
+            )
+            mkt_data_group = self.dataframe.groupby(PxDataCol.DATE_MARKET)
+            self.dataframe[PxDataCol.VWAP] = np.divide(
+                mkt_data_group[PxDataCol.PRICE_TIMES_VOLUME].transform(pd.Series.cumsum),
+                mkt_data_group[PxDataCol.VOLUME].transform(pd.Series.cumsum),
+            )
 
         # Remove NaNs
         self.dataframe = self.dataframe.fillna(np.nan).replace([np.nan], [None])
