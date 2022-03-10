@@ -70,7 +70,13 @@ class Position:
         return self._data
 
     def __str__(self):
-        return " / ".join([
+        position_text = [
             f"{pos.contract.localSymbol}: {pos.position}"
             for pos in self._data.values() if pos.position != 0
-        ])
+        ]
+
+        # Could have data with 0 position
+        if not position_text:
+            return "(No position)"
+
+        return " / ".join(position_text)
