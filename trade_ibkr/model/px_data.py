@@ -97,7 +97,15 @@ class PxData:
         return self.dataframe.iloc[-n]
 
     def get_last_day_close(self) -> float | None:
-        market_date_prev = self.dataframe[PxDataCol.DATE_MARKET].unique()[-2]
+        market_dates = self.dataframe[PxDataCol.DATE_MARKET].unique()
+
+        if len(market_dates) < 2:
+            raise ValueError(
+                f"Px data of {self.contract.underSymbol} ({self.contract.contract.conId} @ {self.period_sec}) "
+                f"only has a single market date: {market_dates}"
+            )
+
+        market_date_prev = market_dates[-2]
 
         last_day_df = self.dataframe[self.dataframe[PxDataCol.DATE_MARKET] == market_date_prev]
 

@@ -1,6 +1,7 @@
 import time
 from abc import ABC
 from dataclasses import dataclass, field
+from datetime import date, datetime
 from typing import Generic, TypeVar
 
 from ibapi.common import BarData
@@ -30,6 +31,12 @@ class PxDataCacheEntry(ABC):
 
     @property
     def current_epoch_sec(self) -> int:
+        # Epoch sec is YYYYMMDD instead for daily bar
+        if self.period_sec >= 86400:
+            today = date.today()
+
+            return int(datetime(today.year, today.month, today.day).timestamp())
+
         return int(time.time()) // self.period_sec * self.period_sec
 
     @property
@@ -104,7 +111,7 @@ class PxDataCacheEntry(ABC):
         if bar.barCount == -1:
             return
 
-        bar_data_dict = to_bar_data_dict(bar)
+        bar_data_dict = to_bar_data_dict(bar, is_date_ymd=self.period_sec >= 86400)
 
         epoch_to_rec = bar_data_dict[PxDataCol.EPOCH_SEC]
         epoch_current = self.current_epoch_sec
