@@ -40,7 +40,10 @@ class IBapiPx(IBapiContract, ABC):
         self._px_data_cache: T = self._init_get_px_data_cache()
         self._px_req_id_to_contract_req_id: dict[int, int] = {}
         self._px_market_to_px_data: DefaultDict[int, set[int]] = defaultdict(set)
+
         self._contract_req_id_to_px_req_id: DefaultDict[int, set[int]] = defaultdict(set)
+
+        self._market_request_source: dict[Contract, int] = {}
 
     # region Historical
 
@@ -109,8 +112,19 @@ class IBapiPx(IBapiContract, ABC):
 
     # region Market
 
+    def _get_req_id_of_source_mkt_data(self, source: Contract) -> int | None:
+        for contract, req_id in self._market_request_source.items():
+            if self._is_same_contract(contract, source):
+                return req_id
+
+        return None
+
     def _request_px_data_market(self, contract: Contract) -> int:
+        if existing_req_id := self._get_req_id_of_source_mkt_data(contract):
+            return existing_req_id
+
         request_id = self.next_valid_request_id
+        self._market_request_source[contract] = request_id
 
         self.reqMktData(request_id, contract, "", False, False, [])
 
@@ -156,6 +170,8 @@ class IBapiPx(IBapiContract, ABC):
     ) -> int:
         req_contract = self.request_contract_data(contract)
         req_market = self._request_px_data_market(contract)
+
+        print(contract.localSymbol, duration, bar_size, period_sec, req_contract, req_market)
 
         req_px = self._request_px_data(contract=contract, duration=duration, bar_size=bar_size, keep_update=True)
         self._px_req_id_to_contract_req_id[req_px] = req_contract
