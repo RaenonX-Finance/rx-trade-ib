@@ -150,38 +150,28 @@ class IBapiPx(IBapiContract, ABC):
 
     def get_px_data_keep_update(
             self, *,
-            contract: Contract, duration: str, bar_sizes: list[str], period_secs: list[int],
+            contract: Contract, duration: str, bar_size: str, period_sec: int,
             on_px_data_updated: OnPxDataUpdatedNoAccount,
             on_market_data_received: OnMarketDataReceived,
-    ) -> list[int]:
-        if len(period_secs) != len(bar_sizes):
-            raise ValueError(
-                f"`period_secs` ({len(period_secs)}) should have the same length of `bar_sizes` ({len(bar_sizes)})"
-            )
-
-        req_px_ids: list[int] = []
-
+    ) -> int:
         req_contract = self.request_contract_data(contract)
         req_market = self._request_px_data_market(contract)
 
-        for bar_size, period_sec in zip(bar_sizes, period_secs):
-            req_px = self._request_px_data(contract=contract, duration=duration, bar_size=bar_size, keep_update=True)
-            self._px_req_id_to_contract_req_id[req_px] = req_contract
-            self._contract_req_id_to_px_req_id[req_contract].add(req_px)
-            self._px_market_to_px_data[req_market].add(req_px)
+        req_px = self._request_px_data(contract=contract, duration=duration, bar_size=bar_size, keep_update=True)
+        self._px_req_id_to_contract_req_id[req_px] = req_contract
+        self._contract_req_id_to_px_req_id[req_contract].add(req_px)
+        self._px_market_to_px_data[req_market].add(req_px)
 
-            self._px_data_cache.data[req_px] = PxDataCacheEntryKeepUpdate(
-                contract=None,
-                period_sec=period_sec,
-                contract_og=contract,
-                data={},
-                on_update=on_px_data_updated,
-                on_update_market=on_market_data_received,
-            )
+        self._px_data_cache.data[req_px] = PxDataCacheEntryKeepUpdate(
+            contract=None,
+            period_sec=period_sec,
+            contract_og=contract,
+            data={},
+            on_update=on_px_data_updated,
+            on_update_market=on_market_data_received,
+        )
 
-            req_px_ids.append(req_px)
-
-        return req_px_ids
+        return req_px
 
     def is_all_px_data_ready(self, px_data_req_ids: list[int]) -> bool:
         return self._px_data_cache.is_all_px_data_ready(px_data_req_ids)

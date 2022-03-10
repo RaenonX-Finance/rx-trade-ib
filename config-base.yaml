@@ -5,8 +5,8 @@ system:
     actual: <ACCOUNT_NUMBER>
 
 bot:
-  strategy-check-interval-sec: 0.075
-  position-fetch-interval-sec: 3
+  strategy-check-interval-sec: 0.15
+  position-fetch-interval-sec: 10
 
 data:
   # Only used by bot (spread) - needs to run `run_server_info` first
@@ -29,19 +29,25 @@ server:
   contract:
     - symbol: MNQH2
       exchange: GLOBEX
-      duration: 86400 S
-      bar-sizes:
-        - 1 min
-        - 5 mins
-      period-secs:
-        - 60
-        - 300
+      data:
+      - duration: 86400 S
+        bar-size: 1 min
+        period-secs: 60
+      - duration: 86400 S
+        bar-size: 5 mins
+        period-secs: 300
+      - duration: 10 D
+        bar-size: 1 hours
+        period-secs: 3600
+      - duration: 30 D
+        bar-size: 1 day
+        period-secs: 86400
     - symbol: MYM  MAR 22
       exchange: ECBOT
-      duration: 86400 S
-      bar-sizes:
-        - 1 min
-        - 5 mins
-      period-secs:
-        - 60
-        - 300
+      data:
+      - duration: 86400 S
+        bar-size: 1 min
+        period-secs: 60
+      - duration: 86400 S
+        bar-size: 5 mins
+        period-secs: 300
