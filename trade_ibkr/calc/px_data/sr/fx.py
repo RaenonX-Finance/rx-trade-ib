@@ -30,7 +30,7 @@ def support_resistance_fractal(df: DataFrame, min_gap: float) -> list[float]:
 
     levels = []
 
-    for i in range(2, len(df.index) - 2):
+    for i in reversed(range(2, len(df.index) - 3)):
         if is_bullish_fractal(i):
             low = series_low[i]
             if is_far_from_level(low, levels, min_gap):
@@ -51,7 +51,7 @@ def support_resistance_window(df: DataFrame, min_gap: float) -> list[float]:
     series_high = df[PxDataCol.HIGH].tolist()
     series_low = df[PxDataCol.LOW].tolist()
 
-    for i in range(5, len(df.index) - 5):
+    for i in reversed(range(5, len(df.index) - 6)):
         # taking a window of 9 candles
         current_max = max(series_high[i - 5:i + 4])
 
@@ -84,7 +84,7 @@ def support_resistance_extrema(df: DataFrame, min_gap: float) -> list[float]:
     series_maxima = df[PxDataCol.LOCAL_MAX]
     series_minima = df[PxDataCol.LOCAL_MIN]
 
-    for maxima, minima in zip(series_maxima, series_minima):
+    for maxima, minima in reversed(list(zip(series_maxima, series_minima))[:-1]):
         if maxima and is_far_from_level(maxima, levels, min_gap):
             levels.append(maxima)
         if minima and is_far_from_level(minima, levels, min_gap):
