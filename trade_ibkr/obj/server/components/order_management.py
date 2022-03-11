@@ -10,9 +10,8 @@ from ibapi.order_state import OrderState
 from trade_ibkr.enums import OrderSideConst
 from trade_ibkr.model import OnOrderFilled, OnOrderFilledEvent
 from trade_ibkr.utils import (
-    get_contract_identifier, make_limit_order, make_market_order, make_stop_order,
-    print_error,
-    update_order_price,
+    get_contract_identifier, make_limit_order, make_stop_order,
+    print_error, update_order_price,
 )
 from .execution import IBapiExecution
 from .open_order import IBapiOpenOrder
@@ -21,11 +20,6 @@ from .position import IBapiPosition
 
 class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
     def _handle_on_order_filled(self, contract: Contract, order: Order):
-        if order.permId != self._order_filled_perm_id:
-            self._order_filled_perm_id = None
-            self._order_filled_avg_px = None
-            return
-
         if not self._order_on_filled:
             print_error("Order filled handler not set, use `set_on_order_filled()` for setting it.")
             self._order_filled_perm_id = None
@@ -47,7 +41,8 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
         self._order_filled_avg_px = None
 
     def completedOrder(self, contract: Contract, order: Order, orderState: OrderState):
-        self._handle_on_order_filled(contract, order)
+        if order.permId == self._order_filled_perm_id:
+            self._handle_on_order_filled(contract, order)
 
     def orderStatus(
             self, orderId: OrderId, status: str, filled: Decimal,
