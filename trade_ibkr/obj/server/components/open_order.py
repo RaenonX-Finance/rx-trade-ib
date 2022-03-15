@@ -16,13 +16,13 @@ class IBapiOpenOrder(IBapiOrderBase, ABC):
     def __init__(self):
         super().__init__()
 
-        self._open_order_list: list[OpenOrder] | None = None
+        self._open_order_list: list[OpenOrder] = []
+        self._open_order_fetching: bool = False
         self._open_order_on_fetched: OnOpenOrderFetched | None | Literal["UNDEFINED"] = "UNDEFINED"
 
     def openOrder(self, orderId: OrderId, contract: Contract, order: Order, orderState: OrderState):
-        if self._open_order_list is None:
+        if not self._open_order_fetching:
             # Manually dispatch a request event because it's not triggered on-demand
-            # > `_open_order_list` is `None` means it's not manually requested
             self.request_open_orders()
             return
 
@@ -37,35 +37,36 @@ class IBapiOpenOrder(IBapiOrderBase, ABC):
         ))
 
     def openOrderEnd(self):
+        self._open_order_fetching = False
+
         if self._open_order_on_fetched == "UNDEFINED":
             print_error(
                 "[TWS] Open order fetched, but no corresponding handler is set. "
                 "Use `set_on_open_order_fetched()` for setting it.\n"
                 "If this is intended, call `set_on_open_order_fetched(None)`",
             )
-            self._open_order_list = None
+            self._open_order_list = []
             return
         elif not self._open_order_on_fetched:
-            self._open_order_list = None
+            self._open_order_list = []
             return
 
         async def execute_after_open_order_fetched():
             # noinspection PyCallingNonCallable
             await self._open_order_on_fetched(OnOpenOrderFetchedEvent(
-                open_order=OpenOrderBook(self._open_order_list or [])
+                open_order=OpenOrderBook(self._open_order_list)
             ))
 
         asyncio.run(execute_after_open_order_fetched())
-
-        self._open_order_list = None
 
     def set_on_open_order_fetched(self, on_open_order_fetched: OnOpenOrderFetched | None):
         self._open_order_on_fetched = on_open_order_fetched
 
     def request_open_orders(self):
-        if self._open_order_list is not None:
+        if self._open_order_fetching:
             # Another request is processing, ignore the current one
             return
 
         self._open_order_list = []
+        self._open_order_fetching = True
         self.reqOpenOrders()
