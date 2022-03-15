@@ -46,6 +46,8 @@ class PxData:
                 f"not calculating EMA 120 trend (trend window unspecified)"
             )
 
+        self.dataframe[PxDataCol.EMA_120_TREND_CHANGE] = self.dataframe[PxDataCol.EMA_120_TREND].diff()
+
     def _proc_df_amplitude(self):
         self.dataframe[PxDataCol.AMPLITUDE_HL] = abs(self.dataframe[PxDataCol.HIGH] - self.dataframe[PxDataCol.LOW])
         self.dataframe[PxDataCol.AMPLITUDE_HL_EMA_10] = talib.EMA(

@@ -23,6 +23,7 @@ class PxDataBar(TypedDict):
     extremaMax: bool | None
     ema120: float | None
     ema120Trend: float | None
+    ema120TrendChange: float | None
     diff: float
     diffSma: float | None
     diffSmaTrend: float | None
@@ -100,6 +101,7 @@ def _from_px_data_bars(px_data: "PxData") -> list[PxDataBar]:
         PxDataCol.LOCAL_MAX: "extremaMax",
         PxDataCol.EMA_120: "ema120",
         PxDataCol.EMA_120_TREND: "ema120Trend",
+        PxDataCol.EMA_120_TREND_CHANGE: "ema120TrendChange",
         PxDataCol.DIFF: "diff",
         PxDataCol.DIFF_SMA: "diffSma",
         PxDataCol.DIFF_SMA_TREND: "diffSmaTrend",
