@@ -10,9 +10,9 @@ from pandas import DataFrame, DatetimeIndex, Series, to_datetime
 from scipy.signal import argrelextrema
 
 from trade_ibkr.calc import analyze_extrema, calc_support_resistance_levels
-from trade_ibkr.const import console
+from trade_ibkr.const import MARKET_TREND_WINDOW, console
 from trade_ibkr.enums import CandlePos, PxDataCol
-from trade_ibkr.utils import closest_diff, get_detailed_contract_identifier, print_log
+from trade_ibkr.utils import closest_diff, get_detailed_contract_identifier, print_log, print_warning
 
 if TYPE_CHECKING:
     from trade_ibkr.model import BarDataDict
@@ -32,6 +32,16 @@ class PxData:
         ))
 
         self.dataframe[PxDataCol.EMA_120] = talib.EMA(self.dataframe[PxDataCol.CLOSE], timeperiod=120)
+        if ema_diff_window := MARKET_TREND_WINDOW.get(self.period_sec):
+            self.dataframe[PxDataCol.EMA_120_TREND] = (
+                    self.dataframe[PxDataCol.CLOSE] - self.dataframe[PxDataCol.EMA_120]
+            ).ewm(span=ema_diff_window, adjust=False).mean()
+        else:
+            self.dataframe[PxDataCol.EMA_120_TREND] = np.full(len(self.dataframe.index), np.nan)
+            print_warning(
+                f"PxData of {self.contract.underSymbol} @ {self.period_sec} is "
+                f"not calculating EMA 120 trend (trend window unspecified)"
+            )
 
         self.dataframe[PxDataCol.AMPLITUDE_HL] = abs(self.dataframe[PxDataCol.HIGH] - self.dataframe[PxDataCol.LOW])
         self.dataframe[PxDataCol.AMPLITUDE_HL_EMA_10] = talib.EMA(

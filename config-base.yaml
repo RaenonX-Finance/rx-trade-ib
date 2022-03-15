@@ -11,6 +11,14 @@ bot:
 data:
   # Only used by bot (spread) - needs to run `run_server_info` first
   market: ws://localhost:8000
+  # Count of bar to lookback for calculating the current trend
+  # > Key = period sec, must match with `server.contract[].data[].period-secs`
+  # > Value = count of bar to lookback
+  # -----------------
+  # `300: 96` means to lookback 96 bars (8 hrs) for data of period in 300s
+  trend-window:
+    300: 96
+    3600: 24
 
 support-resistance:
   # Period of the amplitude value (to be used with multiplier)

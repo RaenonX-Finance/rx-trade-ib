@@ -17,11 +17,12 @@ class PxDataBar(TypedDict):
     low: float
     close: float
     vwap: float
-    amplitudeHL: float
-    amplitudeOC: float
-    extremaMin: bool
-    extremaMax: bool
-    ema120: float
+    amplitudeHL: float | None
+    amplitudeOC: float | None
+    extremaMin: bool | None
+    extremaMax: bool | None
+    ema120: float | None
+    ema120Trend: float | None
 
 
 class PxDataSupportResistanceType(TypedDict):
@@ -95,11 +96,12 @@ def _from_px_data_bars(px_data: "PxData") -> list[PxDataBar]:
         PxDataCol.LOCAL_MIN: "extremaMin",
         PxDataCol.LOCAL_MAX: "extremaMax",
         PxDataCol.EMA_120: "ema120",
+        PxDataCol.EMA_120_TREND: "ema120Trend",
     }
 
     df = px_data.dataframe.copy()
-    df[PxDataCol.LOCAL_MIN].astype(bool, copy=False)
-    df[PxDataCol.LOCAL_MAX].astype(bool, copy=False)
+    df[PxDataCol.LOCAL_MIN] = df[PxDataCol.LOCAL_MIN].astype(bool)
+    df[PxDataCol.LOCAL_MAX] = df[PxDataCol.LOCAL_MAX].astype(bool)
 
     return df_rows_to_list_of_data(px_data.dataframe, columns)
 

@@ -29,6 +29,7 @@ AMPL_COEFF_TP = config["risk-management"]["take-profit-ampl"]
 AMPL_COEFF_SL = config["risk-management"]["stop-loss-ampl"]
 
 MARKET_SOCKET_PATH = config["data"]["market"]
+MARKET_TREND_WINDOW = config["data"]["trend-window"]
 
 BOT_STRATEGY_CHECK_INTERVAL = config["bot"]["strategy-check-interval-sec"]
 BOT_POSITION_FETCH_INTERVAL = config["bot"]["position-fetch-interval-sec"]

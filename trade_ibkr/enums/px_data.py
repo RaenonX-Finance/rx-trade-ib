@@ -14,6 +14,7 @@ class PxDataCol:
     AMPLITUDE_OC_EMA_10 = "amplitude_oc_ema10"
 
     EMA_120 = "ema_120"
+    EMA_120_TREND = "ema_120_trend"
 
     DATE = "date"
     DATE_MARKET = "market_date"
