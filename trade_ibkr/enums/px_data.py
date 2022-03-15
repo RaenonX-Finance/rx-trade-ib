@@ -13,6 +13,10 @@ class PxDataCol:
     AMPLITUDE_HL_EMA_10 = "amplitude_hl_ema10"
     AMPLITUDE_OC_EMA_10 = "amplitude_oc_ema10"
 
+    DIFF = "diff"
+    DIFF_SMA = "diff_sma"
+    DIFF_SMA_TREND = "diff_sma_trend"
+
     EMA_120 = "ema_120"
     EMA_120_TREND = "ema_120_trend"
 

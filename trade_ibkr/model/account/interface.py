@@ -5,8 +5,8 @@ from typing import final
 from ibapi.contract import Contract
 
 from trade_ibkr.enums import OrderSideConst, Side, reverse_order_side
+from trade_ibkr.utils import get_contract_identifier, print_log
 from ..position import PositionData
-from ...utils import get_contract_identifier, print_log
 
 
 class Account(ABC):

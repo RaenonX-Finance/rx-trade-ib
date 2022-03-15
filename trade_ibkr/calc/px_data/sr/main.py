@@ -8,7 +8,7 @@ from .model import SRLevelsData
 
 
 def calc_support_resistance_levels(df: DataFrame) -> SRLevelsData:
-    min_gap = np.mean(df[PxDataCol.HIGH].tail(SR_PERIOD) - df[PxDataCol.LOW].tail(SR_PERIOD)) * SR_MULTIPLIER
+    min_gap = np.mean(df[PxDataCol.DIFF_SMA].tail(SR_PERIOD)) * SR_MULTIPLIER
 
     levels_fractal = support_resistance_fractal(df, min_gap) if SR_METHOD["fractal"] else []
     levels_window = support_resistance_window(df, min_gap) if SR_METHOD["window"] else []

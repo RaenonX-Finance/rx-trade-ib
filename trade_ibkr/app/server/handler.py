@@ -1,4 +1,5 @@
 from trade_ibkr.const import fast_api_socket
+from trade_ibkr.enums import SocketEvent
 from trade_ibkr.model import (
     OnErrorEvent, OnExecutionFetchedEvent, OnMarketDataReceivedEvent, OnOpenOrderFetchedEvent, OnOrderFilledEvent,
     OnPositionFetchedEvent, OnPxDataUpdatedEventNoAccount,
@@ -10,7 +11,6 @@ from trade_ibkr.utils import (
     to_socket_message_position, to_socket_message_px_data, to_socket_message_px_data_market,
 )
 from .utils import get_execution_on_fetched_params
-from ...enums import SocketEvent
 
 
 async def on_px_updated(e: OnPxDataUpdatedEventNoAccount):

@@ -15,10 +15,19 @@ data:
   # > Key = period sec, must match with `server.contract[].data[].period-secs`
   # > Value = count of bar to lookback
   # -----------------
-  # `300: 96` means to lookback 96 bars (8 hrs) for data of period in 300s
+  # `300: 96` means to lookback 96 bars (8 hrs) on data of period in 300s
   trend-window:
     300: 96
     3600: 24
+  # Period of diff SMA
+  # > Key = period sec, or `default`
+  # > Value = SMA period
+  # -----------------
+  # `300: 5` means to use 5 SMA on data of period in 300s
+  diff-sma-window:
+    default: 20
+    300: 5
+    3600: 20
 
 support-resistance:
   # Period of the amplitude value (to be used with multiplier)

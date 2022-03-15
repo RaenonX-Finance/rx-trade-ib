@@ -10,7 +10,7 @@ from pandas import DataFrame, DatetimeIndex, Series, to_datetime
 from scipy.signal import argrelextrema
 
 from trade_ibkr.calc import analyze_extrema, calc_support_resistance_levels
-from trade_ibkr.const import MARKET_TREND_WINDOW, console
+from trade_ibkr.const import DIFF_TREND_WINDOW, DIFF_TREND_WINDOW_DEFAULT, MARKET_TREND_WINDOW, console
 from trade_ibkr.enums import CandlePos, PxDataCol
 from trade_ibkr.utils import closest_diff, get_detailed_contract_identifier, print_log, print_warning
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 class PxData:
-    def _proc_df(self):
+    def _proc_df_date(self):
         self.dataframe[PxDataCol.DATE] = to_datetime(
             self.dataframe[PxDataCol.EPOCH_SEC], utc=True, unit="s"
         ).dt.tz_convert("America/Chicago").dt.tz_localize(None)
@@ -31,11 +31,14 @@ class PxData:
             self.dataframe[PxDataCol.DATE].dt.date + timedelta(days=1)
         ))
 
+    def _proc_df_ema120(self):
         self.dataframe[PxDataCol.EMA_120] = talib.EMA(self.dataframe[PxDataCol.CLOSE], timeperiod=120)
         if ema_diff_window := MARKET_TREND_WINDOW.get(self.period_sec):
             self.dataframe[PxDataCol.EMA_120_TREND] = (
                     self.dataframe[PxDataCol.CLOSE] - self.dataframe[PxDataCol.EMA_120]
-            ).ewm(span=ema_diff_window, adjust=False).mean()
+            ) \
+                .ewm(span=ema_diff_window, adjust=False) \
+                .mean()
         else:
             self.dataframe[PxDataCol.EMA_120_TREND] = np.full(len(self.dataframe.index), np.nan)
             print_warning(
@@ -43,6 +46,7 @@ class PxData:
                 f"not calculating EMA 120 trend (trend window unspecified)"
             )
 
+    def _proc_df_amplitude(self):
         self.dataframe[PxDataCol.AMPLITUDE_HL] = abs(self.dataframe[PxDataCol.HIGH] - self.dataframe[PxDataCol.LOW])
         self.dataframe[PxDataCol.AMPLITUDE_HL_EMA_10] = talib.EMA(
             self.dataframe[PxDataCol.AMPLITUDE_HL], timeperiod=10
@@ -52,6 +56,24 @@ class PxData:
             timeperiod=10
         )
 
+    def _proc_df_diff(self):
+        self.dataframe[PxDataCol.DIFF] = self.dataframe[PxDataCol.CLOSE] - self.dataframe[PxDataCol.OPEN]
+        if diff_trend_window := DIFF_TREND_WINDOW.get(self.period_sec):
+            self.dataframe[PxDataCol.DIFF_SMA] = abs(self.dataframe[PxDataCol.DIFF]) \
+                .rolling(diff_trend_window) \
+                .mean()
+        else:
+            self.dataframe[PxDataCol.DIFF_SMA] = abs(self.dataframe[PxDataCol.DIFF]) \
+                .rolling(DIFF_TREND_WINDOW_DEFAULT) \
+                .mean()
+            print_warning(
+                f"PxData of {self.contract.underSymbol} @ {self.period_sec} is "
+                f"using default diff SMA window"
+            )
+
+        self.dataframe[PxDataCol.DIFF_SMA_TREND] = self.dataframe[PxDataCol.DIFF_SMA].diff()
+
+    def _proc_df_extrema(self):
         self.dataframe[PxDataCol.LOCAL_MIN] = self.dataframe.iloc[
             argrelextrema(self.dataframe[PxDataCol.LOW].values, np.less_equal, order=7)[0]
         ][PxDataCol.LOW]
@@ -59,6 +81,7 @@ class PxData:
             argrelextrema(self.dataframe[PxDataCol.HIGH].values, np.greater_equal, order=7)[0]
         ][PxDataCol.HIGH]
 
+    def _proc_df_vwap(self):
         # Don't calculate VWAP if period is 3600s+ (meaningless)
         if self.period_sec >= 3600:
             self.dataframe[PxDataCol.VWAP] = np.full(len(self.dataframe.index), np.nan)
@@ -72,6 +95,14 @@ class PxData:
                 mkt_data_group[PxDataCol.PRICE_TIMES_VOLUME].transform(pd.Series.cumsum),
                 mkt_data_group[PxDataCol.VOLUME].transform(pd.Series.cumsum),
             )
+
+    def _proc_df(self):
+        self._proc_df_date()
+        self._proc_df_ema120()
+        self._proc_df_amplitude()
+        self._proc_df_diff()
+        self._proc_df_extrema()
+        self._proc_df_vwap()
 
         # Remove NaNs
         self.dataframe = self.dataframe.fillna(np.nan).replace([np.nan], [None])
