@@ -51,15 +51,17 @@ class OnExecutionFetchedParams:
     earliest_time: datetime = field(init=False)
     contract_ids: set[int] = field(init=False)
 
-    px_data_dict_1m: dict[int, "PxData"] = field(init=False)
+    px_data_dict_lowest_period: dict[int, "PxData"] = field(init=False)
 
     def __post_init__(self):
         self.earliest_time = min(px_data.earliest_time for px_data in self.px_data_list)
         self.contract_ids = {px_data.contract_identifier for px_data in self.px_data_list}
-        self.px_data_dict_1m = {
+
+        px_data_min_period_sec = min(self.px_data_list, key=lambda px_data: px_data.period_sec).period_sec
+        self.px_data_dict_lowest_period = {
             px_data.contract_identifier: px_data
             for px_data in self.px_data_list
-            if px_data.period_sec == 60
+            if px_data.period_sec == px_data_min_period_sec
         }
 
 

@@ -18,7 +18,7 @@ class OrderExecutionCollection:
                 # Skip contract IDs not to be included
                 continue
 
-            px_data = params.px_data_dict_1m[identifier]
+            px_data = params.px_data_dict_lowest_period[identifier]
 
             self._executions_dataframe[identifier] = init_exec_dataframe(
                 grouped_executions,
