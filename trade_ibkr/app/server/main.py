@@ -32,8 +32,8 @@ def run_ib_server(is_demo: bool | None = None, client_id: int | None = None) -> 
     while not app.is_all_px_data_ready(px_data_req_ids):
         time.sleep(0.25)
         print_log("[System] Waiting the initial data to ready")
-    register_socket_endpoints(app, px_data_req_ids)
 
+    register_socket_endpoints(app, px_data_req_ids)
     register_handlers(app, px_data_req_ids)
 
     return app
