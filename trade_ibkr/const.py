@@ -25,8 +25,8 @@ SR_PERIOD = config["support-resistance"]["period"]
 SR_MULTIPLIER = config["support-resistance"]["multiplier"]
 SR_METHOD = config["support-resistance"]["method"]
 
-AMPL_COEFF_TP = config["risk-management"]["take-profit-ampl"]
-AMPL_COEFF_SL = config["risk-management"]["stop-loss-ampl"]
+RISK_MGMT_TP_X = config["risk-management"]["take-profit-x"]
+RISK_MGMT_SL_X = config["risk-management"]["stop-loss-x"]
 
 MARKET_SOCKET_PATH = config["data"]["market"]
 MARKET_TREND_WINDOW = config["data"]["trend-window"]

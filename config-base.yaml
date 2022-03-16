@@ -40,8 +40,8 @@ support-resistance:
     extrema: true
 
 risk-management:
-  take-profit-ampl: 3.5
-  stop-loss-ampl: 1.7
+  take-profit-x: 15
+  stop-loss-x: 3
 
 server:
   client-id:

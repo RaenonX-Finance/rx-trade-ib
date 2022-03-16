@@ -228,8 +228,8 @@ class PxData:
         return self.get_current()[PxDataCol.CLOSE]
 
     @property
-    def current_ampl_hl_ema10(self) -> float:
-        return self.get_current()[PxDataCol.AMPLITUDE_HL_EMA_10]
+    def current_diff_sma(self) -> float:
+        return self.get_current()[PxDataCol.DIFF_SMA]
 
     @property
     def contract_identifier(self) -> int:

@@ -47,7 +47,7 @@ def register_socket_endpoints(app: IBapiServer, px_data_req_ids: list[int]):
             quantity=message.quantity,
             order_px=message.px,
             current_px=px_data.current_close,
-            amplitude_hl_ema10=px_data.current_ampl_hl_ema10,
+            diff_sma=px_data.current_diff_sma,
             order_id=message.order_id,
             min_tick=px_data.contract.minTick,
         )

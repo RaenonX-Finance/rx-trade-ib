@@ -7,10 +7,11 @@ from ibapi.contract import Contract
 from ibapi.order import Order
 from ibapi.order_state import OrderState
 
+from trade_ibkr.const import RISK_MGMT_SL_X, RISK_MGMT_TP_X
 from trade_ibkr.enums import OrderSideConst
 from trade_ibkr.model import OnOrderFilled, OnOrderFilledEvent
 from trade_ibkr.utils import (
-    get_contract_identifier, make_limit_order, make_stop_order,
+    get_contract_identifier, make_limit_order, make_stop_order, make_limit_bracket_order,
     print_error, update_order_price,
 )
 from .execution import IBapiExecution
@@ -66,22 +67,43 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
     def _make_new_order(
             self, *,
             side: OrderSideConst, quantity: float, order_px: float | None,
-            current_px: float, amplitude_hl_ema10: float, order_id: int, min_tick: float,
+            current_px: float, diff_sma: float, order_id: int, min_tick: float,
+            contract_identifier: int,
     ) -> list[Order]:
         quantity = Decimal(quantity)
 
+        # Make order Px = current Px if not specified (intend to order on market Px)
         if not order_px:
-            return [make_limit_order(side, quantity, current_px, order_id)]
+            order_px = current_px
+
+        def _make_limit_order_internal() -> list[Order]:
+            if (
+                    self._open_order_list or
+                    (self._position_data and self._position_data.has_position(contract_identifier))
+            ):
+                # Has open order / position, make simple LMT order instead
+                return [make_limit_order(side, quantity, order_px, order_id)]
+
+            return make_limit_bracket_order(
+                side, quantity, order_px, order_id,
+                take_profit_px_diff=diff_sma * RISK_MGMT_TP_X,
+                stop_loss_px_diff=diff_sma * RISK_MGMT_SL_X,
+                min_tick=min_tick
+            )
+
+        if not order_px:
+            # Market limit
+            return _make_limit_order_internal()
 
         match side:
             case "BUY":
                 if order_px < current_px:
-                    return [make_limit_order(side, quantity, order_px, order_id)]
+                    return _make_limit_order_internal()
 
                 return [make_stop_order(side, quantity, order_px, order_id)]
             case "SELL":
                 if order_px > current_px:
-                    return [make_limit_order(side, quantity, order_px, order_id)]
+                    return _make_limit_order_internal()
 
                 return [make_stop_order(side, quantity, order_px, order_id)]
 
@@ -96,7 +118,7 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
     def place_order(
             self, *,
             contract: Contract, side: OrderSideConst, quantity: float, order_px: float | None,
-            current_px: float, amplitude_hl_ema10: float, order_id: int | None, min_tick: float,
+            current_px: float, diff_sma: float, order_id: int | None, min_tick: float,
     ):
         if order_id:
             # Have order ID means it's order modification
@@ -115,8 +137,9 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
             quantity=quantity,
             current_px=current_px,
             order_id=self.next_valid_order_id,
-            amplitude_hl_ema10=amplitude_hl_ema10,
+            diff_sma=diff_sma,
             min_tick=min_tick,
+            contract_identifier=get_contract_identifier(contract),
         )
 
         for order in order_list:

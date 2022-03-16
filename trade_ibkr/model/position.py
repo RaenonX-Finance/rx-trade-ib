@@ -65,6 +65,9 @@ class Position:
         """
         self._data[get_contract_identifier(position_data.contract)] = position_data
 
+    def has_position(self, contract_identifier: int) -> bool:
+        return contract_identifier in self._data and self._data[contract_identifier].position != Decimal(0)
+
     @property
     def data(self) -> dict[int, PositionData]:
         return self._data
