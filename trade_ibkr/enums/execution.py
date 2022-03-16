@@ -12,7 +12,7 @@ class ExecutionDataCol:
 
     PX_SIDE = "px_side"
     PX_SIDE_SUM = "px_side_sum"
-    PX_SIDE_AMPL_RATIO = "px_side_ampl_ratio"
+    PX_SIDE_DIFF_SMA_RATIO = "px_side_diff_sma_ratio"
 
     PROFIT = "profit"
     LOSS = "loss"

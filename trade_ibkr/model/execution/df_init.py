@@ -53,14 +53,16 @@ def _summary(df: DataFrame, multiplier: float, px_data: "PxData"):
 
     # Px Side Amplitude Ratio
     df_temp = df.copy()
-    df_temp[ExecutionDataCol.TIME_COMPLETED] = df_temp[ExecutionDataCol.TIME_COMPLETED].dt.round("min")
+    df_temp[ExecutionDataCol.TIME_COMPLETED] = df_temp[ExecutionDataCol.TIME_COMPLETED] \
+        .dt \
+        .floor(f"{px_data.period_sec}S")
     df_temp = df_temp.merge(
         px_data.dataframe,
         how="left", left_on=ExecutionDataCol.TIME_COMPLETED, right_index=True
     )
-    df_temp[PxDataCol.AMPLITUDE_HL_EMA_10].replace([None], np.nan, inplace=True)
-    df[ExecutionDataCol.PX_SIDE_AMPL_RATIO] = abs(
-        df_temp[ExecutionDataCol.PX_SIDE].divide(df_temp[PxDataCol.AMPLITUDE_HL_EMA_10])
+    df_temp[PxDataCol.DIFF_SMA].replace([None], np.nan, inplace=True)
+    df[ExecutionDataCol.PX_SIDE_DIFF_SMA_RATIO] = abs(
+        df_temp[ExecutionDataCol.PX_SIDE].divide(df_temp[PxDataCol.DIFF_SMA])
     )
 
 

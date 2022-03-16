@@ -38,7 +38,7 @@ class ExecutionGroup(TypedDict):
 
     pxSide: float | None
     pxSideSum: float | None
-    pxSideAmplRatio: float | None
+    pxSideDiffSmaRatio: float | None
 
     avgPxProfit: float | None
     avgPxLoss: float | None
@@ -75,7 +75,7 @@ def _from_grouped_execution_dataframe(executions_df: DataFrame) -> list[Executio
         ExecutionDataCol.AVG_PNL_EWR: "avgPnLEwr",
         ExecutionDataCol.PX_SIDE: "pxSide",
         ExecutionDataCol.PX_SIDE_SUM: "pxSideSum",
-        ExecutionDataCol.PX_SIDE_AMPL_RATIO: "pxSideAmplRatio",
+        ExecutionDataCol.PX_SIDE_DIFF_SMA_RATIO: "pxSideDiffSmaRatio",
         ExecutionDataCol.AVG_PX_PROFIT: "avgPxProfit",
         ExecutionDataCol.AVG_PX_LOSS: "avgPxLoss",
         ExecutionDataCol.AVG_PX_RR_RATIO: "avgPxRrRatio",
