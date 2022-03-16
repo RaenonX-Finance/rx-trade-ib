@@ -78,7 +78,7 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
 
         def _make_limit_order_internal() -> list[Order]:
             if (
-                    self._open_order_list or
+                    self._has_open_order_of_contract(contract_identifier) or
                     (self._position_data and self._position_data.has_position(contract_identifier))
             ):
                 # Has open order / position, make simple LMT order instead

@@ -8,7 +8,7 @@ from ibapi.order import Order
 from ibapi.order_state import OrderState
 
 from trade_ibkr.model import OnOpenOrderFetched, OnOpenOrderFetchedEvent, OpenOrder, OpenOrderBook
-from trade_ibkr.utils import get_order_trigger_price, print_error
+from trade_ibkr.utils import get_contract_identifier, get_order_trigger_price, print_error
 from .order_base import IBapiOrderBase
 
 
@@ -70,3 +70,9 @@ class IBapiOpenOrder(IBapiOrderBase, ABC):
         self._open_order_list = []
         self._open_order_fetching = True
         self.reqOpenOrders()
+
+    def _has_open_order_of_contract(self, contract_identifier: int) -> bool:
+        return any(
+            get_contract_identifier(open_order.contract) == contract_identifier
+            for open_order in self._open_order_list
+        )
