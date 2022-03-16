@@ -34,7 +34,10 @@ def register_socket_endpoints(app: IBapiServer, px_data_req_ids: list[int]):
     async def on_request_place_order(_, order_content: str):
         message = from_socket_message_order(order_content)
 
-        px_data = get_px_data_by_contract_identifier(app, px_data_req_ids, message.contract_identifier)
+        px_data = get_px_data_by_contract_identifier(
+            app, px_data_req_ids,
+            message.contract_identifier, message.period_sec
+        )
         contract = px_data.contract.contract
 
         print_log(f"[Socket] Received `orderPlace` ({contract.localSymbol} {message.side} @ {message.px or 'MKT'})")

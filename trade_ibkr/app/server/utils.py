@@ -23,13 +23,13 @@ def get_execution_on_fetched_params(app: IBapiServer, px_data_req_ids: list[int]
 
 
 def get_px_data_by_contract_identifier(
-        app: IBapiServer, px_data_req_ids: list[int], contract_identifier: int
+        app: IBapiServer, px_data_req_ids: list[int], contract_identifier: int, period_sec: int,
 ) -> PxData:
     px_data = None
     for req_id in px_data_req_ids:
         data = app.get_px_data_from_cache(req_id)
 
-        if get_detailed_contract_identifier(data.contract) == contract_identifier:
+        if get_detailed_contract_identifier(data.contract) == contract_identifier and data.period_sec == period_sec:
             px_data = data
             break
 

@@ -11,6 +11,7 @@ class OrderSocketMessage(TypedDict):
     side: OrderSideConst
     quantity: float
     px: float | None
+    periodSec: int
 
 
 @dataclass(kw_only=True)
@@ -20,6 +21,7 @@ class OrderSocketMessagePack:
     side: OrderSideConst
     quantity: float
     px: float | None
+    period_sec: int
 
 
 def from_socket_message_order(message: str) -> OrderSocketMessagePack:
@@ -31,4 +33,5 @@ def from_socket_message_order(message: str) -> OrderSocketMessagePack:
         side=order_message["side"],
         quantity=order_message["quantity"],
         px=order_message["px"],
+        period_sec=order_message["periodSec"],
     )
