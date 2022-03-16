@@ -56,7 +56,7 @@ class PxDataExtremaPoint(TypedDict):
     epochSec: int
     length: int
     diff: float
-    amplRatio: float
+    diffSmaRatio: float
     px: float
     direction: DirectionConst
 
@@ -68,7 +68,7 @@ class PxDataExtremaCurrentData(TypedDict):
 
 class PxDataExtremaCurrentStats(TypedDict):
     diff: PxDataExtremaCurrentData
-    amplRatio: PxDataExtremaCurrentData
+    diffSmaRatio: PxDataExtremaCurrentData
     length: PxDataExtremaCurrentData
 
 
@@ -151,9 +151,9 @@ def _from_px_data_current_stats(px_data: "PxData") -> PxDataExtremaCurrentStats:
             "val": diff,
             "pct": (1 - cdf(diff, list(map(lambda point: point.diff, points)))) * 100,
         },
-        "amplRatio": {
+        "diffSmaRatio": {
             "val": ampl_ratio,
-            "pct": (1 - cdf(ampl_ratio, list(map(lambda point: point.diff_ampl_ratio, points)))) * 100,
+            "pct": (1 - cdf(ampl_ratio, list(map(lambda point: point.diff_sma_ratio, points)))) * 100,
         },
         "length": {
             "val": length,
@@ -167,7 +167,7 @@ def _from_px_data_extrema_point(point: ExtremaDataPoint) -> PxDataExtremaPoint:
         "epochSec": point.epoch_sec,
         "length": point.length,
         "diff": point.diff,
-        "amplRatio": point.diff_ampl_ratio,
+        "diffSmaRatio": point.diff_sma_ratio,
         "px": point.px,
         "direction": point.direction,
     }
