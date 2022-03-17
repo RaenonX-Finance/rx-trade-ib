@@ -25,6 +25,7 @@ def run_ib_server(is_demo: bool | None = None, client_id: int | None = None) -> 
                 duration=contract_data["duration"],
                 bar_size=contract_data["bar-size"],
                 period_sec=contract_data["period-secs"],
+                is_major=contract_data.get("is-major", False),
                 on_px_data_updated=on_px_updated,
                 on_market_data_received=on_market_data_received,
             ))

@@ -79,6 +79,7 @@ class PxDataDict(TypedDict):
     extrema: PxDataExtrema
     supportResistance: list[PxDataSupportResistance]
     lastDayClose: float | None
+    isMajor: bool
 
 
 def _from_px_data_bars(px_data: "PxData") -> list[PxDataBar]:
@@ -181,7 +182,8 @@ def _to_px_data_dict(px_data: "PxData") -> PxDataDict:
         "data": _from_px_data_bars(px_data),
         "extrema": _from_px_data_extrema(px_data),
         "supportResistance": _from_px_data_support_resistance(px_data),
-        "lastDayClose": px_data.get_last_day_close()
+        "lastDayClose": px_data.get_last_day_close(),
+        "isMajor": px_data.is_major,
     }
 
 

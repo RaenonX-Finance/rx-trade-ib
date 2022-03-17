@@ -164,7 +164,7 @@ class IBapiPx(IBapiContract, ABC):
 
     def get_px_data_keep_update(
             self, *,
-            contract: Contract, duration: str, bar_size: str, period_sec: int,
+            contract: Contract, duration: str, bar_size: str, period_sec: int, is_major: bool,
             on_px_data_updated: OnPxDataUpdatedNoAccount,
             on_market_data_received: OnMarketDataReceived,
     ) -> int:
@@ -179,6 +179,7 @@ class IBapiPx(IBapiContract, ABC):
         self._px_data_cache.data[req_px] = PxDataCacheEntryKeepUpdate(
             contract=None,
             period_sec=period_sec,
+            is_major=is_major,
             contract_og=contract,
             data={},
             on_update=on_px_data_updated,

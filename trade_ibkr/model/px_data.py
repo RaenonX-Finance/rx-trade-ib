@@ -112,11 +112,13 @@ class PxData:
             self, *,
             contract: ContractDetails,
             period_sec: int,
+            is_major: bool,
             bars: list["BarDataDict"] | None = None,
             dataframe: DataFrame | None = None,
     ):
         self.contract: ContractDetails = contract
         self.period_sec: int = period_sec
+        self.is_major: bool = is_major
         self.dataframe: DataFrame = DataFrame(bars) if bars else dataframe
 
         if self.dataframe is None:

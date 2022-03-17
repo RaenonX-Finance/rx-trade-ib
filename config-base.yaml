@@ -58,6 +58,7 @@ server:
       - duration: 86400 S
         bar-size: 5 mins
         period-secs: 300
+        is-major: true  # Indicates that the data is the main focus, defaults to `false`
       - duration: 10 D
         bar-size: 1 hours
         period-secs: 3600

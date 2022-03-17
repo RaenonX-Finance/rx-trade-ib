@@ -17,6 +17,7 @@ from .server import OnPxDataUpdatedNoAccount
 class PxDataCacheEntry(ABC):
     data: dict[int, BarDataDict]
     period_sec: int
+    is_major: bool
     contract: ContractDetails | None
     contract_og: Contract
 
@@ -134,6 +135,7 @@ class PxDataCacheEntry(ABC):
         return PxData(
             contract=self.contract,
             period_sec=self.period_sec,
+            is_major=self.is_major,
             bars=[self.data[key] for key in sorted(self.data.keys())]
         )
 
