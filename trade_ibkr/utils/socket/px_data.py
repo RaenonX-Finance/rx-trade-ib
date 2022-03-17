@@ -32,6 +32,7 @@ class PxDataBar(TypedDict):
 class PxDataSupportResistance(TypedDict):
     level: float
     strength: float
+    strengthCount: float
 
 
 class PxDataContract(TypedDict):
@@ -119,6 +120,7 @@ def _from_px_data_support_resistance(px_data: "PxData") -> list[PxDataSupportRes
             "level": sr_level.level,
             # Convert integral absolute strength (5) to relative strength (5 / 10 = 0.5)
             "strength": sr_level.strength / max_strength,
+            "strengthCount": sr_level.strength,
         })
 
     return ret
