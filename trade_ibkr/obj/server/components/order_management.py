@@ -11,7 +11,7 @@ from trade_ibkr.const import RISK_MGMT_SL_X, RISK_MGMT_TP_X
 from trade_ibkr.enums import OrderSideConst
 from trade_ibkr.model import OnOrderFilled, OnOrderFilledEvent
 from trade_ibkr.utils import (
-    get_contract_identifier, make_limit_order, make_stop_order, make_limit_bracket_order,
+    get_contract_identifier, make_limit_order, make_stop_limit_order, make_limit_bracket_order,
     print_error, update_order_price,
 )
 from .execution import IBapiExecution
@@ -100,12 +100,12 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
                 if order_px < current_px:
                     return _make_limit_order_internal()
 
-                return [make_stop_order(side, quantity, order_px, order_id)]
+                return [make_stop_limit_order(side, quantity, order_px, order_id)]
             case "SELL":
                 if order_px > current_px:
                     return _make_limit_order_internal()
 
-                return [make_stop_order(side, quantity, order_px, order_id)]
+                return [make_stop_limit_order(side, quantity, order_px, order_id)]
 
         raise ValueError(f"Unhandled order side: {side}")
 

@@ -42,6 +42,25 @@ def make_stop_order(
     return order
 
 
+def make_stop_limit_order(
+        side: OrderSideConst, quantity: Decimal, px: float, order_id: int | None = None,
+        *, parent_id: int = 0, transmit: bool = True,
+) -> Order:
+    order = Order()
+    if order_id:
+        order.orderId = order_id
+    order.action = side
+    order.totalQuantity = quantity
+    order.orderType = "STP LMT"
+    order.outsideRth = True
+    order.auxPrice = px
+    order.lmtPrice = px
+    order.parentId = parent_id
+    order.transmit = transmit
+
+    return order
+
+
 def make_market_order(side: OrderSideConst, quantity: Decimal, order_id: int | None = None) -> Order:
     order = Order()
     if order_id:
@@ -54,7 +73,7 @@ def make_market_order(side: OrderSideConst, quantity: Decimal, order_id: int | N
 
 
 def get_order_trigger_price(order: Order) -> float:
-    if order.orderType == "STP":
+    if order.orderType in ("STP", "STP LMT"):
         return order.auxPrice
 
     if order.orderType == "LMT":
@@ -66,9 +85,18 @@ def get_order_trigger_price(order: Order) -> float:
 def update_order_price(order: Order, px: float):
     if order.orderType == "STP":
         order.auxPrice = px
+        return
 
     if order.orderType == "LMT":
         order.lmtPrice = px
+        return
+
+    if order.orderType == "STP LMT":
+        order.lmtPrice = px
+        order.auxPrice = px
+        return
+
+    raise ValueError(f"Order of type {order.orderType} not updated - no corresponding handling implementation")
 
 
 def make_limit_bracket_order(
