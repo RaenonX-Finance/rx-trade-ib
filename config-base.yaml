@@ -29,6 +29,13 @@ data:
     300: 5
     3600: 20
 
+sr-level:
+  # Determines the gap between each level, the larger the multiplier, the larger the gap
+  # > Used together with the average of all diff SMA to get the minimum gap between SR levels
+  multiplier: 1.5
+  # Threshold to determine that an S/R level is "strong" in terms of its relative strength (0~1)
+  strong-threshold: 0.7
+
 risk-management:
   take-profit-x: 15
   stop-loss-x: 3

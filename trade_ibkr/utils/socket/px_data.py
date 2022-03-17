@@ -4,6 +4,7 @@ from typing import Iterable, TYPE_CHECKING, TypedDict
 from trade_ibkr.enums import DirectionConst, PxDataCol
 from trade_ibkr.utils import cdf
 from .utils import df_rows_to_list_of_data
+from ...const import SR_STRONG_THRESHOLD
 
 if TYPE_CHECKING:
     from trade_ibkr.calc import ExtremaDataPoint
@@ -33,6 +34,7 @@ class PxDataSupportResistance(TypedDict):
     level: float
     strength: float
     strengthCount: float
+    strong: bool
 
 
 class PxDataContract(TypedDict):
@@ -116,11 +118,14 @@ def _from_px_data_support_resistance(px_data: "PxData") -> list[PxDataSupportRes
     max_strength = max(px_data.sr_levels_data.levels_data, key=lambda data: data.strength).strength
 
     for sr_level in px_data.sr_levels_data.levels_data:
+        # Convert integral absolute strength (5) to relative strength (5 / 10 = 0.5)
+        strength = sr_level.strength / max_strength
+
         ret.append({
             "level": sr_level.level,
-            # Convert integral absolute strength (5) to relative strength (5 / 10 = 0.5)
-            "strength": sr_level.strength / max_strength,
+            "strength": strength,
             "strengthCount": sr_level.strength,
+            "strong": strength > SR_STRONG_THRESHOLD
         })
 
     return ret

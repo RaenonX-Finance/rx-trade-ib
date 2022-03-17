@@ -13,6 +13,7 @@ from trade_ibkr.model import (
     OnMarketDataReceived, OnMarketDataReceivedEvent, OnPxDataUpdatedEventNoAccount, OnPxDataUpdatedNoAccount,
     PxData, PxDataCache, PxDataCacheEntry,
 )
+from trade_ibkr.utils import print_warning
 from .contract import IBapiContract
 
 
@@ -51,8 +52,17 @@ class IBapiPx(IBapiContract, ABC):
         cache_entry = self._px_data_cache.data[req_id_px]
 
         if contract_req_id := self._px_req_id_to_contract_req_id.get(req_id_px):
+            contract = self._contract_data.get(contract_req_id)
+
+            if not contract:
+                print_warning(
+                    f"Contract for Px data request (#{req_id_px}) not ready,"
+                    f"the contract data should be ready in a few moments"
+                )
+                return
+
             # Add contract detail to PxData object
-            cache_entry.contract = self._contract_data[contract_req_id]
+            cache_entry.contract = contract
 
         cache_entry.update_latest_history(bar, is_realtime_update=is_realtime_update)
 

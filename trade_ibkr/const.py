@@ -24,6 +24,9 @@ ACCOUNT_NUMBER_ACTUAL = config["system"]["account"]["actual"]
 RISK_MGMT_TP_X = config["risk-management"]["take-profit-x"]
 RISK_MGMT_SL_X = config["risk-management"]["stop-loss-x"]
 
+SR_MULTIPLIER = config["sr-level"]["multiplier"]
+SR_STRONG_THRESHOLD = config["sr-level"]["strong-threshold"]
+
 MARKET_SOCKET_PATH = config["data"]["market"]
 MARKET_TREND_WINDOW = config["data"]["trend-window"]
 
