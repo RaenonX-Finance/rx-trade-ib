@@ -21,9 +21,6 @@ IS_DEMO = config["system"]["demo"]
 ACCOUNT_NUMBER_DEMO = config["system"]["account"]["demo"]
 ACCOUNT_NUMBER_ACTUAL = config["system"]["account"]["actual"]
 
-SR_PERIOD = config["support-resistance"]["period"]
-SR_MULTIPLIER = config["support-resistance"]["multiplier"]
-
 RISK_MGMT_TP_X = config["risk-management"]["take-profit-x"]
 RISK_MGMT_SL_X = config["risk-management"]["stop-loss-x"]
 

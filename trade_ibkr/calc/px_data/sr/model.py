@@ -1,7 +1,4 @@
-from collections import defaultdict
 from dataclasses import dataclass, field
-
-from pandas import DataFrame
 
 from trade_ibkr.utils import avg
 
@@ -12,13 +9,23 @@ class SRLevelGroup:
 
     @staticmethod
     def from_levels_to_groups(levels: list[float], min_gap: float) -> list["SRLevelGroup"]:
-        groups = defaultdict(SRLevelGroup)
+        current_group_start_level = None
+        current_group = SRLevelGroup()
+        groups = []
 
-        for level in levels:
-            idx = level // min_gap
-            groups[idx].levels.append(level)
+        for level in sorted(levels):
+            if not current_group_start_level:
+                current_group_start_level = level
+            elif level - current_group_start_level >= min_gap:
+                current_group_start_level = level
+                groups.append(current_group)
+                current_group = SRLevelGroup()
 
-        return list(groups.values())
+            current_group.levels.append(level)
+
+        groups.append(current_group)
+
+        return groups
 
     @property
     def mean(self) -> float:
@@ -43,8 +50,6 @@ class SRLevelsData:
     levels: list[float]
 
     min_gap: float
-
-    df: DataFrame
 
     levels_data: list[SRLevel] = field(init=False)
 

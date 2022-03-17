@@ -29,12 +29,6 @@ data:
     300: 5
     3600: 20
 
-support-resistance:
-  # Period of the amplitude value (to be used with multiplier)
-  period: 60
-  # Level distance must be greater than this multiplier of the last <period> average amplitude
-  multiplier: 1.2
-
 risk-management:
   take-profit-x: 15
   stop-loss-x: 3
