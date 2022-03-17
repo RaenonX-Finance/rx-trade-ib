@@ -28,6 +28,13 @@ data:
     default: 20
     300: 5
     3600: 20
+  sma:
+    - 5
+    - 10
+    - 22
+    - 66
+    - 128
+    - 256
 
 sr-level:
   # Determines the gap between each level, the larger the multiplier, the larger the gap

@@ -1,10 +1,10 @@
 import json
 from typing import Iterable, TYPE_CHECKING, TypedDict
 
+from trade_ibkr.const import SMA_PERIODS, SR_STRONG_THRESHOLD
 from trade_ibkr.enums import DirectionConst, PxDataCol
 from trade_ibkr.utils import cdf
 from .utils import df_rows_to_list_of_data
-from ...const import SR_STRONG_THRESHOLD
 
 if TYPE_CHECKING:
     from trade_ibkr.calc import ExtremaDataPoint
@@ -83,6 +83,7 @@ class PxDataDict(TypedDict):
     supportResistance: list[PxDataSupportResistance]
     lastDayClose: float | None
     isMajor: bool
+    smaPeriods: list[int]
 
 
 def _from_px_data_bars(px_data: "PxData") -> list[PxDataBar]:
@@ -103,6 +104,10 @@ def _from_px_data_bars(px_data: "PxData") -> list[PxDataBar]:
         PxDataCol.DIFF: "diff",
         PxDataCol.DIFF_SMA: "diffSma",
         PxDataCol.DIFF_SMA_TREND: "diffSmaTrend",
+    }
+    columns |= {
+        PxDataCol.get_sma_col_name(sma_period): f"sma{sma_period}"
+        for sma_period in SMA_PERIODS
     }
 
     df = px_data.dataframe.copy()
@@ -191,6 +196,7 @@ def _to_px_data_dict(px_data: "PxData") -> PxDataDict:
         "supportResistance": _from_px_data_support_resistance(px_data),
         "lastDayClose": px_data.get_last_day_close(),
         "isMajor": px_data.is_major,
+        "smaPeriods": SMA_PERIODS,
     }
 
 

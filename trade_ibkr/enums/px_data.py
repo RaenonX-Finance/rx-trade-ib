@@ -28,3 +28,7 @@ class PxDataCol:
     LOCAL_MAX = "local_max"
 
     PRICE_TIMES_VOLUME = "price_times_volume"
+
+    @staticmethod
+    def get_sma_col_name(period: int) -> str:
+        return f"sma_{period}"

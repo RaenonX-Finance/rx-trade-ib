@@ -9,7 +9,7 @@ from pandas import DataFrame, DatetimeIndex, Series, to_datetime
 from scipy.signal import argrelextrema
 
 from trade_ibkr.calc import analyze_extrema, calc_support_resistance_levels
-from trade_ibkr.const import DIFF_TREND_WINDOW, DIFF_TREND_WINDOW_DEFAULT, MARKET_TREND_WINDOW
+from trade_ibkr.const import DIFF_TREND_WINDOW, DIFF_TREND_WINDOW_DEFAULT, MARKET_TREND_WINDOW, SMA_PERIODS
 from trade_ibkr.enums import CandlePos, PxDataCol
 from trade_ibkr.utils import get_detailed_contract_identifier, print_log, print_warning
 
@@ -46,6 +46,13 @@ class PxData:
             )
 
         self.dataframe[PxDataCol.EMA_120_TREND_CHANGE] = self.dataframe[PxDataCol.EMA_120_TREND].diff()
+
+    def _proc_df_smas(self):
+        for sma_period in SMA_PERIODS:
+            self.dataframe[PxDataCol.get_sma_col_name(sma_period)] = talib.SMA(
+                self.dataframe[PxDataCol.CLOSE],
+                timeperiod=sma_period
+            )
 
     def _proc_df_amplitude(self):
         self.dataframe[PxDataCol.AMPLITUDE_HL] = abs(self.dataframe[PxDataCol.HIGH] - self.dataframe[PxDataCol.LOW])
@@ -100,6 +107,7 @@ class PxData:
     def _proc_df(self):
         self._proc_df_date()
         self._proc_df_ema120()
+        self._proc_df_smas()
         self._proc_df_amplitude()
         self._proc_df_diff()
         self._proc_df_extrema()
