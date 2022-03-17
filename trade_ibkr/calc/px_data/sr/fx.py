@@ -2,6 +2,8 @@
 Most of the source code originated from:
 https://medium.datadriveninvestor.com/how-to-detect-support-resistance-levels-and-breakout-using-python-f8b5dac42f21.
 """
+import math
+
 import numpy as np
 from pandas import DataFrame
 
@@ -12,6 +14,7 @@ def is_far_from_level(value: float, levels: list[float], avg: float) -> bool:
     return not np.any([abs(value - level) < avg for level in levels])
 
 
+# Not using
 def support_resistance_fractal(df: DataFrame, min_gap: float) -> list[float]:
     series_high = df[PxDataCol.HIGH].tolist()
     series_low = df[PxDataCol.LOW].tolist()
@@ -43,6 +46,7 @@ def support_resistance_fractal(df: DataFrame, min_gap: float) -> list[float]:
     return sorted(levels)
 
 
+# Not using
 def support_resistance_window(df: DataFrame, min_gap: float) -> list[float]:
     levels = []
     max_list = []
@@ -78,16 +82,5 @@ def support_resistance_window(df: DataFrame, min_gap: float) -> list[float]:
     return sorted(levels)
 
 
-def support_resistance_extrema(df: DataFrame, min_gap: float) -> list[float]:
-    levels = []
-
-    series_maxima = df[PxDataCol.LOCAL_MAX]
-    series_minima = df[PxDataCol.LOCAL_MIN]
-
-    for maxima, minima in reversed(list(zip(series_maxima, series_minima))[:-1]):
-        if maxima and is_far_from_level(maxima, levels, min_gap):
-            levels.append(maxima)
-        if minima and is_far_from_level(minima, levels, min_gap):
-            levels.append(minima)
-
-    return levels
+def support_resistance_extrema(df: DataFrame) -> list[float]:
+    return df[PxDataCol.LOCAL_MAX].dropna().to_list() + df[PxDataCol.LOCAL_MIN].dropna().to_list()

@@ -1,12 +1,12 @@
 import json
 from typing import Iterable, TYPE_CHECKING, TypedDict
 
-from trade_ibkr.calc import ExtremaDataPoint
 from trade_ibkr.enums import DirectionConst, PxDataCol
 from trade_ibkr.utils import cdf
 from .utils import df_rows_to_list_of_data
 
 if TYPE_CHECKING:
+    from trade_ibkr.calc import ExtremaDataPoint
     from trade_ibkr.model import PxData
 
 
@@ -29,15 +29,9 @@ class PxDataBar(TypedDict):
     diffSmaTrend: float | None
 
 
-class PxDataSupportResistanceType(TypedDict):
-    window: bool
-    fractal: bool
-    extrema: bool
-
-
 class PxDataSupportResistance(TypedDict):
     level: float
-    type: PxDataSupportResistanceType
+    strength: float
 
 
 class PxDataContract(TypedDict):
@@ -117,14 +111,13 @@ def _from_px_data_bars(px_data: "PxData") -> list[PxDataBar]:
 def _from_px_data_support_resistance(px_data: "PxData") -> list[PxDataSupportResistance]:
     ret: list[PxDataSupportResistance] = []
 
-    for level_data in px_data.sr_levels_data.levels_data.values():
+    max_strength = max(px_data.sr_levels_data.levels_data, key=lambda data: data.strength).strength
+
+    for sr_level in px_data.sr_levels_data.levels_data:
         ret.append({
-            "level": level_data.level,
-            "type": {
-                "window": level_data.window,
-                "fractal": level_data.fractal,
-                "extrema": level_data.extrema,
-            },
+            "level": sr_level.level,
+            # Convert integral absolute strength (5) to relative strength (5 / 10 = 0.5)
+            "strength": sr_level.strength / max_strength,
         })
 
     return ret
@@ -162,7 +155,7 @@ def _from_px_data_current_stats(px_data: "PxData") -> PxDataExtremaCurrentStats:
     }
 
 
-def _from_px_data_extrema_point(point: ExtremaDataPoint) -> PxDataExtremaPoint:
+def _from_px_data_extrema_point(point: "ExtremaDataPoint") -> PxDataExtremaPoint:
     return {
         "epochSec": point.epoch_sec,
         "length": point.length,

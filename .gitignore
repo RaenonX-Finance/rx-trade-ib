@@ -8,6 +8,7 @@ config.yaml
 
 # Miscellaneous
 .wakatime-project
+sandbox.py
 
 # Data file / analysis
 *.csv

@@ -34,10 +34,6 @@ support-resistance:
   period: 60
   # Level distance must be greater than this multiplier of the last <period> average amplitude
   multiplier: 1.2
-  method:
-    fractal: true
-    window: true
-    extrema: true
 
 risk-management:
   take-profit-x: 15
