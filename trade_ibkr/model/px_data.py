@@ -76,7 +76,7 @@ class PxData:
                 .mean()
             print_warning(
                 f"PxData of {self.contract.underSymbol} @ {self.period_sec} is "
-                f"using default diff SMA window"
+                f"using default diff SMA window ({DIFF_TREND_WINDOW_DEFAULT})"
             )
 
         self.dataframe[PxDataCol.DIFF_SMA_TREND] = self.dataframe[PxDataCol.DIFF_SMA].diff()
