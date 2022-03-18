@@ -11,7 +11,7 @@ from ibapi.order import Order
 from ibapi.ticktype import TickType, TickTypeEnum
 
 from trade_ibkr.const import (
-    ACCOUNT_NUMBER_ACTUAL, ACCOUNT_NUMBER_DEMO, BOT_POSITION_FETCH_INTERVAL,
+    ACCOUNT_NUMBER_LIVE, ACCOUNT_NUMBER_DEMO, BOT_POSITION_FETCH_INTERVAL,
     BOT_STRATEGY_CHECK_INTERVAL, IS_DEMO,
 )
 from trade_ibkr.model import (
@@ -146,7 +146,7 @@ class IBautoBotSpread(IBapiServer):
         req_id_pnl = self.next_valid_request_id
         self.reqPnLSingle(
             req_id_pnl,
-            ACCOUNT_NUMBER_DEMO if IS_DEMO else ACCOUNT_NUMBER_ACTUAL,
+            ACCOUNT_NUMBER_DEMO if IS_DEMO else ACCOUNT_NUMBER_LIVE,
             "",
             contract_details.underConId
         )

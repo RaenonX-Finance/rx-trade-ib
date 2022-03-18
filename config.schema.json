@@ -1,0 +1,277 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/RaenonX/rx-trade-ib/main/config.schema.json",
+  "title": "Rx Trade IB Config Schema",
+  "type": "object",
+  "description": "JSON Schema for the trading server config.",
+  "required": [
+    "system",
+    "bot",
+    "data",
+    "sr-level",
+    "risk-management",
+    "server"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "system": {
+      "type": "object",
+      "description": "System settings.",
+      "required": [
+        "demo",
+        "account"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "demo": {
+          "type": "boolean",
+          "description": "Determines if the server should connect to the demo API."
+        },
+        "account": {
+          "type": "object",
+          "description": "IB Account number.",
+          "properties": {
+            "demo": {
+              "type": "string",
+              "description": "Simulated trading account number. The value should start with DU.",
+              "pattern": "^DU[0-9]{7}$"
+            },
+            "actual": {
+              "type": "string",
+              "description": "Actual account number. The value should start with U.",
+              "pattern": "^U[0-9]{7}$"
+            }
+          }
+        }
+      }
+    },
+    "bot": {
+      "type": "object",
+      "description": "Trading bot related settings.",
+      "required": [
+        "strategy-check-interval-sec",
+        "position-fetch-interval-sec"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "strategy-check-interval-sec": {
+          "type": "number",
+          "description": "Strategy execution checking interval in second.",
+          "exclusiveMinimum": 0
+        },
+        "position-fetch-interval-sec": {
+          "type": "number",
+          "description": "Position fetching interval in second.",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "data": {
+      "type": "object",
+      "description": "Px data analyzing settings.",
+      "required": [
+        "trend-window",
+        "diff-sma-window",
+        "sma"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "trend-window": {
+          "type": "object",
+          "description": "Count of bar to lookback for calculating the current trend.\n\nKey is the period in second; value is the count of bar to lookback.\n\n> Note that the key must match with `server.contract[].data[].period-secs`.\n\nExample: `300: 96` means to lookback 96 bars (8 hrs) for data of period in 300s.",
+          "patternProperties": {
+            "^(0|[1-9][0-9]*)$": {
+              "type": "integer"
+            }
+          }
+        },
+        "diff-sma-window": {
+          "type": "object",
+          "description": "Period of diff SMA.\n\nKey is the period in second; value is the SMA period.\nValue of key `default` will be used by any period second which is specified in `server.contract[].data[].period-secs` but not here.\n\nExample: `300: 5` means to use 5 SMA on data of period in 300s.",
+          "required": [
+            "default"
+          ],
+          "patternProperties": {
+            "^(0|[1-9][0-9]*)$": {
+              "type": "integer"
+            },
+            "^default$": {
+              "type": "integer"
+            }
+          }
+        },
+        "sma": {
+          "type": "array",
+          "description": "SMA periods.",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "description": "SMA period.",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "sr-level": {
+      "type": "object",
+      "description": "SR level determining settings.",
+      "required": [
+        "multiplier",
+        "strong-threshold"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "multiplier": {
+          "type": "number",
+          "description": "Gap between each level. The larger the multiplier, the larger the gap.",
+          "exclusiveMinimum": 0
+        },
+        "strong-threshold": {
+          "type": "number",
+          "description": "Threshold to determine that an S/R level is strong in terms of its relative strength.",
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1
+        }
+      }
+    },
+    "risk-management": {
+      "type": "object",
+      "description": "Risk management related settings.",
+      "required": [
+        "take-profit-x",
+        "stop-loss-x"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "take-profit-x": {
+          "type": "number",
+          "description": "Multiplier for take profit Px related to diff SMA. This is used as *(order Px) + (current diff SMA) x (take profit mult)*.",
+          "exclusiveMinimum": 0
+        },
+        "stop-loss-x": {
+          "type": "number",
+          "description": "Multiplier for stop loss Px related to diff SMA. This is used as *(order Px) + (current diff SMA) x (stop loss mult)*.",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "server": {
+      "type": "object",
+      "description": "Server settings.",
+      "required": [
+        "client-id",
+        "position-on-first-realized",
+        "contract"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "client-id": {
+          "type": "object",
+          "description": "TWS API Client ID to use for each type of environment.",
+          "required": [
+            "demo",
+            "live"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "demo": {
+              "type": "integer",
+              "description": "Simulated trading TWS client ID."
+            },
+            "live": {
+              "type": "integer",
+              "description": "Live trading TWS client ID."
+            }
+          }
+        },
+        "position-on-first-realized": {
+          "type": "object",
+          "description": "Position on first realized PnL.\n\nKey is the contract ID (`conId` in code); value is the signed position. Example: `477837024: -1` means that contract ID of 477837024 (`MNQM2`) has position of -1 (Short 1) when the first PnL realization occur.",
+          "patternProperties": {
+            "^[1-9][0-9]*$": {
+              "type": "integer"
+            }
+          }
+        },
+        "contract": {
+          "type": "array",
+          "description": "Contract configs to use for market data. Check https://interactivebrokers.github.io/tws-api/basic_contracts.html for more.",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "description": "Contract config of a data subscription. Check https://interactivebrokers.github.io/tws-api/basic_contracts.html for more.",
+            "required": [
+              "symbol",
+              "exchange",
+              "type",
+              "data"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "description": "Symbol of a contract."
+              },
+              "exchange": {
+                "type": "string",
+                "description": "Exchange name of the symbol."
+              },
+              "type": {
+                "enum": [
+                  "Futures",
+                  "Index",
+                  "Crypto"
+                ]
+              },
+              "data": {
+                "type": "array",
+                "description": "Data configs of a contract.",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "object",
+                  "description": "Config of a single data subscription. Each subscription will be displayed separated on the front end.",
+                  "required": [
+                    "duration",
+                    "bar-size",
+                    "period-secs"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "duration": {
+                      "type": "string",
+                      "description": "Duration of the data. Check https://interactivebrokers.github.io/tws-api/historical_bars.html for more.",
+                      "pattern": "^[1-9][0-9]* [SDWMY]$"
+                    },
+                    "bar-size": {
+                      "type": "string",
+                      "description": "Time length of a single data bar in string representation. Check https://interactivebrokers.github.io/tws-api/historical_bars.html for more.",
+                      "pattern": "^((1|5|10|15|30) secs|(2|3|5|10|15|20|30) mins|([2348]) hours|1 (min|hour|day|week|month))$"
+                    },
+                    "period-secs": {
+                      "type": "integer",
+                      "description": "Time length of a single data bar in second.",
+                      "exclusiveMinimum": 0
+                    },
+                    "is-major": {
+                      "type": "boolean",
+                      "description": "Indicates if the corresponding data subscription is a major focus.",
+                      "default": true
+                    }
+                  }
+                }
+              },
+              "enable": {
+                "type": "boolean",
+                "description": "If the contract should be enabled or not.",
+                "default": false
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

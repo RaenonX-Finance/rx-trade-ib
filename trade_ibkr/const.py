@@ -19,7 +19,7 @@ with open("config.yaml", "r") as config_file:
 
 IS_DEMO = config["system"]["demo"]
 ACCOUNT_NUMBER_DEMO = config["system"]["account"]["demo"]
-ACCOUNT_NUMBER_ACTUAL = config["system"]["account"]["actual"]
+ACCOUNT_NUMBER_LIVE = config["system"]["account"]["live"]
 
 RISK_MGMT_TP_X = config["risk-management"]["take-profit-x"]
 RISK_MGMT_SL_X = config["risk-management"]["stop-loss-x"]

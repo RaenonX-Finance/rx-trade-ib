@@ -1,29 +1,18 @@
+# Check `config.schema.json` for the complete schema.
 system:
   demo: false
   account:
-    demo: <ACCOUNT_NUMBER>
-    actual: <ACCOUNT_NUMBER>
+    demo: DU0000000
+    actual: U0000000
 
 bot:
   strategy-check-interval-sec: 0.15
   position-fetch-interval-sec: 10
 
 data:
-  # Only used by bot (spread) - needs to run `run_server_info` first
-  market: ws://localhost:8000
-  # Count of bar to lookback for calculating the current trend
-  # > Key = period sec, must match with `server.contract[].data[].period-secs`
-  # > Value = count of bar to lookback
-  # -----------------
-  # `300: 96` means to lookback 96 bars (8 hrs) on data of period in 300s
   trend-window:
     300: 96
     3600: 24
-  # Period of diff SMA
-  # > Key = period sec, or `default`
-  # > Value = SMA period
-  # -----------------
-  # `300: 5` means to use 5 SMA on data of period in 300s
   diff-sma-window:
     default: 20
     300: 5
@@ -37,10 +26,7 @@ data:
     - 256
 
 sr-level:
-  # Determines the gap between each level, the larger the multiplier, the larger the gap
-  # > Used together with the average of all diff SMA to get the minimum gap between SR levels
   multiplier: 1.5
-  # Threshold to determine that an S/R level is "strong" in terms of its relative strength (0~1)
   strong-threshold: 0.7
 
 risk-management:
@@ -67,9 +53,9 @@ server:
       - duration: 86400 S
         bar-size: 5 mins
         period-secs: 300
-        is-major: true  # Indicates that the data is the main focus, defaults to `false`
+        is-major: true
       - duration: 10 D
-        bar-size: 1 hours
+        bar-size: 1 hour
         period-secs: 3600
       - duration: 30 D
         bar-size: 1 day
