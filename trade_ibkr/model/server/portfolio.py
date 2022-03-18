@@ -1,7 +1,8 @@
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Callable, Coroutine, TYPE_CHECKING
+from typing import Any, Callable, Coroutine, DefaultDict, TYPE_CHECKING
 
 from trade_ibkr.enums import OrderSideConst
 
@@ -57,12 +58,21 @@ class OnExecutionFetchedParams:
         self.earliest_time = min(px_data.earliest_time for px_data in self.px_data_list)
         self.contract_ids = {px_data.contract_identifier for px_data in self.px_data_list}
 
-        px_data_min_period_sec = min(self.px_data_list, key=lambda px_data: px_data.period_sec).period_sec
-        self.px_data_dict_lowest_period = {
-            px_data.contract_identifier: px_data
-            for px_data in self.px_data_list
-            if px_data.period_sec == px_data_min_period_sec
+        px_data_period_secs: DefaultDict[int, list[int]] = defaultdict(list)
+        for px_data in self.px_data_list:
+            px_data_period_secs[px_data.contract_identifier].append(px_data.period_sec)
+
+        px_data_period_secs_min: dict[int, int] = {
+            contract_identifier: min(period_secs)
+            for contract_identifier, period_secs in px_data_period_secs.items()
         }
+
+        self.px_data_dict_lowest_period = {}
+        for px_data in self.px_data_list:
+            contract_identifier = px_data.contract_identifier
+
+            if px_data.period_sec == px_data_period_secs_min[contract_identifier]:
+                self.px_data_dict_lowest_period[contract_identifier] = px_data
 
 
 OnExecutionFetchedGetParams = Callable[[], OnExecutionFetchedParams]
