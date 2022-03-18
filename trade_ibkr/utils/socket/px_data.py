@@ -139,7 +139,7 @@ def _from_px_data_support_resistance(px_data: "PxData") -> list[PxDataSupportRes
 def _from_px_data_contract(px_data: "PxData") -> PxDataContract:
     return {
         "identifier": px_data.contract_identifier,
-        "symbol": px_data.contract.underSymbol,
+        "symbol": px_data.contract_symbol,
         "minTick": px_data.contract.minTick,
         "multiplier": float(px_data.contract.contract.multiplier or 1),
     }

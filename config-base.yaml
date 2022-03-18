@@ -59,6 +59,7 @@ server:
   contract:
     - symbol: MNQH2
       exchange: GLOBEX
+      type: Futures
       data:
       - duration: 86400 S
         bar-size: 1 min
@@ -73,8 +74,10 @@ server:
       - duration: 30 D
         bar-size: 1 day
         period-secs: 86400
-    - symbol: MYM  MAR 22
+    - symbol: MYM  JUN 22
       exchange: ECBOT
+      type: Futures
+      enable: false
       data:
       - duration: 86400 S
         bar-size: 1 min
@@ -82,3 +85,17 @@ server:
       - duration: 86400 S
         bar-size: 5 mins
         period-secs: 300
+    - symbol: SPX
+      exchange: CBOE
+      type: Index
+      data:
+      - duration: 360 D
+        bar-size: 1 day
+        period-secs: 86400
+    - symbol: INDU
+      exchange: CME
+      type: Index
+      data:
+      - duration: 360 D
+        bar-size: 1 day
+        period-secs: 86400

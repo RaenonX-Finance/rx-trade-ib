@@ -3,8 +3,7 @@ from typing import Any, Callable, Coroutine, TypeAlias
 
 from ibapi.contract import Contract, ContractDetails
 
-from trade_ibkr.model.account import Account
-from trade_ibkr.model.px_data import PxData
+from trade_ibkr.model import Account, PxData
 
 
 @dataclass(kw_only=True)
@@ -28,8 +27,9 @@ class OnPxDataUpdatedEventNoAccount:
 
     def __str__(self):
         return (
-            f"{self.contract.underSymbol} ({self.contract.contract.conId}) - {self.px_data.current_close:.2f} "
-            f"/ {self.px_data.latest_time} @ {self.px_data.period_sec // 60} / {self.proc_sec:.3f} s"
+            f"{self.px_data.contract_symbol} ({self.px_data.contract_identifier}) - "
+            f"{self.px_data.current_close:.2f} / {self.px_data.latest_time} "
+            f"@ {self.px_data.period_sec // 60} / {self.proc_sec:.3f} s"
         )
 
 

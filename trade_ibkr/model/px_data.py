@@ -11,7 +11,7 @@ from scipy.signal import argrelextrema
 from trade_ibkr.calc import analyze_extrema, calc_support_resistance_levels
 from trade_ibkr.const import DIFF_TREND_WINDOW, DIFF_TREND_WINDOW_DEFAULT, MARKET_TREND_WINDOW, SMA_PERIODS
 from trade_ibkr.enums import CandlePos, PxDataCol
-from trade_ibkr.utils import get_detailed_contract_identifier, print_log, print_warning
+from trade_ibkr.utils import get_contract_symbol, get_detailed_contract_identifier, print_log, print_warning
 
 if TYPE_CHECKING:
     from trade_ibkr.model import BarDataDict
@@ -218,6 +218,10 @@ class PxData:
     @property
     def contract_identifier(self) -> int:
         return get_detailed_contract_identifier(self.contract)
+
+    @property
+    def contract_symbol(self) -> str:
+        return get_contract_symbol(self.contract)
 
     @property
     def unique_identifier(self) -> str:
