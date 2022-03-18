@@ -11,7 +11,8 @@ from trade_ibkr.const import RISK_MGMT_SL_X, RISK_MGMT_TP_X
 from trade_ibkr.enums import OrderSideConst
 from trade_ibkr.model import OnOrderFilled, OnOrderFilledEvent
 from trade_ibkr.utils import (
-    get_contract_identifier, make_limit_order, make_stop_limit_order, make_limit_bracket_order,
+    get_contract_identifier, get_basic_contract_symbol, make_limit_order, make_stop_limit_order,
+    make_limit_bracket_order,
     print_error, update_order_price,
 )
 from .execution import IBapiExecution
@@ -30,7 +31,7 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
         async def execute_after_order_filled():
             await self._order_on_filled(OnOrderFilledEvent(
                 identifier=get_contract_identifier(contract),
-                symbol=contract.symbol,
+                symbol=get_basic_contract_symbol(contract),
                 action=order.action,
                 quantity=order.filledQuantity,
                 fill_px=self._order_filled_avg_px,

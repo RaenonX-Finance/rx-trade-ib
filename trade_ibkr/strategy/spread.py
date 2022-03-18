@@ -5,7 +5,7 @@ from pandas import Series
 
 from trade_ibkr.enums import PxDataPairCol, Side
 from trade_ibkr.model import Account, CommodityPair, OnBotSpreadPxUpdatedEvent, UnrealizedPnL
-from trade_ibkr.utils import get_contract_identifier, print_log
+from trade_ibkr.utils import get_basic_contract_symbol, get_contract_identifier, print_log
 
 
 @dataclass(kw_only=True)
@@ -84,22 +84,22 @@ def _entry_out_of_band(params: SpreadTradeParams):
     if spread > spread_hi:
         params.account.long(
             params.on_high.contract, params.on_high.quantity, px=None,
-            message=f"ENTRY: Buy on out of BB (high) - {params.on_high.contract.localSymbol}"
+            message=f"ENTRY: Buy on out of BB (high) - {get_basic_contract_symbol(params.on_high.contract)}"
         )
         params.account.short(
             params.on_low.contract, params.on_low.quantity, px=None,
-            message=f"ENTRY: Buy on out of BB (high) - {params.on_low.contract.localSymbol}"
+            message=f"ENTRY: Buy on out of BB (high) - {get_basic_contract_symbol(params.on_high.contract)}"
         )
         return
 
     if spread < spread_lo:
         params.account.long(
             params.on_low.contract, params.on_low.quantity, px=None,
-            message=f"ENTRY: Buy on out of BB (low) - {params.on_low.contract.localSymbol}"
+            message=f"ENTRY: Buy on out of BB (low) - {get_basic_contract_symbol(params.on_high.contract)}"
         )
         params.account.short(
             params.on_high.contract, params.on_high.quantity, px=None,
-            message=f"ENTRY: Buy on out of BB (low) - {params.on_high.contract.localSymbol}"
+            message=f"ENTRY: Buy on out of BB (low) - {get_basic_contract_symbol(params.on_high.contract)}"
         )
         return
 

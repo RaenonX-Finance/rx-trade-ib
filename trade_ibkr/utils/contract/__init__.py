@@ -4,4 +4,7 @@ from .make import (
 )
 from .model import ContractParams
 from .type import ContractMakerFunction, ContractType
-from .utils import get_contract_identifier, get_detailed_contract_identifier, get_contract_symbol
+from .utils import (
+    get_contract_identifier, get_detailed_contract_identifier,
+    get_contract_symbol, get_incomplete_contract_identifier, get_basic_contract_symbol,
+)

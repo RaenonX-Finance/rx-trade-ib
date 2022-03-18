@@ -4,7 +4,7 @@ from decimal import Decimal
 from ibapi.contract import Contract
 
 from trade_ibkr.enums import Side
-from trade_ibkr.utils import get_contract_identifier
+from trade_ibkr.utils import get_contract_identifier, get_basic_contract_symbol
 
 
 @dataclass(kw_only=True)
@@ -74,7 +74,7 @@ class Position:
 
     def __str__(self):
         position_text = [
-            f"{pos.contract.localSymbol}: {pos.position}"
+            f"{get_basic_contract_symbol(pos.contract)}: {pos.position}"
             for pos in self._data.values() if pos.position != 0
         ]
 

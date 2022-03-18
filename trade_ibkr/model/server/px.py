@@ -4,6 +4,7 @@ from typing import Any, Callable, Coroutine, TypeAlias
 from ibapi.contract import Contract, ContractDetails
 
 from trade_ibkr.model import Account, PxData
+from trade_ibkr.utils import get_detailed_contract_identifier, get_contract_symbol
 
 
 @dataclass(kw_only=True)
@@ -42,7 +43,10 @@ class OnMarketDataReceivedEvent:
     px: float
 
     def __str__(self):
-        return f"{self.contract.underSymbol} ({self.contract.contract.conId}) - {self.px:.2f}"
+        return (
+            f"{get_contract_symbol(self.contract)} ({get_detailed_contract_identifier(self.contract)}) - "
+            f"{self.px:.2f}"
+        )
 
 
 OnMarketDataReceived: TypeAlias = Callable[[OnMarketDataReceivedEvent], Coroutine[Any, Any, None]]

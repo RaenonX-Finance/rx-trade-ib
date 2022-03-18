@@ -1,7 +1,8 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
 from ibapi.contract import Contract, ContractDetails
 
+from trade_ibkr.utils import get_incomplete_contract_identifier
 from .base import IBapiBase
 
 
@@ -13,7 +14,8 @@ class IBapiContract(IBapiBase, ABC):
         self._contract_request_source: dict[Contract, int] = {}
 
     def _is_same_contract(self, a: Contract, b: Contract) -> bool:
-        return a.localSymbol == b.localSymbol
+        # Those contracts might not have all information available!
+        return get_incomplete_contract_identifier(a) == get_incomplete_contract_identifier(b)
 
     def _get_req_id_of_source(self, source: Contract) -> int | None:
         for contract, req_id in self._contract_request_source.items():

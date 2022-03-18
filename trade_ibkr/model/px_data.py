@@ -41,7 +41,7 @@ class PxData:
         else:
             self.dataframe[PxDataCol.EMA_120_TREND] = np.full(len(self.dataframe.index), np.nan)
             print_warning(
-                f"PxData of {self.contract.underSymbol} @ {self.period_sec} is "
+                f"PxData of {self.contract_symbol} @ {self.period_sec} is "
                 f"not calculating EMA 120 trend (trend window unspecified)"
             )
 
@@ -75,7 +75,7 @@ class PxData:
                 .rolling(DIFF_TREND_WINDOW_DEFAULT) \
                 .mean()
             print_warning(
-                f"PxData of {self.contract.underSymbol} @ {self.period_sec} is "
+                f"PxData of {self.contract_symbol} @ {self.period_sec} is "
                 f"using default diff SMA window ({DIFF_TREND_WINDOW_DEFAULT})"
             )
 
@@ -148,7 +148,7 @@ class PxData:
 
         if len(market_dates) < 2:
             raise ValueError(
-                f"Px data of {self.contract.underSymbol} ({self.contract.contract.conId} @ {self.period_sec}) "
+                f"Px data of {self.contract_symbol} ({self.contract_identifier} @ {self.period_sec}) "
                 f"only has a single market date: {market_dates}"
             )
 

@@ -3,6 +3,8 @@ from decimal import Decimal
 
 from ibapi.contract import Contract
 
+from trade_ibkr.utils import get_basic_contract_symbol
+
 
 @dataclass(kw_only=True)
 class Commodity:
@@ -10,4 +12,4 @@ class Commodity:
     quantity: Decimal
 
     def __str__(self):
-        return f"{self.contract.localSymbol} x {self.quantity}"
+        return f"{get_basic_contract_symbol(self.contract)} x {self.quantity}"

@@ -18,7 +18,10 @@ from trade_ibkr.model import (
     BrokerAccount, CommodityPair, OnBotSpreadPxUpdated, OnBotSpreadPxUpdatedEvent, PxDataPairCache,
     PxDataPairCacheEntry, UnrealizedPnL,
 )
-from trade_ibkr.utils import get_order_trigger_price, print_error, print_log
+from trade_ibkr.utils import (
+    get_contract_symbol, get_basic_contract_symbol, get_order_trigger_price, print_error,
+    print_log,
+)
 from ...server import IBapiServer
 
 
@@ -44,7 +47,7 @@ class IBautoBotSpread(IBapiServer):
             unrlzd_pnl=UnrealizedPnL()
         )
 
-        print_log(f"[BOT - Spread] Subscribe Px update for {contract.localSymbol} ({req_px})")
+        print_log(f"[BOT - Spread] Subscribe Px update for {get_basic_contract_symbol(contract)} ({req_px})")
 
         return req_px
 
@@ -97,7 +100,8 @@ class IBautoBotSpread(IBapiServer):
 
         print_log(
             f"[TWS] Place order #{orderId}: "
-            f"{order.action} {order.orderType} {contract.localSymbol} x {order.totalQuantity} "
+            f"{order.action} {order.orderType} "
+            f"{get_basic_contract_symbol(contract.localSymbol)} x {order.totalQuantity} "
             f"@ {'MKT' if px == sys.float_info.max else px}"
         )
         super().placeOrder(orderId, contract, order)
@@ -148,7 +152,7 @@ class IBautoBotSpread(IBapiServer):
         )
         self._pnl_req_id_to_contract_req_id[req_id_pnl] = contract_req_id
 
-        print_log(f"[TWS] Subscribe PnL of {contract_details.underSymbol}")
+        print_log(f"[TWS] Subscribe PnL of {get_contract_symbol(contract_details)}")
 
     def pnlSingle(
             self, reqId: int, pos: Decimal, dailyPnL: float, unrealizedPnL: float, realizedPnL: float, value: float
