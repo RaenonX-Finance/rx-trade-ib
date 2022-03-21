@@ -134,6 +134,7 @@ class PxData:
 
         self._proc_df()
 
+        self.market_dates: Series = self.dataframe[PxDataCol.DATE_MARKET].unique()
         self.sr_levels_data = calc_support_resistance_levels(self.dataframe)
         self.extrema = analyze_extrema(self.dataframe)
 
@@ -144,15 +145,13 @@ class PxData:
         return self.dataframe.iloc[-n]
 
     def get_last_day_close(self) -> float | None:
-        market_dates = self.dataframe[PxDataCol.DATE_MARKET].unique()
-
-        if len(market_dates) < 2:
+        if len(self.market_dates) < 2:
             raise ValueError(
                 f"Px data of {self.contract_symbol} ({self.contract_identifier} @ {self.period_sec}) "
-                f"only has a single market date: {market_dates}"
+                f"only has a single market date: {self.market_dates}"
             )
 
-        market_date_prev = market_dates[-2]
+        market_date_prev = self.market_dates[-2]
 
         last_day_df = self.dataframe[self.dataframe[PxDataCol.DATE_MARKET] == market_date_prev]
 
@@ -161,6 +160,17 @@ class PxData:
 
         last_day_last_entry = last_day_df.iloc[-1]
         return last_day_last_entry[PxDataCol.CLOSE]
+
+    def get_today_open(self) -> float | None:
+        market_date_prev = self.market_dates[-1]
+
+        today_df = self.dataframe[self.dataframe[PxDataCol.DATE_MARKET] == market_date_prev]
+
+        if not len(today_df.index):
+            return None
+
+        last_day_last_entry = today_df.iloc[0]
+        return last_day_last_entry[PxDataCol.OPEN]
 
     @staticmethod
     def _get_series_at(original: Series, candle_pos: CandlePos) -> Series:

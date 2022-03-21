@@ -82,6 +82,7 @@ class PxDataDict(TypedDict):
     extrema: PxDataExtrema
     supportResistance: list[PxDataSupportResistance]
     lastDayClose: float | None
+    todayOpen: float | None
     isMajor: bool
     smaPeriods: list[int]
 
@@ -195,6 +196,7 @@ def _to_px_data_dict(px_data: "PxData") -> PxDataDict:
         "extrema": _from_px_data_extrema(px_data),
         "supportResistance": _from_px_data_support_resistance(px_data),
         "lastDayClose": px_data.get_last_day_close(),
+        "todayOpen": px_data.get_today_open(),
         "isMajor": px_data.is_major,
         "smaPeriods": SMA_PERIODS,
     }
