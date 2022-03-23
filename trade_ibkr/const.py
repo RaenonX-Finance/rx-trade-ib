@@ -20,6 +20,7 @@ with open("config.yaml", "r") as config_file:
 IS_DEMO = config["system"]["demo"]
 ACCOUNT_NUMBER_DEMO = config["system"]["account"]["demo"]
 ACCOUNT_NUMBER_LIVE = config["system"]["account"]["live"]
+ACCOUNT_NUMBER_IN_USE = ACCOUNT_NUMBER_DEMO if IS_DEMO else ACCOUNT_NUMBER_LIVE
 
 RISK_MGMT_TP_X = config["risk-management"]["take-profit-x"]
 RISK_MGMT_SL_X = config["risk-management"]["stop-loss-x"]

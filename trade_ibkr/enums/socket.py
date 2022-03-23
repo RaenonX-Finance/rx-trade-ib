@@ -11,5 +11,6 @@ class SocketEvent:
     ORDER_FILLED = "orderFilled"
 
     EXECUTION = "execution"
+    PNL_UPDATED = "pnlUpdated"
 
     ERROR = "error"

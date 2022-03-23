@@ -2,13 +2,13 @@ from trade_ibkr.const import fast_api_socket
 from trade_ibkr.enums import SocketEvent
 from trade_ibkr.model import (
     OnErrorEvent, OnExecutionFetchedEvent, OnMarketDataReceivedEvent, OnOpenOrderFetchedEvent, OnOrderFilledEvent,
-    OnPositionFetchedEvent, OnPxDataUpdatedEventNoAccount,
+    OnPnLUpdatedEvent, OnPositionFetchedEvent, OnPxDataUpdatedEventNoAccount,
 )
 from trade_ibkr.obj import IBapiServer
 from trade_ibkr.utils import (
     print_log,
     to_socket_message_error, to_socket_message_execution, to_socket_message_open_order, to_socket_message_order_filled,
-    to_socket_message_position, to_socket_message_px_data, to_socket_message_px_data_market,
+    to_socket_message_pnl, to_socket_message_position, to_socket_message_px_data, to_socket_message_px_data_market,
 )
 from .utils import get_execution_on_fetched_params
 
@@ -61,6 +61,14 @@ async def on_order_filled(e: OnOrderFilledEvent):
     )
 
 
+async def on_pnl_updated(e: OnPnLUpdatedEvent):
+    print_log(f"[TWS] PnL updated ({e})")
+    await fast_api_socket.emit(
+        SocketEvent.PNL_UPDATED,
+        to_socket_message_pnl(e.pnl_dict)
+    )
+
+
 async def on_error(e: OnErrorEvent):
     await fast_api_socket.emit(SocketEvent.ERROR, to_socket_message_error(e))
 
@@ -70,4 +78,5 @@ def register_handlers(app: IBapiServer, px_data_req_ids: list[int]):
     app.set_on_open_order_fetched(on_open_order_fetched)
     app.set_on_order_filled(on_order_filled)
     app.set_on_executions_fetched(on_executions_fetched, get_execution_on_fetched_params(app, px_data_req_ids))
+    app.set_on_pnl_updated(on_pnl_updated)
     app.set_on_error(on_error)

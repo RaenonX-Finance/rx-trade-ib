@@ -11,16 +11,15 @@ from ibapi.order import Order
 from ibapi.ticktype import TickType, TickTypeEnum
 
 from trade_ibkr.const import (
-    ACCOUNT_NUMBER_LIVE, ACCOUNT_NUMBER_DEMO, BOT_POSITION_FETCH_INTERVAL,
-    BOT_STRATEGY_CHECK_INTERVAL, IS_DEMO,
+    ACCOUNT_NUMBER_IN_USE, BOT_POSITION_FETCH_INTERVAL,
+    BOT_STRATEGY_CHECK_INTERVAL,
 )
 from trade_ibkr.model import (
     BrokerAccount, CommodityPair, OnBotSpreadPxUpdated, OnBotSpreadPxUpdatedEvent, PxDataPairCache,
     PxDataPairCacheEntry, UnrealizedPnL,
 )
 from trade_ibkr.utils import (
-    get_contract_symbol, get_basic_contract_symbol, get_order_trigger_price, print_error,
-    print_log,
+    get_basic_contract_symbol, get_contract_symbol, get_order_trigger_price, print_error, print_log,
 )
 from ...server import IBapiServer
 
@@ -146,7 +145,7 @@ class IBautoBotSpread(IBapiServer):
         req_id_pnl = self.next_valid_request_id
         self.reqPnLSingle(
             req_id_pnl,
-            ACCOUNT_NUMBER_DEMO if IS_DEMO else ACCOUNT_NUMBER_LIVE,
+            ACCOUNT_NUMBER_IN_USE,
             "",
             contract_details.underConId
         )
