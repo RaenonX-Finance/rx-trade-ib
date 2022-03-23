@@ -32,6 +32,11 @@ sr-level:
 risk-management:
   take-profit-x: 15
   stop-loss-x: 3
+  pnl-warning:
+    px-diff-val: 50
+    px-diff-sma-ratio: 2
+    total-pnl: 2000
+    unrealized-pnl: 350
 
 server:
   client-id:

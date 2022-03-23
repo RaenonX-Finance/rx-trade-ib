@@ -1,11 +1,23 @@
 from trade_ibkr.const import fast_api_socket
 from trade_ibkr.enums import SocketEvent
 from trade_ibkr.obj import IBapiServer
-from trade_ibkr.utils import from_socket_message_order, print_log, to_socket_message_px_data_list
+from trade_ibkr.utils import (
+    from_socket_message_order, print_log,
+    to_socket_message_init_data, to_socket_message_px_data_list,
+)
 from .utils import get_px_data_by_contract_identifier
 
 
 def register_socket_endpoints(app: IBapiServer, px_data_req_ids: list[int]):
+    @fast_api_socket.on(SocketEvent.INIT)
+    async def on_request_init_data(*_):
+        print_log("[Socket] Received `init`")
+
+        await fast_api_socket.emit(
+            SocketEvent.INIT,
+            to_socket_message_init_data()
+        )
+
     @fast_api_socket.on(SocketEvent.PX_INIT)
     async def on_request_px_data_init(*_):
         print_log("[Socket] Received `pxInit`")

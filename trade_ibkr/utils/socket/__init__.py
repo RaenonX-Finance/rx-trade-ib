@@ -1,5 +1,6 @@
 from .execution import to_socket_message_execution
 from .error import to_socket_message_error
+from .init import to_socket_message_init_data
 from .open_order import to_socket_message_open_order
 from .order import from_socket_message_order
 from .order_filled import to_socket_message_order_filled

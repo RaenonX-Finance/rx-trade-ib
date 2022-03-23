@@ -25,6 +25,11 @@ ACCOUNT_NUMBER_IN_USE = ACCOUNT_NUMBER_DEMO if IS_DEMO else ACCOUNT_NUMBER_LIVE
 RISK_MGMT_TP_X = config["risk-management"]["take-profit-x"]
 RISK_MGMT_SL_X = config["risk-management"]["stop-loss-x"]
 
+PNL_WARNING_PX_DIFF_VAL = config["risk-management"]["pnl-warning"]["px-diff-val"]
+PNL_WARNING_PX_DIFF_SMA_RATIO = config["risk-management"]["pnl-warning"]["px-diff-sma-ratio"]
+PNL_WARNING_TOTAL_PNL = config["risk-management"]["pnl-warning"]["total-pnl"]
+PNL_WARNING_UNREALIZED_PNL = config["risk-management"]["pnl-warning"]["unrealized-pnl"]
+
 SR_MULTIPLIER = config["sr-level"]["multiplier"]
 SR_STRONG_THRESHOLD = config["sr-level"]["strong-threshold"]
 

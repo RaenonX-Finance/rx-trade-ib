@@ -140,7 +140,8 @@
       "description": "Risk management related settings.",
       "required": [
         "take-profit-x",
-        "stop-loss-x"
+        "stop-loss-x",
+        "pnl-warning"
       ],
       "additionalProperties": false,
       "properties": {
@@ -153,6 +154,39 @@
           "type": "number",
           "description": "Multiplier for stop loss Px related to diff SMA. This is used as *(order Px) + (current diff SMA) x (stop loss mult)*.",
           "exclusiveMinimum": 0
+        },
+        "pnl-warning": {
+          "type": "object",
+          "description": "PnL warning related settings.",
+          "required": [
+            "px-diff-val",
+            "px-diff-sma-ratio",
+            "total-pnl",
+            "unrealized-pnl"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "px-diff-val": {
+              "type": "number",
+              "description": "Warning threshold of Px diff value. If the current Px diff value is lower than this threshold, a warning should appear.",
+              "exclusiveMinimum": 0
+            },
+            "px-diff-sma-ratio": {
+              "type": "number",
+              "description": "Warning threshold of Px diff SMA ratio. If the current Px diff SMA ratio is lower than this threshold, a warning should appear.",
+              "exclusiveMinimum": 0
+            },
+            "total-pnl": {
+              "type": "number",
+              "description": "Warning threshold of total PnL. If the current total PnL is lower than this threshold, a warning should appear.",
+              "exclusiveMinimum": 0
+            },
+            "unrealized-pnl": {
+              "type": "number",
+              "description": "Warning threshold of unrealized PnL. If the current unrealized PnL is lower than this threshold, a warning should appear.",
+              "exclusiveMinimum": 0
+            }
+          }
         }
       }
     },
