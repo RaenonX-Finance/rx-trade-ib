@@ -147,7 +147,7 @@ class IBautoBotSpread(IBapiServer):
             req_id_pnl,
             ACCOUNT_NUMBER_IN_USE,
             "",
-            contract_details.underConId
+            contract_details.contract.conId
         )
         self._pnl_req_id_to_contract_req_id[req_id_pnl] = contract_req_id
 
