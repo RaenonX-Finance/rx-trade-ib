@@ -19,6 +19,7 @@ def make_limit_order(
     order.outsideRth = True
     order.lmtPrice = px
     order.parentId = parent_id
+    order.tif = "GTC"
     order.transmit = transmit
 
     return order
@@ -37,6 +38,7 @@ def make_stop_order(
     order.outsideRth = True
     order.auxPrice = px
     order.parentId = parent_id
+    order.tif = "GTC"
     order.transmit = transmit
 
     return order
@@ -56,6 +58,7 @@ def make_stop_limit_order(
     order.auxPrice = px
     order.lmtPrice = px
     order.parentId = parent_id
+    order.tif = "GTC"
     order.transmit = transmit
 
     return order
