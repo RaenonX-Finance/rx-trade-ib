@@ -62,6 +62,7 @@ def register_socket_endpoints(app: IBapiServer, px_data_req_ids: list[int]):
             diff_sma=px_data.current_diff_sma,
             order_id=message.order_id,
             min_tick=px_data.contract.minTick,
+            force_bracket=message.force_bracket,
         )
 
     @fast_api_socket.on(SocketEvent.CANCEL_ORDER)

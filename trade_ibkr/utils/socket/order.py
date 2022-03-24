@@ -12,6 +12,7 @@ class OrderSocketMessage(TypedDict):
     quantity: float
     px: float | None
     periodSec: int
+    forceBracket: bool | None
 
 
 @dataclass(kw_only=True)
@@ -22,6 +23,7 @@ class OrderSocketMessagePack:
     quantity: float
     px: float | None
     period_sec: int
+    force_bracket: bool | None
 
 
 def from_socket_message_order(message: str) -> OrderSocketMessagePack:
@@ -34,4 +36,5 @@ def from_socket_message_order(message: str) -> OrderSocketMessagePack:
         quantity=order_message["quantity"],
         px=order_message["px"],
         period_sec=order_message["periodSec"],
+        force_bracket=order_message["forceBracket"],
     )

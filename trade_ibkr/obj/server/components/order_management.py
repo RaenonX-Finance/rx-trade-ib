@@ -11,9 +11,8 @@ from trade_ibkr.const import RISK_MGMT_SL_X, RISK_MGMT_TP_X
 from trade_ibkr.enums import OrderSideConst
 from trade_ibkr.model import OnOrderFilled, OnOrderFilledEvent
 from trade_ibkr.utils import (
-    get_contract_identifier, get_basic_contract_symbol, make_limit_order, make_stop_limit_order,
-    make_limit_bracket_order,
-    print_error, update_order_price,
+    get_basic_contract_symbol, get_contract_identifier, make_limit_bracket_order, make_limit_order,
+    make_stop_limit_order, print_error, update_order_price,
 )
 from .execution import IBapiExecution
 from .open_order import IBapiOpenOrder
@@ -69,7 +68,7 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
             self, *,
             side: OrderSideConst, quantity: float, order_px: float | None,
             current_px: float, diff_sma: float, order_id: int, min_tick: float,
-            contract_identifier: int,
+            contract_identifier: int, force_bracket: bool | None,
     ) -> list[Order]:
         quantity = Decimal(quantity)
 
@@ -78,6 +77,14 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
             order_px = current_px
 
         def _make_limit_order_internal() -> list[Order]:
+            if force_bracket:
+                return make_limit_bracket_order(
+                    side, quantity, order_px, order_id,
+                    take_profit_px_diff=diff_sma * RISK_MGMT_TP_X,
+                    stop_loss_px_diff=diff_sma * RISK_MGMT_SL_X,
+                    min_tick=min_tick
+                )
+
             if (
                     self._has_open_order_of_contract(contract_identifier) or
                     (self._position_data and self._position_data.has_position(contract_identifier))
@@ -120,6 +127,7 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
             self, *,
             contract: Contract, side: OrderSideConst, quantity: float, order_px: float | None,
             current_px: float, diff_sma: float, order_id: int | None, min_tick: float,
+            force_bracket: bool | None,
     ):
         if order_id:
             # Have order ID means it's order modification
@@ -141,6 +149,7 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
             diff_sma=diff_sma,
             min_tick=min_tick,
             contract_identifier=get_contract_identifier(contract),
+            force_bracket=force_bracket,
         )
 
         for order in order_list:
