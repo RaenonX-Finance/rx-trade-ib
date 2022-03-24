@@ -16,3 +16,12 @@ def print_warning(message: str):
 
 def print_error(message: str):
     console_error.print(f"[red]{datetime.now().strftime('%H:%M:%S.%f')[:-3]}[/red]: {message}")
+
+
+def print_socket_event(event: str, additional: str = ""):
+    message = f"[Socket] Received `[purple]{event}[/purple]`"
+
+    if additional:
+        message += f" - {additional}"
+
+    print_log(message)

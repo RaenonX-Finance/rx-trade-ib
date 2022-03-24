@@ -3,7 +3,7 @@ from trade_ibkr.enums import SocketEvent
 from trade_ibkr.obj import IBapiServer
 from trade_ibkr.utils import (
     from_socket_message_order, print_log,
-    to_socket_message_init_data, to_socket_message_px_data_list,
+    print_socket_event, to_socket_message_init_data, to_socket_message_px_data_list,
 )
 from .utils import get_px_data_by_contract_identifier
 
@@ -11,7 +11,7 @@ from .utils import get_px_data_by_contract_identifier
 def register_socket_endpoints(app: IBapiServer, px_data_req_ids: list[int]):
     @fast_api_socket.on(SocketEvent.INIT)
     async def on_request_init_data(*_):
-        print_log("[Socket] Received `init`")
+        print_socket_event(SocketEvent.INIT)
 
         await fast_api_socket.emit(
             SocketEvent.INIT,
@@ -20,7 +20,7 @@ def register_socket_endpoints(app: IBapiServer, px_data_req_ids: list[int]):
 
     @fast_api_socket.on(SocketEvent.PX_INIT)
     async def on_request_px_data_init(*_):
-        print_log("[Socket] Received `pxInit`")
+        print_socket_event(SocketEvent.PX_INIT)
 
         await fast_api_socket.emit(
             SocketEvent.PX_INIT,
@@ -29,17 +29,17 @@ def register_socket_endpoints(app: IBapiServer, px_data_req_ids: list[int]):
 
     @fast_api_socket.on(SocketEvent.POSITION)
     async def on_request_position(*_):
-        print_log("[Socket] Received `position`")
+        print_socket_event(SocketEvent.POSITION)
         app.request_positions()
 
     @fast_api_socket.on(SocketEvent.OPEN_ORDER)
     async def on_request_open_orders(*_):
-        print_log("[Socket] Received `openOrder`")
+        print_socket_event(SocketEvent.OPEN_ORDER)
         app.request_open_orders()
 
     @fast_api_socket.on(SocketEvent.EXECUTION)
     async def on_request_execution(*_):
-        print_log("[Socket] Received `execution`")
+        print_socket_event(SocketEvent.EXECUTION)
         app.request_all_executions()
 
     @fast_api_socket.on(SocketEvent.PLACE_ORDER)
@@ -52,7 +52,10 @@ def register_socket_endpoints(app: IBapiServer, px_data_req_ids: list[int]):
         )
         contract = px_data.contract.contract
 
-        print_log(f"[Socket] Received `orderPlace` ({contract.localSymbol} {message.side} @ {message.px or 'MKT'})")
+        print_socket_event(
+            SocketEvent.PLACE_ORDER,
+            f"({contract.localSymbol} {message.side} @ {message.px or 'MKT'})"
+        )
         app.place_order(
             contract=contract,
             side=message.side,
@@ -67,5 +70,5 @@ def register_socket_endpoints(app: IBapiServer, px_data_req_ids: list[int]):
 
     @fast_api_socket.on(SocketEvent.CANCEL_ORDER)
     async def on_request_cancel_order(_, order_id: str):
-        print_log("[Socket] Received `orderCancel`")
+        print_socket_event(SocketEvent.CANCEL_ORDER)
         app.cancel_order(int(order_id))
