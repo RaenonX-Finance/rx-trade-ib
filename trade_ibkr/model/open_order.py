@@ -14,6 +14,7 @@ class OpenOrder:
     price: float
     quantity: Decimal
     side: OrderSideConst
+    type_: str
 
     parent_id: int
 

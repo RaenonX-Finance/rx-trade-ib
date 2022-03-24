@@ -15,6 +15,7 @@ class OpenOrderData(TypedDict):
     side: OrderSideConst
     quantity: float
     px: float
+    type: str
 
 
 OpenOrderDict: TypeAlias = dict[int, dict[int, OpenOrderData]]
@@ -34,6 +35,7 @@ def _from_open_order(open_order: "OpenOrder", *, override_group_id: int | None) 
         "side": open_order.side,
         "quantity": float(open_order.quantity),
         "px": open_order.price,
+        "type": open_order.type_,
     }
 
 

@@ -33,6 +33,7 @@ class IBapiOpenOrder(IBapiOrderBase, ABC):
             price=get_order_trigger_price(order),
             quantity=order.totalQuantity,
             side=order.action,
+            type_=order.orderType,
             parent_id=order.parentId,
         ))
 
