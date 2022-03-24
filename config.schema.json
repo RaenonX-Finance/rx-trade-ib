@@ -42,6 +42,10 @@
               "pattern": "^U[0-9]{7}$"
             }
           }
+        },
+        "suppress-warning": {
+          "type": "boolean",
+          "description": "Determines if the console should suppress warnings."
         }
       }
     },

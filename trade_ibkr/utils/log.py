@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from trade_ibkr.const import console, console_error
+from trade_ibkr.const import SUPPRESS_WARNINGS, console, console_error
 
 
 def print_log(message: str):
@@ -8,6 +8,9 @@ def print_log(message: str):
 
 
 def print_warning(message: str):
+    if SUPPRESS_WARNINGS:
+        return
+
     console.print(f"[yellow]{datetime.now().strftime('%H:%M:%S.%f')[:-3]}: {message}[/yellow]")
 
 
