@@ -16,6 +16,7 @@ _error_code_ignore: set[int] = {
     2104,  # Market data farm connected
     2106,  # Historical market data farm connected
     2109,  # Out of RTH order is still processed
+    2150,  # Invalid position trade derived value
     2158,  # Security definition server connection OK
 }
 

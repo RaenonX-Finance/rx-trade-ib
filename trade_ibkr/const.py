@@ -32,6 +32,7 @@ PNL_WARNING_UNREALIZED_PNL = config["risk-management"]["pnl-warning"]["unrealize
 
 SR_MULTIPLIER = config["sr-level"]["multiplier"]
 SR_STRONG_THRESHOLD = config["sr-level"]["strong-threshold"]
+SR_CUSTOM_LEVELS = config["sr-level"]["custom"]
 
 MARKET_TREND_WINDOW = config["data"]["trend-window"]
 

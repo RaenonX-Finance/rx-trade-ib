@@ -28,6 +28,23 @@ data:
 sr-level:
   multiplier: 1.5
   strong-threshold: 0.7
+  custom:
+    # MNQM2
+    477837024:
+      - level: 15347.25
+      - level: 15221.25
+        strong: true
+      - level: 15051.75
+        strong: true
+      - level: 14844.25
+      - level: 14763.5
+      - level: 14632.75
+        strong: true
+      - level: 14535
+      - level: 14469.25
+      - level: 14388
+      - level: 14249.75
+        strong: true
 
 risk-management:
   take-profit-x: 15

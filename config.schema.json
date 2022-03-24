@@ -118,7 +118,8 @@
       "description": "SR level determining settings.",
       "required": [
         "multiplier",
-        "strong-threshold"
+        "strong-threshold",
+        "custom"
       ],
       "additionalProperties": false,
       "properties": {
@@ -132,6 +133,37 @@
           "description": "Threshold to determine that an S/R level is strong in terms of its relative strength.",
           "exclusiveMinimum": 0,
           "exclusiveMaximum": 1
+        },
+        "custom": {
+          "type": "object",
+          "description": "Custom S/R levels of all contracts. Key must be the contract ID.",
+          "patternProperties": {
+            "^(0|[1-9][0-9]*)$": {
+              "type": "array",
+              "description": "Custom S/R levels of a single contract.",
+              "uniqueItems": true,
+              "items": {
+                "type": "object",
+                "description": "Single custom S/R level.",
+                "required": [
+                  "level"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "level": {
+                    "type": "number",
+                    "description": "S/R level in Px.",
+                    "minimum": 1
+                  },
+                  "strong": {
+                    "type": "boolean",
+                    "description": "Determines if the S/R level is strong.",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
