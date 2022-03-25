@@ -1,4 +1,3 @@
-import asyncio
 import threading
 import time
 from abc import ABC
@@ -8,7 +7,7 @@ from ibapi.common import TickerId
 from ibapi.wrapper import EWrapper
 
 from trade_ibkr.model import OnError, OnErrorEvent
-from trade_ibkr.utils import print_error, print_log
+from trade_ibkr.utils import asyncio_run, print_error, print_log
 
 _error_code_ignore: set[int] = {
     202,  # Order canceled
@@ -67,7 +66,7 @@ class IBapiBase(EWrapper, EClient, ABC):
         async def execute_on_error():
             await self._on_error_handler(event)
 
-        asyncio.run(execute_on_error())
+        asyncio_run(execute_on_error())
 
     @property
     def next_valid_request_id(self) -> int:

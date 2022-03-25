@@ -1,4 +1,3 @@
-import asyncio
 from abc import ABC
 from decimal import Decimal
 from typing import Literal
@@ -6,7 +5,7 @@ from typing import Literal
 from ibapi.contract import Contract
 
 from trade_ibkr.model import OnPositionFetched, OnPositionFetchedEvent, Position, PositionData
-from trade_ibkr.utils import print_error, print_log
+from trade_ibkr.utils import asyncio_run, print_error, print_log
 from .base import IBapiBase
 
 
@@ -46,7 +45,7 @@ class IBapiPosition(IBapiBase, ABC):
             # noinspection PyCallingNonCallable
             await self._position_on_fetched(OnPositionFetchedEvent(position=self._position_data))
 
-        asyncio.run(execute_after_position_end())
+        asyncio_run(execute_after_position_end())
 
     def request_positions(self):
         print_log("[TWS] Position request sent")

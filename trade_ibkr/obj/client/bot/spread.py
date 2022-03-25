@@ -1,4 +1,3 @@
-import asyncio
 import sys
 import threading
 import time
@@ -19,7 +18,7 @@ from trade_ibkr.model import (
     PxDataPairCacheEntry, UnrealizedPnL,
 )
 from trade_ibkr.utils import (
-    get_basic_contract_symbol, get_contract_symbol, get_order_trigger_price, print_error, print_log,
+    asyncio_run, get_basic_contract_symbol, get_contract_symbol, get_order_trigger_price, print_error, print_log,
 )
 from ...server import IBapiServer
 
@@ -200,7 +199,7 @@ class IBautoBotSpread(IBapiServer):
                 proc_sec=time.time() - start_epoch,
             ))
 
-        asyncio.run(execute_on_update())
+        asyncio_run(execute_on_update())
 
     def historicalDataUpdate(self, reqId: int, bar: BarData):
         _time = time.time()

@@ -1,4 +1,3 @@
-import asyncio
 import sys
 import time
 from abc import ABC
@@ -11,7 +10,7 @@ from trade_ibkr.model import (
     OnExecutionFetched, OnExecutionFetchedEvent, OnExecutionFetchedGetParams, OnExecutionFetchedParams,
     OrderExecution, OrderExecutionCollection,
 )
-from trade_ibkr.utils import print_error
+from trade_ibkr.utils import asyncio_run, print_error
 from .open_order import IBapiOpenOrder
 from .position import IBapiPosition
 
@@ -73,7 +72,7 @@ class IBapiExecution(IBapiOpenOrder, IBapiPosition, ABC):
                 proc_sec=time.time() - _time
             ))
 
-        asyncio.run(execute_after_execution_fetched())
+        asyncio_run(execute_after_execution_fetched())
 
         self._execution_cache = {}
 

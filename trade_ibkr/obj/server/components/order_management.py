@@ -1,4 +1,3 @@
-import asyncio
 from abc import ABC
 from decimal import Decimal
 
@@ -11,8 +10,9 @@ from trade_ibkr.const import RISK_MGMT_SL_X, RISK_MGMT_TP_X
 from trade_ibkr.enums import OrderSideConst
 from trade_ibkr.model import OnOrderFilled, OnOrderFilledEvent
 from trade_ibkr.utils import (
-    get_basic_contract_symbol, get_contract_identifier, make_limit_bracket_order, make_limit_order,
-    make_stop_limit_order, print_error, update_order_price,
+    asyncio_run, get_basic_contract_symbol, get_contract_identifier,
+    make_limit_bracket_order, make_limit_order, make_stop_limit_order,
+    print_error, update_order_price,
 )
 from .execution import IBapiExecution
 from .open_order import IBapiOpenOrder
@@ -36,7 +36,7 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
                 fill_px=self._order_filled_avg_px,
             ))
 
-        asyncio.run(execute_after_order_filled())
+        asyncio_run(execute_after_order_filled())
 
         self._order_filled_perm_id = None
         self._order_filled_avg_px = None

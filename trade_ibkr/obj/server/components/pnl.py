@@ -1,4 +1,3 @@
-import asyncio
 from abc import ABC
 from decimal import Decimal
 
@@ -6,7 +5,7 @@ from ibapi.contract import ContractDetails
 
 from trade_ibkr.const import ACCOUNT_NUMBER_IN_USE
 from trade_ibkr.model import OnPnLUpdated, OnPnLUpdatedEvent, PnL
-from trade_ibkr.utils import get_contract_symbol, get_detailed_contract_identifier, print_error, print_log
+from trade_ibkr.utils import asyncio_run, get_contract_symbol, get_detailed_contract_identifier, print_error, print_log
 from .px import IBapiPx
 
 
@@ -59,4 +58,4 @@ class IBapiPnL(IBapiPx, ABC):
             # noinspection PyCallingNonCallable
             await self._pnl_on_updated(OnPnLUpdatedEvent(pnl_dict=self._pnl_of_contract_id))
 
-        asyncio.run(execute_on_pnl_updated())
+        asyncio_run(execute_on_pnl_updated())

@@ -1,4 +1,3 @@
-import asyncio
 from abc import ABC
 from typing import Literal
 
@@ -8,7 +7,7 @@ from ibapi.order import Order
 from ibapi.order_state import OrderState
 
 from trade_ibkr.model import OnOpenOrderFetched, OnOpenOrderFetchedEvent, OpenOrder, OpenOrderBook
-from trade_ibkr.utils import get_contract_identifier, get_order_trigger_price, print_error
+from trade_ibkr.utils import asyncio_run, get_contract_identifier, get_order_trigger_price, print_error
 from .order_base import IBapiOrderBase
 
 
@@ -58,7 +57,7 @@ class IBapiOpenOrder(IBapiOrderBase, ABC):
                 open_order=OpenOrderBook(self._open_order_list)
             ))
 
-        asyncio.run(execute_after_open_order_fetched())
+        asyncio_run(execute_after_open_order_fetched())
 
     def set_on_open_order_fetched(self, on_open_order_fetched: OnOpenOrderFetched | None):
         self._open_order_on_fetched = on_open_order_fetched

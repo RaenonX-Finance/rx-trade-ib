@@ -1,4 +1,3 @@
-import asyncio
 import time
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -13,7 +12,7 @@ from trade_ibkr.model import (
     OnMarketDataReceived, OnMarketDataReceivedEvent, OnPxDataUpdatedEventNoAccount, OnPxDataUpdatedNoAccount,
     PxData, PxDataCache, PxDataCacheEntry,
 )
-from trade_ibkr.utils import print_warning
+from trade_ibkr.utils import asyncio_run, print_warning
 from .contract import IBapiContract
 
 
@@ -77,7 +76,7 @@ class IBapiPx(IBapiContract, ABC):
                 proc_sec=time.time() - start_epoch,
             ))
 
-        asyncio.run(execute_on_update())
+        asyncio_run(execute_on_update())
 
     def _request_px_data(self, *, contract: Contract, duration: str, bar_size: str, keep_update: bool) -> int:
         request_id = self.next_valid_request_id
@@ -162,7 +161,7 @@ class IBapiPx(IBapiContract, ABC):
                 px=price,
             ))
 
-        asyncio.run(execute_on_update())
+        asyncio_run(execute_on_update())
 
         # Must be placed after `is_send_market_px_data_ok`
         self._px_data_cache.data[px_req_id].update_latest_market(price)
