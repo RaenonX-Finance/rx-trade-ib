@@ -1,13 +1,18 @@
 import time
 
 from trade_ibkr.const import IS_DEMO, SERVER_CLIENT_ID_DEMO, SERVER_CLIENT_ID_LIVE, SERVER_CONTRACTS
+from trade_ibkr.discord import DiscordBot
 from trade_ibkr.obj import IBapiServer
-from trade_ibkr.utils import print_log, ContractParams, TYPE_TO_CONTRACT_FUNCTION, print_warning
+from trade_ibkr.utils import ContractParams, TYPE_TO_CONTRACT_FUNCTION, print_log, print_warning
 from .handler import on_market_data_received, on_px_updated, register_handlers
 from .socket import register_socket_endpoints
 
 
-def run_ib_server(is_demo: bool | None = None, client_id: int | None = None) -> IBapiServer:
+def run_ib_server(
+        *,
+        discord_bot: DiscordBot,
+        is_demo: bool | None = None, client_id: int | None = None
+) -> IBapiServer:
     is_demo = IS_DEMO if is_demo is None else is_demo
 
     app = IBapiServer()

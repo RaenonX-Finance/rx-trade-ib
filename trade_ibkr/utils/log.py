@@ -3,8 +3,11 @@ from datetime import datetime
 from trade_ibkr.const import SUPPRESS_WARNINGS, console, console_error
 
 
-def print_log(message: str):
-    console.print(f"[green]{datetime.now().strftime('%H:%M:%S.%f')[:-3]}[/green]: {message}")
+def print_log(message: str, *, timestamp_color: str = "green"):
+    console.print(
+        f"[{timestamp_color}]{datetime.now().strftime('%H:%M:%S.%f')[:-3]}[/{timestamp_color}]: "
+        f"{message}"
+    )
 
 
 def print_warning(message: str):
@@ -25,3 +28,7 @@ def print_socket_event(event: str, additional: str = ""):
         message += f" - {additional}"
 
     print_log(message)
+
+
+def print_discord_log(message: str):
+    print_log(f"[Discord] {message}", timestamp_color="blue")

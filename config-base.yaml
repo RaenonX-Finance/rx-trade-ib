@@ -8,6 +8,11 @@ system:
 bot:
   strategy-check-interval-sec: 0.15
   position-fetch-interval-sec: 10
+  discord:
+    access-token: <TOKEN>
+    px-auto-report-interval-sec: 3
+    px-auto-report-symbols:
+      - MNQM2
 
 data:
   trend-window:

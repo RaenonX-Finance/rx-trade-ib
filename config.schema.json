@@ -54,7 +54,8 @@
       "description": "Trading bot related settings.",
       "required": [
         "strategy-check-interval-sec",
-        "position-fetch-interval-sec"
+        "position-fetch-interval-sec",
+        "discord"
       ],
       "additionalProperties": false,
       "properties": {
@@ -67,6 +68,36 @@
           "type": "number",
           "description": "Position fetching interval in second.",
           "exclusiveMinimum": 0
+        },
+        "discord": {
+          "type": "object",
+          "description": "Discord px reporting bot related settings.",
+          "required": [
+            "access-token",
+            "px-auto-report-interval-sec",
+            "px-auto-report-symbols"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "access-token": {
+              "type": "string",
+              "description": "Discord bot access token"
+            },
+            "px-auto-report-interval-sec": {
+              "type": "number",
+              "description": "Px auto report interval in seconds.",
+              "exclusiveMinimum": 0
+            },
+            "px-auto-report-symbols": {
+              "type": "array",
+              "description": "Symbols to auto report the Px.",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "description": "Contract symbol."
+              }
+            }
+          }
         }
       }
     },

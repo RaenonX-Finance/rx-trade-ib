@@ -25,3 +25,9 @@ uvicorn[standard]
 
 # Config
 pyyaml
+
+# Bot
+discord.py
+
+# Async handling
+nest-asyncio
