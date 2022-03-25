@@ -8,6 +8,8 @@ import talib
 from pandas import DataFrame
 from talib import MA_Type
 
+from trade_ibkr.utils import print_log
+
 
 @dataclass(kw_only=True)
 class SpreadTradingCommodity:
@@ -60,14 +62,14 @@ def get_df_between_time(df: DataFrame, params: SpreadTradingParams) -> DataFrame
 
 
 def apply_strategy(df: DataFrame, params: SpreadTradingParams) -> DataFrame:
-    print(
+    print_log(
         f"Data 1: {params.data_1.name} / Data 2: {params.data_2.name}\n"
         f"Weighted Px 1: {params.data_1.get_weighted_px(df[f'close_{params.data_1.name}'][-1]):.2f}\n"
         f"Weighted Px 2: {params.data_2.get_weighted_px(df[f'close_{params.data_2.name}'][-1]):.2f}"
     )
 
     if df["px_diff"][-1] < 0:
-        print("Px diff value is negative, the division order should be reversed!")
+        print_log("Px diff value is negative, the division order should be reversed!")
 
     name_1 = params.data_1.name
     name_2 = params.data_2.name
@@ -89,7 +91,9 @@ def apply_strategy(df: DataFrame, params: SpreadTradingParams) -> DataFrame:
             }
             continue
 
-        print(current_pnl, f"{last['entry_t']} {last['position']}" if last else "", dt)
+        msg = f"{current_pnl} {last['position']}" if last else ""
+        msg += f" {dt}"
+        print_log(msg)
 
         # Entry - out of band
         if not last or last["position"] == "close":

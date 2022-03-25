@@ -1,5 +1,6 @@
 from trade_ibkr.app import run_ib_server
 from trade_ibkr.model import OnExecutionFetchedEvent
+from trade_ibkr.utils import print_log
 
 
 def main():
@@ -9,7 +10,7 @@ def main():
         async def fetched(e: OnExecutionFetchedEvent):
             for identifier, df in e.executions.execution_dataframes.items():
                 dest = f"execution-{identifier}.csv"
-                print(f"Saved to: {dest}")
+                print_log(f"Saved to: {dest}")
                 df.to_csv(dest)
 
             app.disconnect()
