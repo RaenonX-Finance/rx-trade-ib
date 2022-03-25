@@ -18,13 +18,11 @@ class OrderExecutionCollection:
                 # Skip contract IDs not to be included
                 continue
 
-            px_data = params.px_data_dict_lowest_period[identifier]
-
             self._executions_dataframe[identifier] = init_exec_dataframe(
                 grouped_executions,
                 # Equity doesn't have multiplier
                 multiplier=float(grouped_executions[0].contract.multiplier or 1),
-                px_data=px_data,
+                px_data=params.px_data_dict_execution_period_sec[identifier],
             )
 
     def __init__(self, order_execs: Iterable[OrderExecution], params: "OnExecutionFetchedParams"):

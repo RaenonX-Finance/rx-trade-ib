@@ -90,11 +90,11 @@
             },
             "px-auto-report-symbols": {
               "type": "array",
-              "description": "Symbols to auto report the Px.",
+              "description": "Symbols (e.g. MNQ) to auto report the Px.",
               "uniqueItems": true,
               "items": {
                 "type": "string",
-                "description": "Contract symbol."
+                "description": "Contract symbol (e.g. MNQ)."
               }
             }
           }
@@ -107,7 +107,8 @@
       "required": [
         "trend-window",
         "diff-sma-window",
-        "sma"
+        "sma",
+        "execution-period-sec"
       ],
       "additionalProperties": false,
       "properties": {
@@ -128,10 +129,12 @@
           ],
           "patternProperties": {
             "^(0|[1-9][0-9]*)$": {
-              "type": "integer"
+              "type": "integer",
+              "description": "Diff SMA smoothing window of a single contract. Key is the contract ID."
             },
             "^default$": {
-              "type": "integer"
+              "type": "integer",
+              "description": "Default diff SMA smoothing window. Used by any contract that doesn't have corresponding smoothing window assigned."
             }
           }
         },
@@ -144,6 +147,25 @@
             "type": "integer",
             "description": "SMA period.",
             "minimum": 1
+          }
+        },
+        "execution-period-sec": {
+          "type": "object",
+          "description": "Period sec of the Px data to use for calculating diff SMA ratio of each realized execution of a specific contract. Contract symbol (e.g. MNQ) as the key.",
+          "required": [
+            "default"
+          ],
+          "patternProperties": {
+            "^(0|[1-9][0-9]*)$": {
+              "type": "integer",
+              "description": "Period sec of the Px data to use for calculating diff SMA ratio of each realized execution of a single contract. Key is the corresponding contract symbol (e.g. MNQ). This value must exist in `server.contract[].data[].period-secs`. For example, this can be 300 but not 250 if contract MNQH2 has a data of period sec 300.",
+              "exclusiveMinimum": 0
+            },
+            "^default$": {
+              "type": "integer",
+              "description": "Default period sec of the Px data to use for calculating diff SMA ratio of each realized execution. This value must exist in `server.contract[].data[].period-secs` across the contracts that are using this value. For example, this can be 300 but not 250 if contract MNQH2 is not specified, but has a data of period sec 300.",
+              "exclusiveMinimum": 0
+            }
           }
         }
       }
@@ -313,7 +335,7 @@
             "properties": {
               "symbol": {
                 "type": "string",
-                "description": "Symbol of a contract."
+                "description": "Detailed symbol of a contract (e.g. MNQM2)."
               },
               "exchange": {
                 "type": "string",

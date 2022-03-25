@@ -12,7 +12,7 @@ bot:
     access-token: <TOKEN>
     px-auto-report-interval-sec: 3
     px-auto-report-symbols:
-      - MNQM2
+      - MNQ
 
 data:
   trend-window:
@@ -29,6 +29,9 @@ data:
     - 66
     - 128
     - 256
+  execution-period-sec:
+    default: 60
+    MNQ: 300
 
 sr-level:
   multiplier: 1.5
