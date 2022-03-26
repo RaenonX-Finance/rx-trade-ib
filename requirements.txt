@@ -27,7 +27,4 @@ uvicorn[standard]
 pyyaml
 
 # Bot
-discord.py
-
-# Async handling
-nest-asyncio
+linenotipy

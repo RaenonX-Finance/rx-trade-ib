@@ -55,7 +55,7 @@
       "required": [
         "strategy-check-interval-sec",
         "position-fetch-interval-sec",
-        "discord"
+        "line"
       ],
       "additionalProperties": false,
       "properties": {
@@ -69,32 +69,47 @@
           "description": "Position fetching interval in second.",
           "exclusiveMinimum": 0
         },
-        "discord": {
+        "line": {
           "type": "object",
-          "description": "Discord px reporting bot related settings.",
+          "description": "LINE px reporting bot related settings.",
           "required": [
-            "access-token",
-            "px-auto-report-interval-sec",
-            "px-auto-report-symbols"
+            "enable",
+            "token",
+            "px-auto-report"
           ],
           "additionalProperties": false,
           "properties": {
-            "access-token": {
+            "enable": {
+              "type": "boolean",
+              "description": "Determines if the LINE px reporting should be enabled."
+            },
+            "token": {
               "type": "string",
-              "description": "Discord bot access token"
+              "description": "LINE Notify API token. Obtained from https://notify-bot.line.me/my/."
             },
-            "px-auto-report-interval-sec": {
-              "type": "number",
-              "description": "Px auto report interval in seconds.",
-              "exclusiveMinimum": 0
-            },
-            "px-auto-report-symbols": {
-              "type": "array",
-              "description": "Symbols (e.g. MNQ) to auto report the Px.",
-              "uniqueItems": true,
-              "items": {
-                "type": "string",
-                "description": "Contract symbol (e.g. MNQ)."
+            "px-auto-report": {
+              "type": "object",
+              "description": "Px auto report settings.",
+              "required": [
+                "interval-sec",
+                "symbols"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "interval-sec": {
+                  "type": "number",
+                  "description": "Px auto report interval in seconds.",
+                  "exclusiveMinimum": 0
+                },
+                "symbols": {
+                  "type": "array",
+                  "description": "Symbols (e.g. MNQ) to auto report the Px.",
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "description": "Contract symbol (e.g. MNQ)."
+                  }
+                }
               }
             }
           }

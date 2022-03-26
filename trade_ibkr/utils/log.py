@@ -30,5 +30,5 @@ def print_socket_event(event: str, additional: str = ""):
     print_log(message)
 
 
-def print_discord_log(message: str):
-    print_log(f"[Discord] {message}", timestamp_color="blue")
+def print_line_log(message: str):
+    print_log(f"[LINE] {message}", timestamp_color="blue")

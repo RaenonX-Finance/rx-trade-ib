@@ -4,15 +4,18 @@ system:
   account:
     demo: DU0000000
     actual: U0000000
+  suppress-warning: true
 
 bot:
   strategy-check-interval-sec: 0.15
   position-fetch-interval-sec: 10
-  discord:
-    access-token: <TOKEN>
-    px-auto-report-interval-sec: 3
-    px-auto-report-symbols:
-      - MNQ
+  line:
+    enable: true
+    token: <TOKEN>
+    px-auto-report:
+      interval-sec: 3
+      symbols:
+        - MNQ
 
 data:
   trend-window:

@@ -38,7 +38,7 @@ class IBapiBase(EWrapper, EClient, ABC):
 
         def run_loop():
             while not self.isConnected():
-                print_log("[System] Waiting the app to connect...")
+                print_log("[System] Waiting for the app to connect...")
                 time.sleep(0.25)
 
             try:

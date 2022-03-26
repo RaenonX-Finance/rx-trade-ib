@@ -151,4 +151,4 @@ class PxDataCache(Generic[E]):
         self.data = {}
 
     def is_all_px_data_ready(self) -> bool:
-        return all(px_data.is_ready for px_data in self.data.values())
+        return all(px_data_entry.is_ready for px_data_entry in self.data.values())
