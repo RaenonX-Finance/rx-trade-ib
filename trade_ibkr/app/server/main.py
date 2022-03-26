@@ -5,6 +5,7 @@ from trade_ibkr.obj import IBapiServer
 from trade_ibkr.utils import ContractParams, TYPE_TO_CONTRACT_FUNCTION, print_log, print_warning
 from .handler import on_market_data_received, on_px_updated, register_handlers
 from .socket import register_socket_endpoints
+from .utils import show_warnings_as_needed
 
 
 def run_ib_server(
@@ -53,5 +54,6 @@ def run_ib_server(
 
     register_socket_endpoints(app, px_data_req_ids)
     register_handlers(app, px_data_req_ids)
+    show_warnings_as_needed(is_demo=is_demo)
 
     return app

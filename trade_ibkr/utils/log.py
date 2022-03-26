@@ -10,8 +10,8 @@ def print_log(message: str, *, timestamp_color: str = "green"):
     )
 
 
-def print_warning(message: str):
-    if SUPPRESS_WARNINGS:
+def print_warning(message: str, *, force: bool = False):
+    if SUPPRESS_WARNINGS and not force:
         return
 
     console.print(f"[yellow]{datetime.now().strftime('%H:%M:%S.%f')[:-3]}: {message}[/yellow]")

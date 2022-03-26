@@ -197,5 +197,5 @@ class IBapiPx(IBapiContract, ABC):
 
         return req_px
 
-    def is_all_px_data_ready(self, px_data_req_ids: list[int]) -> bool:
-        return self._px_data_cache.is_all_px_data_ready(px_data_req_ids)
+    def is_all_px_data_ready(self) -> bool:
+        return self._px_data_cache.is_all_px_data_ready()

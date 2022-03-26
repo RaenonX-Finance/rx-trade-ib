@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import Callable
 
+from trade_ibkr.const import LINE_ENABLE
 from trade_ibkr.model import OnExecutionFetchedGetParams, OnExecutionFetchedParams, PxData
 from trade_ibkr.obj import IBapiServer
-from trade_ibkr.utils import get_detailed_contract_identifier
+from trade_ibkr.utils import get_detailed_contract_identifier, print_warning
 
 
 def request_earliest_execution_time(app: IBapiServer, px_data_req_ids: list[int]) -> Callable[[], datetime]:
@@ -34,3 +35,11 @@ def get_px_data_by_contract_identifier(
             break
 
     return px_data
+
+
+def show_warnings_as_needed(*, is_demo: bool):
+    if not LINE_ENABLE:
+        print_warning("LINE Px reporting not enabled.", force=True)
+
+    if is_demo:
+        print_warning("Using demo environment.", force=True)

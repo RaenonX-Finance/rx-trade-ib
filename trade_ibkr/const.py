@@ -48,9 +48,10 @@ EXECUTION_SMA_PERIOD = config["data"]["execution-period-sec"]
 BOT_STRATEGY_CHECK_INTERVAL = config["bot"]["strategy-check-interval-sec"]
 BOT_POSITION_FETCH_INTERVAL = config["bot"]["position-fetch-interval-sec"]
 
-DISCORD_TOKEN = config["bot"]["discord"]["access-token"]
-DISCORD_REPORT_INTERVAL_SEC = config["bot"]["discord"]["px-auto-report-interval-sec"]
-DISCORD_REPORT_SYMBOLS = config["bot"]["discord"]["px-auto-report-symbols"]
+LINE_TOKEN = config["bot"]["line"]["token"]
+LINE_ENABLE = config["bot"]["line"]["enable"]
+LINE_REPORT_INTERVAL_SEC = config["bot"]["line"]["px-auto-report"]["interval-sec"]
+LINE_REPORT_SYMBOLS = config["bot"]["line"]["px-auto-report"]["symbols"]
 
 POSITION_ON_FIRST_REALIZED = {
     int(identifier): int(position)
