@@ -11,7 +11,7 @@ def main():
             for identifier, df in e.executions.execution_dataframes.items():
                 dest = f"execution-{identifier}.csv"
                 print_log(f"Saved to: {dest}")
-                df.to_csv(dest)
+                df.to_csv(dest, index=False)
 
             app.disconnect()
 
