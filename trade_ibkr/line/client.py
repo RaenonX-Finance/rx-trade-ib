@@ -4,7 +4,7 @@ from typing import Iterable
 from linenotipy import Line
 
 from trade_ibkr.const import LINE_ENABLE, LINE_REPORT_INTERVAL_SEC, LINE_REPORT_SYMBOLS
-from trade_ibkr.model import PxData
+from trade_ibkr.model import OnOrderFilledEvent, PxData
 from trade_ibkr.utils import print_line_log, print_warning
 
 
@@ -43,7 +43,11 @@ class LineNotifyClient(Line):
         message += now.strftime("\n@ %Y-%m-%d %H:%M:%S")
 
         self.post(message=message)
-        print_line_log(f"Px data reported on {now}")
+        print_line_log("Px data reported")
+
+    def send_order_filled_message(self, event: OnOrderFilledEvent):
+        self.post(message=f"\n{event}")
+        print_line_log("Order filled reported")
 
     @property
     def enabled(self) -> bool:

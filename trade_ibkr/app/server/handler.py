@@ -1,5 +1,6 @@
 from trade_ibkr.const import fast_api_socket
 from trade_ibkr.enums import SocketEvent
+from trade_ibkr.line import line_notify
 from trade_ibkr.model import (
     OnErrorEvent, OnExecutionFetchedEvent, OnMarketDataReceivedEvent, OnOpenOrderFetchedEvent, OnOrderFilledEvent,
     OnPositionFetchedEvent, OnPxDataUpdatedEventNoAccount,
@@ -55,6 +56,9 @@ async def on_executions_fetched(e: OnExecutionFetchedEvent):
 
 async def on_order_filled(e: OnOrderFilledEvent):
     print_log(f"[TWS] Order Filled ({e})")
+
+    line_notify.send_order_filled_message(e)
+
     await fast_api_socket.emit(
         SocketEvent.ORDER_FILLED,
         to_socket_message_order_filled(e)
