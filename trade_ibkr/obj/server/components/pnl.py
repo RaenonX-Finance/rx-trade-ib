@@ -18,6 +18,8 @@ class IBapiPnL(IBapiPx, ABC):
         self._pnl_on_updated: OnPnLUpdated | None = None
 
     def request_pnl_single(self, contract_req_id: int, contract_details: ContractDetails):
+        print_error("Check the PnL numbers before go live, the number seems to be problematic for futures.")
+
         req_id_pnl = self.next_valid_request_id
         self.reqPnLSingle(
             req_id_pnl,
