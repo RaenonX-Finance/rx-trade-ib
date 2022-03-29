@@ -39,8 +39,8 @@ class LineNotifyClient(Line):
 
             px_dict[symbol] = px_data.current_close
 
-        message = now.strftime("%Y-%m-%d %H:%M:%S\n")
-        message += "\n".join([f"{symbol}: {px}" for symbol, px in px_dict.items()])
+        message = "\n" + "\n".join([f"{symbol}: {px}" for symbol, px in px_dict.items()])
+        message += now.strftime("\n@ %Y-%m-%d %H:%M:%S")
 
         self.post(message=message)
         print_line_log(f"Px data reported on {now}")
