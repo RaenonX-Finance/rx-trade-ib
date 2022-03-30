@@ -114,7 +114,7 @@ def make_limit_bracket_order(
         side_reversed, quantity, force_min_tick(px + take_profit_px_diff * diff_coeff, min_tick), order_id + 1,
         parent_id=order_id, transmit=False,
     )
-    stop_loss = make_stop_order(
+    stop_loss = make_stop_limit_order(
         side_reversed, quantity, force_min_tick(px - stop_loss_px_diff * diff_coeff, min_tick), order_id + 2,
         parent_id=order_id, transmit=True,
     )
