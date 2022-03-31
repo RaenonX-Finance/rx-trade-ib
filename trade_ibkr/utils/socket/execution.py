@@ -45,6 +45,9 @@ class ExecutionGroup(TypedDict):
     avgPxRrRatio: float | None
     avgPxEwr: float | None
 
+    totalProfit: float | None
+    totalLoss: float | None
+
 
 ExecutionDict: TypeAlias = dict[int, list[ExecutionGroup]]
 
@@ -80,6 +83,8 @@ def _from_grouped_execution_dataframe(executions_df: DataFrame) -> list[Executio
         ExecutionDataCol.AVG_PX_LOSS: "avgPxLoss",
         ExecutionDataCol.AVG_PX_RR_RATIO: "avgPxRrRatio",
         ExecutionDataCol.AVG_PX_EWR: "avgPxEwr",
+        ExecutionDataCol.TOTAL_PROFIT: "totalProfit",
+        ExecutionDataCol.TOTAL_LOSS: "totalLoss",
     }
 
     return df_rows_to_list_of_data(df, columns)

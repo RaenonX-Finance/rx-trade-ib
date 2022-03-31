@@ -71,7 +71,7 @@ def _analysis_pnl(df: DataFrame):
     df[ExecutionDataCol.TOTAL_PROFIT] = (
         df[df[ExecutionDataCol.REALIZED_PNL] > 0][ExecutionDataCol.REALIZED_PNL].cumsum()
     )
-    df[ExecutionDataCol.TOTAL_PROFIT].fillna(0, inplace=True)
+    df[ExecutionDataCol.TOTAL_PROFIT].fillna(method="ffill", inplace=True)
     df[ExecutionDataCol.AVG_PNL_PROFIT] = df[ExecutionDataCol.TOTAL_PROFIT] \
         .divide(df[ExecutionDataCol.PROFIT]) \
         .replace(0, np.nan) \
@@ -81,7 +81,7 @@ def _analysis_pnl(df: DataFrame):
     df[ExecutionDataCol.TOTAL_LOSS] = (
         df[df[ExecutionDataCol.REALIZED_PNL] < 0][ExecutionDataCol.REALIZED_PNL].cumsum()
     )
-    df[ExecutionDataCol.TOTAL_LOSS].fillna(0, inplace=True)
+    df[ExecutionDataCol.TOTAL_LOSS].fillna(method="ffill", inplace=True)
     df[ExecutionDataCol.AVG_PNL_LOSS] = df[ExecutionDataCol.TOTAL_LOSS] \
         .divide(df[ExecutionDataCol.LOSS]) \
         .replace(0, np.nan) \
