@@ -226,6 +226,10 @@ class PxData:
         return self.get_current()[PxDataCol.DIFF_SMA]
 
     @property
+    def current_ema_120_trend(self) -> float | None:
+        return self.get_current()[PxDataCol.EMA_120_TREND]
+
+    @property
     def contract_identifier(self) -> int:
         return get_detailed_contract_identifier(self.contract)
 

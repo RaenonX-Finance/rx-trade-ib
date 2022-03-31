@@ -103,11 +103,12 @@
                 },
                 "symbols": {
                   "type": "array",
-                  "description": "Symbols (e.g. MNQ) to auto report the Px.",
+                  "description": "Symbols (e.g. MNQ) to auto report the Px. The value must be <SYMBOL>@<PERIOD_SEC>. For example, MNQ@300.",
                   "uniqueItems": true,
                   "items": {
                     "type": "string",
-                    "description": "Contract symbol (e.g. MNQ)."
+                    "description": "Contract symbol (e.g. MNQ).",
+                    "pattern": "^.*@[1-9][0-9]*$"
                   }
                 }
               }

@@ -15,7 +15,7 @@ bot:
     px-auto-report:
       interval-sec: 3
       symbols:
-        - MNQ
+        - MNQ@300
 
 data:
   trend-window:

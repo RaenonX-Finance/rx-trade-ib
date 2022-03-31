@@ -29,17 +29,20 @@ class LineNotifyClient(Line):
 
         self._last_px_report_epoch = now
 
-        px_dict: dict[str, float] = {}
+        px_data_selected: dict[str, PxData] = {}
 
         for px_data in px_data_list:
-            symbol = px_data.contract_symbol
+            identifier = f"{px_data.contract_symbol}@{px_data.period_sec}"
 
-            if symbol not in LINE_REPORT_SYMBOLS or symbol in px_dict:
+            if identifier not in LINE_REPORT_SYMBOLS or identifier in px_data_selected:
                 continue
 
-            px_dict[symbol] = px_data.current_close
+            px_data_selected[identifier] = px_data
 
-        message = "\n" + "\n".join([f"{symbol}: {px}" for symbol, px in px_dict.items()])
+        message = "\n" + "\n".join([
+            f"{px_data.contract_symbol}: {px_data.current_close} @ {px_data.current_ema_120_trend:.2f}"
+            for px_data in px_data_selected.values()
+        ])
         message += now.strftime("\n@ %Y-%m-%d %H:%M:%S")
 
         self.post(message=message)
