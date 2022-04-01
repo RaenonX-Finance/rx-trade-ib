@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass, field
 from decimal import Decimal
 
@@ -21,11 +22,11 @@ class PositionData:
         else:
             self.avg_px = Decimal(0)
 
-    def px_diff(self, px: float) -> Decimal:
+    def px_diff(self, px: float) -> float:
         if not self.position:
-            return Decimal(0)
+            return 0
 
-        return Decimal(px) - self.avg_px
+        return (px - float(self.avg_px)) * math.copysign(1, self.position)
 
     @property
     def side(self) -> Side:

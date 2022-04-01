@@ -1,13 +1,12 @@
 import time
 from abc import ABC
 
+from ibapi.contract import ContractDetails
 from ibapi.order import Order
 
-from trade_ibkr.model import OnOrderFilled
-from trade_ibkr.utils import (
-    print_error,
-    print_log,
-)
+from trade_ibkr.enums import reverse_order_side
+from trade_ibkr.model import OnOrderFilled, PositionData
+from trade_ibkr.utils import get_contract_symbol, make_market_order, print_error, print_log
 from .base import IBapiBase
 
 
@@ -43,3 +42,12 @@ class IBapiOrderBase(IBapiBase, ABC):
         self._order_valid_id += 1
 
         return ret
+
+    def close_positions_of_contract(self, contract: ContractDetails, position: PositionData):
+        print_log(f"Closing positions of [lightblue]{get_contract_symbol(contract)}[/lightblue]")
+        order = make_market_order(
+            side=reverse_order_side(position.side.order_side),
+            quantity=abs(position.position),
+        )
+
+        self.placeOrder(self.next_valid_order_id, contract.contract, order)

@@ -246,7 +246,8 @@
       "required": [
         "take-profit-x",
         "stop-loss-x",
-        "pnl-warning"
+        "pnl-warning",
+        "force-stop-loss"
       ],
       "additionalProperties": false,
       "properties": {
@@ -290,6 +291,27 @@
               "type": "number",
               "description": "Warning threshold of unrealized PnL. If the current unrealized PnL is lower than this threshold, a warning should appear.",
               "exclusiveMinimum": 0
+            }
+          }
+        },
+        "force-stop-loss": {
+          "type": "object",
+          "description": "Force stop loss related settings.",
+          "required": [
+            "period-sec",
+            "px-diff-sma-ratio"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "period-sec": {
+              "type": "integer",
+              "description": "Period sec to use for getting the Px data for stats calculation.",
+              "exclusiveMinimum": 0
+            },
+            "px-diff-sma-ratio": {
+              "type": "number",
+              "description": "Threshold of diff SMA ratio to force the stop loss.",
+              "exclusiveMaximum": 0
             }
           }
         }

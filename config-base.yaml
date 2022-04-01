@@ -65,6 +65,9 @@ risk-management:
     px-diff-sma-ratio: 2
     total-pnl: 2000
     unrealized-pnl: 350
+  force-stop-loss:
+    period-sec: 300
+    px-diff-sma-ratio: -2.75
 
 server:
   client-id:

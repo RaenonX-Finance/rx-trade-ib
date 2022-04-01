@@ -2,7 +2,7 @@ from abc import ABC
 from decimal import Decimal
 
 from ibapi.common import OrderId
-from ibapi.contract import Contract
+from ibapi.contract import Contract, ContractDetails
 from ibapi.order import Order
 from ibapi.order_state import OrderState
 
@@ -11,8 +11,8 @@ from trade_ibkr.enums import OrderSideConst
 from trade_ibkr.model import OnOrderFilled, OnOrderFilledEvent
 from trade_ibkr.utils import (
     asyncio_run, get_basic_contract_symbol, get_contract_identifier,
-    make_limit_bracket_order, make_limit_order, make_stop_limit_order,
-    print_error, update_order_price,
+    get_detailed_contract_identifier, make_limit_bracket_order, make_limit_order, make_stop_limit_order,
+    print_error, print_log, update_order_price,
 )
 from .execution import IBapiExecution
 from .open_order import IBapiOpenOrder
@@ -167,3 +167,22 @@ class IBapiOrderManagement(IBapiExecution, IBapiOpenOrder, IBapiPosition, ABC):
 
     def set_on_order_filled(self, on_order_filled: OnOrderFilled):
         self._order_on_filled = on_order_filled
+
+    def cancel_open_orders_of_contract(self, contract: ContractDetails):
+
+        parent_order_ids_cancelled = set()
+
+        for open_order in self._open_order_list:
+            if get_contract_identifier(open_order.contract) != get_detailed_contract_identifier(contract):
+                continue
+
+            if open_order.has_parent:
+                # This helps prevent getting false-negative order non-exist error message,
+                # because the orders that share the same parent order is cancelled at the same time
+                if open_order.parent_id in parent_order_ids_cancelled:
+                    continue
+
+                parent_order_ids_cancelled.add(open_order.parent_id)
+
+            print_log(f"Canceling open order [lightblue]{open_order}[/lightblue]")
+            self.cancel_order(open_order.order_id)

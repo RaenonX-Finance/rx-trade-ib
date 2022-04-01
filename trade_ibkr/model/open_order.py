@@ -4,7 +4,7 @@ from decimal import Decimal
 from ibapi.contract import Contract
 
 from trade_ibkr.enums import OrderSideConst
-from trade_ibkr.utils import get_contract_identifier
+from trade_ibkr.utils import get_basic_contract_symbol, get_contract_identifier
 
 
 @dataclass(kw_only=True)
@@ -21,6 +21,14 @@ class OpenOrder:
     @property
     def has_parent(self) -> bool:
         return self.parent_id != 0
+
+    def __str__(self):
+        s = f"{self.side} {self.type_} {get_basic_contract_symbol(self.contract)} x {self.quantity} @ {self.price}"
+
+        if self.has_parent:
+            s += f" (P={self.parent_id})"
+
+        return s
 
 
 class OpenOrderBook:

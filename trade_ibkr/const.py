@@ -62,3 +62,6 @@ POSITION_ON_FIRST_REALIZED = {
 SERVER_CONTRACTS = config["server"]["contract"]
 SERVER_CLIENT_ID_LIVE = config["server"]["client-id"]["live"]
 SERVER_CLIENT_ID_DEMO = config["server"]["client-id"]["demo"]
+
+FORCE_STOP_LOSS_PERIOD_SEC = config["risk-management"]["force-stop-loss"]["period-sec"]
+FORCE_STOP_LOSS_DIFF_SMA_X = config["risk-management"]["force-stop-loss"]["px-diff-sma-ratio"]
