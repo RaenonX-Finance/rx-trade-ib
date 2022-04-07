@@ -45,6 +45,9 @@ SMA_PERIODS = config["data"]["sma"]
 
 EXECUTION_SMA_PERIOD = config["data"]["execution-period-sec"]
 
+UPDATE_FREQ_MKT_PX = config["data"]["px-update"]["freq-market-sec"]
+UPDATE_FREQ_HST_PX = config["data"]["px-update"]["freq-historical-sec"]
+
 BOT_STRATEGY_CHECK_INTERVAL = config["bot"]["strategy-check-interval-sec"]
 BOT_POSITION_FETCH_INTERVAL = config["bot"]["position-fetch-interval-sec"]
 

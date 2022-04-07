@@ -7,6 +7,7 @@ from typing import Generic, TypeVar
 from ibapi.common import BarData
 from ibapi.contract import Contract, ContractDetails
 
+from trade_ibkr.const import UPDATE_FREQ_HST_PX, UPDATE_FREQ_MKT_PX
 from trade_ibkr.enums import PxDataCol
 from .bar_data import BarDataDict, to_bar_data_dict
 from .px_data import PxData
@@ -50,7 +51,10 @@ class PxDataCacheEntry(ABC):
             return False
 
         # Debounce the data because `priceTick` and historical data update frequently
-        return self.is_minute_changed_for_historical or time.time() - self.last_historical_sent > 3
+        return (
+                self.is_minute_changed_for_historical
+                or time.time() - self.last_historical_sent > UPDATE_FREQ_HST_PX
+        )
 
     @property
     def is_send_market_px_data_ok(self) -> bool:
@@ -62,7 +66,7 @@ class PxDataCacheEntry(ABC):
             # First market data transmission
             return True
 
-        return time.time() - self.last_market_update > 0.15
+        return time.time() - self.last_market_update > UPDATE_FREQ_MKT_PX
 
     @property
     def is_minute_changed_for_historical(self) -> bool:

@@ -124,7 +124,8 @@
         "trend-window",
         "diff-sma-window",
         "sma",
-        "execution-period-sec"
+        "execution-period-sec",
+        "px-update"
       ],
       "additionalProperties": false,
       "properties": {
@@ -180,6 +181,27 @@
             "^default$": {
               "type": "integer",
               "description": "Default period sec of the Px data to use for calculating diff SMA ratio of each realized execution. This value must exist in `server.contract[].data[].period-secs` across the contracts that are using this value. For example, this can be 300 but not 250 if contract MNQH2 is not specified, but has a data of period sec 300.",
+              "exclusiveMinimum": 0
+            }
+          }
+        },
+        "px-update": {
+          "type": "object",
+          "description": "Px data update settings.",
+          "required": [
+            "freq-market-sec",
+            "freq-historical-sec"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "freq-market-sec": {
+              "type": "number",
+              "description": "Minimum market Px data update frequency in seconds.",
+              "exclusiveMinimum": 0
+            },
+            "freq-historical-sec": {
+              "type": "number",
+              "description": "Minimum historical Px data update frequency in seconds.",
               "exclusiveMinimum": 0
             }
           }

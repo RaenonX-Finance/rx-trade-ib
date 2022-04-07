@@ -35,6 +35,9 @@ data:
   execution-period-sec:
     default: 60
     MNQ: 300
+  px-update:
+    freq-market-sec: 0.15
+    freq-historical-sec: 3
 
 sr-level:
   multiplier: 1.5
