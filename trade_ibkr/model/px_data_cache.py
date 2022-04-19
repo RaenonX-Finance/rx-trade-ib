@@ -63,7 +63,7 @@ class PxDataCacheEntry(ABC):
             return False
 
         if self.last_market_update is None:
-            # First market data transmission
+            # First market data transmission / HL broken
             return True
 
         return time.time() - self.last_market_update > UPDATE_FREQ_MKT_PX

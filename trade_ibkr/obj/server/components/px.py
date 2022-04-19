@@ -148,6 +148,7 @@ class IBapiPx(IBapiContract, ABC):
         px_req_id = next(px_req_id for px_req_id in self._px_market_to_px_data[reqId])
 
         px_data_cache_entry = self._px_data_cache.data[px_req_id]
+        px_data_cache_entry.update_latest_market(price)
 
         if (
                 not isinstance(px_data_cache_entry, PxDataCacheEntryKeepUpdate) or
@@ -162,9 +163,6 @@ class IBapiPx(IBapiContract, ABC):
             ))
 
         asyncio_run(execute_on_update())
-
-        # Must be placed after `is_send_market_px_data_ok`
-        self._px_data_cache.data[px_req_id].update_latest_market(price)
 
     # endregion
 
