@@ -14,15 +14,15 @@ if TYPE_CHECKING:
 class OrderExecutionCollection:
     def _init_exec_dataframe(self, params: "OnExecutionFetchedParams"):
         for identifier, grouped_executions in self._executions.items():
-            if identifier not in params.contract_ids:
-                # Skip contract IDs not to be included
+            if identifier not in params.contract_ids and params.specified_px_data_list:
+                # Skip contract IDs not to be included if `px_data_list` from `params` is not `None`
                 continue
 
             self._executions_dataframe[identifier] = init_exec_dataframe(
                 grouped_executions,
                 # Equity doesn't have multiplier
                 multiplier=float(grouped_executions[0].contract.multiplier or 1),
-                px_data=params.px_data_dict_execution_period_sec[identifier],
+                px_data=params.px_data_dict_execution_period_sec.get(identifier),
             )
 
     def __init__(self, order_execs: Iterable[OrderExecution], params: "OnExecutionFetchedParams"):

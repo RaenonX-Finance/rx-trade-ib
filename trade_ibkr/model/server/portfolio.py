@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Callable, Coroutine, TYPE_CHECKING
+from typing import Any, Callable, Coroutine, Optional, TYPE_CHECKING
 
 from trade_ibkr.const import EXECUTION_SMA_PERIOD
 from trade_ibkr.enums import OrderSideConst
@@ -47,7 +47,7 @@ OnExecutionFetched = Callable[[OnExecutionFetchedEvent], Coroutine[Any, Any, Non
 
 @dataclass(kw_only=True)
 class OnExecutionFetchedParams:
-    px_data_list: list["PxData"]
+    px_data_list: Optional[list["PxData"]] = field(default=None)
 
     earliest_time: datetime = field(init=False)
     contract_ids: set[int] = field(init=False)
@@ -55,15 +55,24 @@ class OnExecutionFetchedParams:
     px_data_dict_execution_period_sec: dict[int, "PxData"] = field(init=False)
 
     def __post_init__(self):
-        self.earliest_time = min(px_data.earliest_time for px_data in self.px_data_list)
-        self.contract_ids = {px_data.contract_identifier for px_data in self.px_data_list}
-
         self.px_data_dict_execution_period_sec: dict[int, "PxData"] = {}
-        for px_data in self.px_data_list:
-            period_sec = EXECUTION_SMA_PERIOD.get(px_data.contract_symbol, EXECUTION_SMA_PERIOD["default"])
 
-            if px_data.period_sec == period_sec:
-                self.px_data_dict_execution_period_sec[px_data.contract_identifier] = px_data
+        if not self.px_data_list:
+            self.earliest_time = datetime.min
+            self.contract_ids = set()
+        else:
+            self.earliest_time = min(px_data.earliest_time for px_data in self.px_data_list)
+            self.contract_ids = {px_data.contract_identifier for px_data in self.px_data_list}
+
+            for px_data in self.px_data_list:
+                period_sec = EXECUTION_SMA_PERIOD.get(px_data.contract_symbol, EXECUTION_SMA_PERIOD["default"])
+
+                if px_data.period_sec == period_sec:
+                    self.px_data_dict_execution_period_sec[px_data.contract_identifier] = px_data
+
+    @property
+    def specified_px_data_list(self) -> bool:
+        return bool(self.px_data_list)
 
 
 OnExecutionFetchedGetParams = Callable[[], OnExecutionFetchedParams]

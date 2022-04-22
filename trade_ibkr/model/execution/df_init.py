@@ -1,10 +1,11 @@
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 import numpy as np
 from pandas import DataFrame
 
 from trade_ibkr.enums import ExecutionDataCol, PxDataCol
 from .model import GroupedOrderExecution
+from ...utils import print_warning
 
 if TYPE_CHECKING:
     from trade_ibkr.model import PxData
@@ -41,7 +42,7 @@ def _profit_loss(df: DataFrame):
     )
 
 
-def _summary(df: DataFrame, multiplier: float, px_data: "PxData"):
+def _summary(df: DataFrame, multiplier: float, px_data: Optional["PxData"]):
     # Total PnL
     df[ExecutionDataCol.REALIZED_PNL_SUM] = df[ExecutionDataCol.REALIZED_PNL].cumsum()
 
@@ -50,6 +51,10 @@ def _summary(df: DataFrame, multiplier: float, px_data: "PxData"):
             df[ExecutionDataCol.REALIZED_PNL].divide(df[ExecutionDataCol.QUANTITY].astype(float)) / multiplier
     )
     df[ExecutionDataCol.PX_SIDE_SUM] = df[ExecutionDataCol.PX_SIDE].cumsum()
+
+    if not px_data:
+        print_warning("Px data unavailable during execution dataframe processing")
+        return
 
     # Px Side Amplitude Ratio
     df_temp = df.copy()
@@ -130,7 +135,7 @@ def _analysis_px_side(df: DataFrame):
 
 def init_exec_dataframe(
         grouped_executions: list[GroupedOrderExecution],
-        *, multiplier: float, px_data: "PxData"
+        *, multiplier: float, px_data: Optional["PxData"]
 ) -> DataFrame:
     df = DataFrame(grouped_executions)
     df.sort_values(by=[ExecutionDataCol.EPOCH_SEC], inplace=True)
