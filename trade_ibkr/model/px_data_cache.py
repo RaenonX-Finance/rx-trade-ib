@@ -27,6 +27,8 @@ class PxDataCacheEntry(ABC):
     last_historical_sent: float = field(init=False)
     last_market_update: float | None = field(init=False)  # None means no data received yet
 
+    allow_force_send_once: bool = field(init=False, default=False)
+
     def __post_init__(self):
         self.last_historical_sent = 0
         self.last_market_update = None
@@ -61,6 +63,10 @@ class PxDataCacheEntry(ABC):
         # Limit market data output rate
         if not self.contract:
             return False
+
+        if self.allow_force_send_once:
+            self.allow_force_send_once = False
+            return True
 
         if self.last_market_update is None:
             # First market data transmission / HL broken
@@ -102,6 +108,7 @@ class PxDataCacheEntry(ABC):
             }
             self.data[epoch_current] = new_bar
             self.remove_oldest()
+            self.allow_force_send_once = True
             return
 
         bar_current = self.data[epoch_current]
@@ -110,6 +117,9 @@ class PxDataCacheEntry(ABC):
             PxDataCol.LOW: min(bar_current[PxDataCol.LOW], current),
             PxDataCol.CLOSE: current,
         }
+
+        if current > bar_current[PxDataCol.HIGH] or current < bar_current[PxDataCol.LOW]:
+            self.allow_force_send_once = True
 
     def update_latest_history(self, bar: BarData, /, is_realtime_update: bool):
         # If `bar.barCount` is -1, the data is incorrect
